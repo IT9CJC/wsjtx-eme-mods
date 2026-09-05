@@ -68,7 +68,7 @@ public:
   using Frequency = Radio::Frequency;
   using port_type = quint16;
 
-  enum DataMode {data_mode_none, data_mode_USB, data_mode_data};
+  enum DataMode {data_mode_none, data_mode_USB, data_mode_data, data_mode_CW};
   Q_ENUM (DataMode)
   enum Type2MsgGen {type_2_msg_1_full, type_2_msg_3_full, type_2_msg_5_only};
   Q_ENUM (Type2MsgGen)

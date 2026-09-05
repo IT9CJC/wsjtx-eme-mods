@@ -1946,6 +1946,7 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   ui_->TX_mode_button_group->setId (ui_->mode_none_radio_button, data_mode_none);
   ui_->TX_mode_button_group->setId (ui_->mode_USB_radio_button, data_mode_USB);
   ui_->TX_mode_button_group->setId (ui_->mode_data_radio_button, data_mode_data);
+  ui_->TX_mode_button_group->setId (ui_->mode_CW_radio_button, data_mode_CW);
 
   ui_->split_mode_button_group->setId (ui_->split_none_radio_button, TransceiverFactory::split_mode_none);
   ui_->split_mode_button_group->setId (ui_->split_rig_radio_button, TransceiverFactory::split_mode_rig);
@@ -5122,6 +5123,7 @@ void Configuration::impl::set_cached_mode ()
     {
     case data_mode_USB: mode = Transceiver::USB; break;
     case data_mode_data: mode = Transceiver::DIG_U; break;
+    case data_mode_CW: mode = Transceiver::CW; break;
     default: break;
     }
 

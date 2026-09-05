@@ -844,6 +844,20 @@ or bandwidth is selected).</string>
             </attribute>
            </widget>
           </item>
+          <item row="0" column="3">
+           <widget class="QRadioButton" name="mode_CW_radio_button">
+            <property name="toolTip">
+             <string>Set the radio to CW mode via CAT.
+Use for EME CW with Doppler tracking.</string>
+            </property>
+            <property name="text">
+             <string>C&amp;W</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">TX_mode_button_group</string>
+            </attribute>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -4993,6 +5007,7 @@ Right click for insert and delete options.</string>
   <tabstop>mode_none_radio_button</tabstop>
   <tabstop>mode_USB_radio_button</tabstop>
   <tabstop>mode_data_radio_button</tabstop>
+  <tabstop>mode_CW_radio_button</tabstop>
   <tabstop>split_none_radio_button</tabstop>
   <tabstop>split_rig_radio_button</tabstop>
   <tabstop>split_emulate_radio_button</tabstop>

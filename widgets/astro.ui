@@ -285,10 +285,10 @@
               <string>Tx Shift  </string>
              </property>
              <property name="minimum">
-              <number>-30</number>
+              <number>-200</number>
              </property>
              <property name="maximum">
-              <number>30</number>
+              <number>200</number>
              </property>
              <property name="singleStep">
               <number>1</number>

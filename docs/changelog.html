@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSJT-X EME CW Mod &mdash; Revision History</title>
+<style>
+  :root {
+    --bg: #fdfdfd;
+    --fg: #1a1a1a;
+    --accent: #1a5276;
+    --accent-light: #d4e6f1;
+    --border: #bdc3c7;
+    --code-bg: #f4f6f7;
+    --green: #27ae60;
+    --green-bg: #eafaf1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.65;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 1.9rem; color: var(--accent); margin-bottom: .3rem; }
+  h2 { font-size: 1.35rem; color: var(--accent); margin-top: 2.5rem; border-bottom: 2px solid var(--accent-light); padding-bottom: .25rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.2rem; color: #333; }
+  p, li { margin-top: .5rem; }
+  ul, ol { padding-left: 1.5rem; }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: var(--code-bg);
+    padding: .1em .35em;
+    border-radius: 3px;
+    font-size: .92em;
+  }
+  .subtitle { color: #555; font-size: 1rem; margin-bottom: 1.5rem; }
+  .release {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1.5rem;
+    background: #fff;
+  }
+  .release-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .release-header h2 { margin-top: 0; border: none; padding: 0; }
+  .release-date { color: #777; font-size: .9rem; }
+  .tag {
+    display: inline-block;
+    padding: .15em .5em;
+    border-radius: 3px;
+    font-size: .8em;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .tag-new { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+  .tag-base { background: var(--code-bg); color: #555; border: 1px solid var(--border); }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: .8rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .4rem .7rem;
+    text-align: left;
+    font-size: .93em;
+  }
+  th { background: var(--accent-light); font-weight: 600; }
+  a { color: var(--accent); }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: #888; font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<h1>WSJT-X EME CW Mod</h1>
+<p class="subtitle">Revision History</p>
+
+<p>All releases are available at
+<a href="https://github.com/54-11-12/wsjtx-eme-mods/releases">github.com/54-11-12/wsjtx-eme-mods/releases</a>.</p>
+
+<!-- ===== v3.0.2-eme-cw ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.2-eme-cw <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-09-06</span>
+  </div>
+
+  <p>Initial release of the EME CW modifications, based on upstream WSJT-X 3.0.2-devel.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>CW rig mode via CAT</strong> &mdash; New "CW" radio button in
+      Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode. Commands the transceiver
+      into CW mode through Hamlib (<code>RIG_MODE_CW</code>) while Doppler
+      tracking remains fully active on both RX and TX.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>TX Shift extended to &plusmn;200&nbsp;MHz</strong> &mdash; The
+      TX&nbsp;Shift spinbox in the Astronomical Data window now accepts values
+      from &minus;200 to +200&nbsp;MHz (was &plusmn;30&nbsp;MHz).
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th><th>Lines</th></tr>
+    <tr>
+      <td><code>Configuration.hpp</code></td>
+      <td>Added <code>data_mode_CW</code> to the <code>DataMode</code> enum</td>
+      <td>Line 71</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.cpp</code></td>
+      <td>Registered <code>mode_CW_radio_button</code> in the TX mode button group;
+        added <code>case data_mode_CW</code> to <code>set_cached_mode()</code></td>
+      <td>Lines 1949, 5127</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.ui</code></td>
+      <td>Added CW radio button (<code>mode_CW_radio_button</code>) to the Mode
+        group box at row&nbsp;0, column&nbsp;3; added tabstop entry</td>
+      <td>Lines 848&ndash;862, 4995</td>
+    </tr>
+    <tr>
+      <td><code>widgets/astro.ui</code></td>
+      <td>Changed <code>sbibShift</code> QSpinBox minimum from &minus;30 to
+        &minus;200 and maximum from 30 to 200</td>
+      <td>Lines 276, 279</td>
+    </tr>
+  </table>
+
+  <h3>Files Added</h3>
+  <table>
+    <tr><th>File</th><th>Description</th></tr>
+    <tr>
+      <td><code>wsjtx-toolchain.cmake</code></td>
+      <td>CMake toolchain file for Windows builds (Qt&nbsp;5.15.2, Boost&nbsp;1.74,
+        FFTW3, Hamlib&nbsp;4.7.2, libusb)</td>
+    </tr>
+    <tr>
+      <td><code>docs/manual.html</code></td>
+      <td>User manual covering EME CW operation, Doppler tracking, and build instructions</td>
+    </tr>
+    <tr>
+      <td><code>docs/changelog.html</code></td>
+      <td>This revision history</td>
+    </tr>
+  </table>
+
+  <h3>Build Environment</h3>
+  <table>
+    <tr><th>Component</th><th>Version</th></tr>
+    <tr><td>Compiler</td><td>MinGW-W64 GCC 8.1.0 (x86_64-posix-seh)</td></tr>
+    <tr><td>Qt</td><td>5.15.2</td></tr>
+    <tr><td>Boost</td><td>1.74.0 (log, stacktrace, timer)</td></tr>
+    <tr><td>FFTW</td><td>3.3.5</td></tr>
+    <tr><td>Hamlib</td><td>4.7.2 (pre-built Windows 64-bit)</td></tr>
+    <tr><td>libusb</td><td>1.0.27</td></tr>
+    <tr><td>libbacktrace</td><td>1.0</td></tr>
+    <tr><td>CMake</td><td>4.x</td></tr>
+    <tr><td>Target</td><td>Windows 10/11 x86_64</td></tr>
+  </table>
+
+  <h3>Upstream Base</h3>
+  <p>Based on <a href="https://github.com/WSJTX/wsjtx">WSJTX/wsjtx</a> master
+  branch, commit <code>ccdfaf3c1</code> (3.0.2-devel).
+  <span class="tag tag-base">BASE</span></p>
+</div>
+
+<!-- ===== Upstream ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>Upstream WSJT-X 3.0.2-devel</h2>
+    <span class="release-date">2025</span>
+  </div>
+  <p>The unmodified upstream codebase. See the
+  <a href="https://wsjt.sourceforge.io/wsjtx.html">official WSJT-X documentation</a>
+  for the full feature list and changelog.</p>
+  <p>Key features relevant to this mod:</p>
+  <ul>
+    <li>Astronomical Data window with Doppler tracking for EME</li>
+    <li>Hamlib rig control with <code>Transceiver::CW</code> enum already defined</li>
+    <li>Split mode support for independent RX/TX frequency control</li>
+    <li>TX Shift control (&plusmn;30 MHz range)</li>
+  </ul>
+</div>
+
+<footer>
+  <p>WSJT-X EME CW Mod &mdash; II9P &mdash;
+  <a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a></p>
+</footer>
+
+</body>
+</html>

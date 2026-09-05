@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSJT-X EME CW Mod &mdash; User Manual</title>
+<style>
+  :root {
+    --bg: #fdfdfd;
+    --fg: #1a1a1a;
+    --accent: #1a5276;
+    --accent-light: #d4e6f1;
+    --border: #bdc3c7;
+    --code-bg: #f4f6f7;
+    --warn-bg: #fef9e7;
+    --warn-border: #f39c12;
+    --note-bg: #eaf2f8;
+    --note-border: #2980b9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.65;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 1.9rem; color: var(--accent); margin-bottom: .3rem; }
+  h2 { font-size: 1.45rem; color: var(--accent); margin-top: 2.5rem; border-bottom: 2px solid var(--accent-light); padding-bottom: .25rem; }
+  h3 { font-size: 1.15rem; margin-top: 1.5rem; }
+  p, li { margin-top: .6rem; }
+  ul, ol { padding-left: 1.5rem; }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: var(--code-bg);
+    padding: .1em .35em;
+    border-radius: 3px;
+    font-size: .92em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin-top: .8rem;
+    font-size: .88em;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: .8rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .45rem .7rem;
+    text-align: left;
+  }
+  th { background: var(--accent-light); font-weight: 600; }
+  .subtitle { color: #555; font-size: 1rem; margin-bottom: 1.5rem; }
+  .callout {
+    border-left: 4px solid var(--note-border);
+    background: var(--note-bg);
+    padding: .8rem 1rem;
+    margin-top: 1rem;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout.warn {
+    border-left-color: var(--warn-border);
+    background: var(--warn-bg);
+  }
+  .callout strong { display: block; margin-bottom: .2rem; }
+  .toc { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1rem 1.5rem; margin-top: 1.5rem; }
+  .toc ol { padding-left: 1.2rem; }
+  .toc li { margin-top: .3rem; }
+  .toc a { text-decoration: none; color: var(--accent); }
+  .toc a:hover { text-decoration: underline; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; background: var(--accent); color: #fff; padding: .1em .5em; border-radius: 3px; font-size: .8em; vertical-align: middle; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: #888; font-size: .85rem; }
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>WSJT-X EME CW Mod</h1>
+<p class="subtitle">User Manual &mdash; Version 3.0.2-eme-cw &mdash; II9P</p>
+
+<nav class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#installation">Installation</a></li>
+  <li><a href="#cw-mode">CW Mode Setup</a></li>
+  <li><a href="#doppler">Doppler Tracking</a></li>
+  <li><a href="#txshift">TX Shift</a></li>
+  <li><a href="#procedure">EME CW Operating Procedure</a></li>
+  <li><a href="#cat">CAT / Hamlib Configuration</a></li>
+  <li><a href="#resolution">Frequency Resolution</a></li>
+  <li><a href="#troubleshooting">Troubleshooting</a></li>
+  <li><a href="#build">Building from Source</a></li>
+</ol>
+</nav>
+
+<!-- ===== 1. OVERVIEW ===== -->
+<h2 id="overview">1. Overview</h2>
+
+<p>This is a modified build of <strong>WSJT-X 3.0.2</strong> with two additions for
+<strong>EME (Earth-Moon-Earth) CW operation</strong>:</p>
+
+<ol>
+  <li><strong>CW rig mode via CAT</strong> &mdash; a new "CW" radio button in Settings&nbsp;&gt;&nbsp;Radio
+    that commands the transceiver into CW mode through Hamlib, while keeping
+    full Doppler tracking active on both RX and TX.</li>
+  <li><strong>Extended TX&nbsp;Shift to &plusmn;200&nbsp;MHz</strong> &mdash; the TX&nbsp;Shift
+    control in the Astronomical Data window now accepts values from
+    &minus;200 to +200&nbsp;MHz (stock limit is &plusmn;30&nbsp;MHz).</li>
+</ol>
+
+<h3>Why is this needed?</h3>
+<p>Stock WSJT-X supports Doppler-tracked digital modes (JT65, Q65, etc.) for EME,
+but has no provision for setting the rig to CW mode via CAT while Doppler tracking
+remains active. EME CW operators must compensate for the continuously changing
+Doppler shift on the Earth-Moon-Earth path (up to &plusmn;several kHz at
+microwave frequencies). This mod lets WSJT-X handle that automatically while the
+operator works CW.</p>
+
+<p>The extended TX&nbsp;Shift range is useful on microwave bands where the TX and RX
+frequencies may be separated by far more than 30&nbsp;MHz due to transverter
+offsets or deliberate frequency splits.</p>
+
+<h3>What is <em>not</em> changed</h3>
+<ul>
+  <li>All existing WSJT-X digital modes and features work exactly as before.</li>
+  <li>The Doppler correction engine is unchanged &mdash; CW mode simply reuses the
+    existing infrastructure.</li>
+  <li>Hamlib rig control is unchanged &mdash; the <code>Transceiver::CW</code>
+    enum value already existed and maps to <code>RIG_MODE_CW</code>.</li>
+</ul>
+
+<!-- ===== 2. INSTALLATION ===== -->
+<h2 id="installation">2. Installation</h2>
+
+<ol>
+  <li>Download <code>wsjtx-eme-mods-win64.zip</code> from the
+    <a href="https://github.com/54-11-12/wsjtx-eme-mods/releases/tag/v3.0.2-eme-cw">GitHub Releases page</a>.</li>
+  <li>Extract the ZIP to any location (e.g. <code>C:\wsjtx-eme</code>).</li>
+  <li>Run <code>bin\wsjtx.exe</code>.</li>
+</ol>
+
+<div class="callout">
+  <strong>Note</strong>
+  All required DLLs (Qt, Hamlib, Boost, FFTW, MinGW runtime) are bundled in the
+  <code>bin\</code> directory. No separate runtime installation is needed.
+</div>
+
+<div class="callout warn">
+  <strong>Side-by-side with stock WSJT-X</strong>
+  This build uses the same configuration directory as stock WSJT-X
+  (<code>%LOCALAPPDATA%\WSJT-X</code>). If you want to keep both, back up your
+  settings before first launch, or use the <code>--rig-name</code> command-line
+  option to create a separate configuration instance:
+  <pre><code>wsjtx.exe --rig-name=EME-CW</code></pre>
+</div>
+
+<!-- ===== 3. CW MODE ===== -->
+<h2 id="cw-mode">3. CW Mode Setup</h2>
+
+<ol>
+  <li>Open <strong>File &gt; Settings</strong> (or press <kbd>F2</kbd>).</li>
+  <li>Go to the <strong>Radio</strong> tab.</li>
+  <li>In the <strong>Mode</strong> group box, select the <strong>CW</strong>
+    radio button.</li>
+</ol>
+
+<p>The four available mode options are:</p>
+
+<table>
+  <tr><th>Button</th><th>CAT Mode Sent</th><th>Use Case</th></tr>
+  <tr><td>None</td><td>(no mode change)</td><td>Leave rig mode as-is</td></tr>
+  <tr><td>USB</td><td>USB</td><td>SSB digital modes</td></tr>
+  <tr><td>Data/Pkt</td><td>DIG-U (DATA-USB)</td><td>FSK/AFSK digital modes</td></tr>
+  <tr><td><strong>CW</strong> <span class="tag">NEW</span></td><td>CW</td><td>EME CW with Doppler tracking</td></tr>
+</table>
+
+<p>When <strong>CW</strong> is selected, WSJT-X sends <code>RIG_MODE_CW</code>
+to the transceiver via Hamlib every time it updates the frequency (which happens
+continuously during Doppler tracking). The rig stays in CW mode, and frequency
+corrections are applied via CAT.</p>
+
+<!-- ===== 4. DOPPLER TRACKING ===== -->
+<h2 id="doppler">4. Doppler Tracking</h2>
+
+<h3>Opening the Astronomical Data window</h3>
+<p>Go to <strong>View &gt; Astronomical Data</strong> to open the Doppler
+tracking window. This window shows Moon position, Doppler shift, path loss,
+and provides the tracking controls.</p>
+
+<h3>Grids</h3>
+<p>Enter your own Maidenhead grid in Settings&nbsp;&gt;&nbsp;General and the
+DX station's grid in the Astronomical Data window. WSJT-X uses both grids to
+compute the precise Doppler shift on the Earth-Moon-Earth path.</p>
+
+<h3>Doppler tracking methods</h3>
+<p>The <strong>Doppler tracking</strong> dropdown selects how frequency
+corrections are applied:</p>
+
+<table>
+  <tr><th>Method</th><th>Description</th><th>Typical Use</th></tr>
+  <tr><td>Full Doppler to DX Grid</td><td>Corrects RX and TX for full round-trip Doppler to the DX station's grid</td><td>When DX does <em>not</em> correct</td></tr>
+  <tr><td>Constant frequency on Moon</td><td>Signal arrives at the Moon at the nominal frequency</td><td>Self-echo, beacons</td></tr>
+  <tr><td>Own Echo</td><td>Corrects for your own echo return Doppler</td><td>Echo testing</td></tr>
+  <tr><td>Both stations correct</td><td>Each station corrects half the Doppler</td><td>Both stations running tracking software</td></tr>
+  <tr><td>On DX Echo</td><td>Corrects so DX hears their own echo on frequency</td><td>Cooperative EME</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Split mode required</strong>
+  Doppler tracking applies separate RX and TX frequency corrections. Your rig
+  must be in <strong>split mode</strong> (VFO A for RX, VFO B for TX) for TX
+  corrections to take effect. Enable split in Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;<em>Split Operation</em>.
+</div>
+
+<h3>How corrections are applied</h3>
+<p>WSJT-X computes two independent correction values (in Hz):</p>
+<ul>
+  <li><strong>RX correction</strong> &mdash; added to the nominal RX frequency:
+    <code>f_rx = f_nominal + correction.rx</code></li>
+  <li><strong>TX correction</strong> &mdash; added to the nominal TX frequency:
+    <code>f_tx = f_nominal + correction.tx</code></li>
+</ul>
+<p>These corrections are sent to the rig via CAT at each update cycle
+(typically every second). The corrections are <em>independent of rig
+mode</em> &mdash; they work identically whether the rig is in USB, Data, or CW.</p>
+
+<!-- ===== 5. TX SHIFT ===== -->
+<h2 id="txshift">5. TX Shift</h2>
+
+<p>The <strong>Tx Shift</strong> spinbox in the Astronomical Data window applies
+a fixed frequency offset to the TX frequency, on top of any Doppler correction.</p>
+
+<table>
+  <tr><th>Parameter</th><th>Value</th></tr>
+  <tr><td>Range</td><td>&minus;200 to +200 MHz <span class="tag">EXTENDED</span></td></tr>
+  <tr><td>Step size</td><td>1 MHz</td></tr>
+  <tr><td>Internal unit</td><td>Hz (value &times; 1,000,000)</td></tr>
+  <tr><td>Enable checkbox</td><td>"Enable Shift" must be checked</td></tr>
+</table>
+
+<p>The TX Shift is useful when:</p>
+<ul>
+  <li>Your TX and RX frequencies are offset by a transverter LO difference.</li>
+  <li>You are working cross-band or with a large deliberate frequency split.</li>
+  <li>You need to compensate for equipment-specific frequency offsets on
+    microwave bands.</li>
+</ul>
+
+<div class="callout warn">
+  <strong>Original limit was &plusmn;30 MHz</strong>
+  Stock WSJT-X limits the TX Shift to &plusmn;30 MHz. This mod extends it to
+  &plusmn;200 MHz for microwave EME use. The underlying Doppler correction
+  engine handles the full range without modification.
+</div>
+
+<!-- ===== 6. OPERATING PROCEDURE ===== -->
+<h2 id="procedure">6. EME CW Operating Procedure</h2>
+
+<p>Step-by-step guide for EME CW operation with Doppler tracking:</p>
+
+<h3>6.1 Initial setup (one-time)</h3>
+<ol>
+  <li>Open Settings (<kbd>F2</kbd>).</li>
+  <li><strong>General tab:</strong> Enter your callsign and Maidenhead grid locator.</li>
+  <li><strong>Radio tab:</strong>
+    <ul>
+      <li>Select your rig from the Hamlib dropdown.</li>
+      <li>Configure the serial port (or network address for TCP rigs).</li>
+      <li>Set <strong>Mode</strong> to <strong>CW</strong>.</li>
+      <li>Set <strong>Split Operation</strong> to <strong>Rig</strong> or <strong>Fake It</strong>.</li>
+      <li>Configure PTT method (CAT, DTR, RTS, or VOX).</li>
+    </ul>
+  </li>
+  <li>Click <strong>Test CAT</strong> to verify communication. The button
+    should turn green.</li>
+</ol>
+
+<h3>6.2 Before each session</h3>
+<ol>
+  <li>Tune your rig to the desired nominal frequency (e.g. 144.100 MHz,
+    432.000 MHz, 1296.000 MHz).</li>
+  <li>Open <strong>View &gt; Astronomical Data</strong>.</li>
+  <li>Enter the DX station's grid locator (or leave blank for CQ).</li>
+  <li>Select the appropriate <strong>Doppler tracking method</strong>:
+    <ul>
+      <li>Use <em>Full Doppler to DX Grid</em> if you know the DX grid and
+        the DX station is not tracking.</li>
+      <li>Use <em>Both stations correct</em> if both of you run tracking.</li>
+      <li>Use <em>Own Echo</em> for testing your own echoes.</li>
+    </ul>
+  </li>
+  <li>If needed, set <strong>Tx Shift</strong> (check "Enable Shift" and
+    enter the value in MHz).</li>
+  <li>Click <strong>Track</strong> to start Doppler tracking.</li>
+</ol>
+
+<h3>6.3 During the QSO</h3>
+<ul>
+  <li>WSJT-X continuously updates the rig frequency via CAT. You will see
+    the VFO moving as the Doppler shift changes.</li>
+  <li>Operate CW normally &mdash; use your keyer, paddle, or straight key.</li>
+  <li>The Astronomical Data window shows the current Doppler shift, predicted
+    echo delay, and path degradation in real time.</li>
+  <li>If the DX station moves to a different grid, update the grid field
+    and the tracking will adjust immediately.</li>
+</ul>
+
+<h3>6.4 After the QSO</h3>
+<ul>
+  <li>Click <strong>Stop</strong> in the Astronomical Data window to stop tracking.</li>
+  <li>Log the QSO as usual.</li>
+</ul>
+
+<!-- ===== 7. CAT / HAMLIB ===== -->
+<h2 id="cat">7. CAT / Hamlib Configuration</h2>
+
+<p>WSJT-X uses <strong>Hamlib 4.7.2</strong> (bundled) for rig control. The CW
+mode mapping is:</p>
+
+<pre><code>User selects "CW" in Settings
+  &rarr; Configuration sets data_mode_CW
+  &rarr; set_cached_mode() maps to Transceiver::CW
+  &rarr; HamlibTransceiver::map_mode() sends RIG_MODE_CW
+  &rarr; Hamlib issues the appropriate CAT command for your rig
+     (e.g. "MD3;" for Kenwood, 0x06 for Icom CI-V)</code></pre>
+
+<h3>Recommended settings</h3>
+<table>
+  <tr><th>Setting</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>Rig</td><td>(your rig model)</td><td>Select from the Hamlib dropdown list</td></tr>
+  <tr><td>Serial Port</td><td>COMx</td><td>The port your rig is connected to</td></tr>
+  <tr><td>Baud Rate</td><td>(rig default)</td><td>Consult your rig manual</td></tr>
+  <tr><td>Mode</td><td><strong>CW</strong></td><td>New option in this mod</td></tr>
+  <tr><td>Split Operation</td><td><strong>Rig</strong></td><td>Required for TX Doppler correction</td></tr>
+  <tr><td>PTT Method</td><td>CAT / VOX</td><td>CAT recommended; VOX if CAT PTT unreliable</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Test CAT before going on the air</strong>
+  Always click <strong>Test CAT</strong> after changing settings. The button
+  turns green on success, red on failure. If it fails, check serial port,
+  baud rate, and cable connections.
+</div>
+
+<!-- ===== 8. FREQUENCY RESOLUTION ===== -->
+<h2 id="resolution">8. Frequency Resolution</h2>
+
+<p>Doppler corrections are rounded to match the minimum frequency step your
+rig supports via CAT. WSJT-X queries the rig's tuning resolution from Hamlib
+and applies the following rounding:</p>
+
+<table>
+  <tr><th>Rig Resolution</th><th>Correction Rounded To</th></tr>
+  <tr><td>100 Hz or coarser</td><td>Nearest 100 Hz</td></tr>
+  <tr><td>20 Hz</td><td>Nearest 20 Hz</td></tr>
+  <tr><td>10 Hz</td><td>Nearest 10 Hz</td></tr>
+  <tr><td>1 Hz</td><td>Nearest 1 Hz</td></tr>
+</table>
+
+<p>On microwave bands where Doppler rates are high, a rig with 1&nbsp;Hz
+resolution provides the smoothest tracking. Most modern HF/VHF transceivers
+support 1&nbsp;Hz or 10&nbsp;Hz CAT resolution.</p>
+
+<!-- ===== 9. TROUBLESHOOTING ===== -->
+<h2 id="troubleshooting">9. Troubleshooting</h2>
+
+<h3>Rig does not switch to CW mode</h3>
+<ul>
+  <li>Verify <strong>CW</strong> is selected in Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode.</li>
+  <li>Click <strong>Test CAT</strong> &mdash; green means CAT is working.</li>
+  <li>Some rigs require specific baud rate or handshake settings. Consult
+    your rig manual and the Hamlib documentation.</li>
+  <li>Check that your rig model is correctly selected (not "Dummy" or a
+    wrong model).</li>
+</ul>
+
+<h3>Doppler corrections not applied to TX</h3>
+<ul>
+  <li><strong>Split mode must be enabled.</strong> Go to Settings&nbsp;&gt;&nbsp;Radio
+    and set Split Operation to "Rig" or "Fake It".</li>
+  <li>Verify that Doppler tracking is active (click "Track" in the
+    Astronomical Data window).</li>
+</ul>
+
+<h3>TX Shift has no effect</h3>
+<ul>
+  <li>The <strong>"Enable Shift"</strong> checkbox must be checked.</li>
+  <li>TX Shift only applies to certain Doppler methods. Select the appropriate
+    tracking method in the Astronomical Data window.</li>
+</ul>
+
+<h3>VFO not moving / frequency frozen</h3>
+<ul>
+  <li>Make sure WSJT-X is in <strong>Monitor</strong> mode (click Monitor or
+    press <kbd>F4</kbd>). Doppler corrections are only sent when monitoring
+    or transmitting.</li>
+  <li>Check that the rig is online (green circle in the bottom status bar).</li>
+</ul>
+
+<h3>"Test CAT" fails (red button)</h3>
+<ul>
+  <li>Check serial cable and port number.</li>
+  <li>Verify baud rate matches the rig setting.</li>
+  <li>Close any other programs that might be using the same COM port.</li>
+  <li>Try a different rig model in the Hamlib list (some rigs have multiple
+    entries for different firmware versions).</li>
+</ul>
+
+<!-- ===== 10. BUILD FROM SOURCE ===== -->
+<h2 id="build">10. Building from Source</h2>
+
+<p>The source code is available at
+<a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a>.</p>
+
+<h3>Requirements</h3>
+<ul>
+  <li>Windows 10/11 64-bit</li>
+  <li>CMake 3.10+</li>
+  <li>Qt 5.15.2 with MinGW 8.1.0 64-bit</li>
+  <li>Boost 1.74 (log, stacktrace, timer)</li>
+  <li>FFTW 3.3.5 (64-bit DLL)</li>
+  <li>Hamlib 4.x (pre-built Windows 64-bit)</li>
+  <li>libusb 1.0.x</li>
+  <li>libbacktrace 1.0</li>
+  <li>OmniRig (type library for COM interface)</li>
+</ul>
+
+<h3>Build commands</h3>
+<pre><code>set PATH=C:\Qt\Tools\mingw810_64\bin;%PATH%
+
+mkdir build-wsjtx && cd build-wsjtx
+
+cmake -G "MinGW Makefiles" ^
+  -DCMAKE_TOOLCHAIN_FILE=C:\Tools\wsjtx-toolchain.cmake ^
+  -DCMAKE_BUILD_TYPE=Release ^
+  -DWSJT_SKIP_MANPAGES=ON ^
+  -DWSJT_GENERATE_DOCS=OFF ^
+  -DWSJT_SKIP_MAP65=ON ^
+  -DOMNIRIG_TYPE_LIB=C:\Tools\omnirig-extracted\app\OmniRig.exe ^
+  -DCMAKE_INSTALL_PREFIX=C:\Tools\wsjtx-install ^
+  C:\src\wsjtx
+
+cmake --build . -j8
+cmake --build . --target install</code></pre>
+
+<p>The toolchain file <code>wsjtx-toolchain.cmake</code> is included in the
+repository. Edit it to match your local dependency paths.</p>
+
+<h3>Modified files</h3>
+<table>
+  <tr><th>File</th><th>Change</th></tr>
+  <tr><td><code>Configuration.hpp</code></td><td>Added <code>data_mode_CW</code> to <code>DataMode</code> enum</td></tr>
+  <tr><td><code>Configuration.cpp</code></td><td>Registered CW radio button; added CW case to <code>set_cached_mode()</code></td></tr>
+  <tr><td><code>Configuration.ui</code></td><td>Added CW radio button to Mode group box</td></tr>
+  <tr><td><code>widgets/astro.ui</code></td><td>Extended TX Shift spinbox range to &plusmn;200 MHz</td></tr>
+</table>
+
+<footer>
+  <p>WSJT-X EME CW Mod v3.0.2-eme-cw &mdash; Built by II9P &mdash; September 2026</p>
+  <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
+  <p>Source: <a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a></p>
+</footer>
+
+</body>
+</html>

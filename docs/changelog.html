@@ -86,12 +86,87 @@
 <p class="subtitle">Revision History</p>
 
 <p>All releases are available at
-<a href="https://github.com/54-11-12/wsjtx-eme-mods/releases">github.com/54-11-12/wsjtx-eme-mods/releases</a>.</p>
+<a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
+
+<!-- ===== v3.0.3-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.3-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-09-06</span>
+  </div>
+
+  <p>Bug fixes and new features for EME CW operation. Version bumped to 3.0.3.</p>
+
+  <h3>Bug Fixes</h3>
+  <ul>
+    <li><strong>TX Shift frequency display</strong> &mdash; When "Enable Shift"
+      is checked, the Sked TX frequency label now shows the actual shifted
+      TX frequency (RX + Shift) in <strong style="color: blue;">blue text</strong>
+      instead of the unhelpful "N/A Tx Shift!" message.
+      <span class="tag tag-new">FIX</span></li>
+  </ul>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Fine frequency wheel control</strong> &mdash; The dial frequency
+      mouse wheel now supports modifier keys for sub-kHz tuning:
+      no modifier = 1&nbsp;kHz, Shift = 100&nbsp;Hz, Ctrl = 10&nbsp;Hz,
+      Ctrl+Shift = 1&nbsp;Hz.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>CW mode status indicator</strong> &mdash; A blue "CW" label
+      appears in the main window status bar when CW data mode is active in
+      Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode. Hidden when any other
+      mode is selected.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Version bump to 3.0.3-devel</strong> &mdash; Project version
+      updated in CMakeLists.txt; reflected in the About dialog and all version
+      strings.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th><th>Lines</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped project VERSION from 3.0.2.0 to 3.0.3.0</td>
+      <td>Line 64</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.hpp</code></td>
+      <td>Added public <code>data_mode()</code> accessor for <code>DataMode</code> enum</td>
+      <td>Line 83</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.cpp</code></td>
+      <td>Added PIMPL forwarding for <code>data_mode()</code></td>
+      <td>Line 1018</td>
+    </tr>
+    <tr>
+      <td><code>widgets/astro.cpp</code></td>
+      <td>Replaced "N/A Tx Shift!" label with computed shifted frequency display
+        in blue text</td>
+      <td>Line 385</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.h</code></td>
+      <td>Added <code>cw_mode_label</code> QLabel member</td>
+      <td>Line 792</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>Added CW status label to status bar; added modifier-key wheel steps
+        (Shift: 100&nbsp;Hz, Ctrl: 10&nbsp;Hz, Ctrl+Shift: 1&nbsp;Hz);
+        updated F5 help text</td>
+      <td>Lines 4381&ndash;4386, 4443&ndash;4449, 5246, 10114&ndash;10134</td>
+    </tr>
+  </table>
+</div>
 
 <!-- ===== v3.0.2-eme-cw ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.2-eme-cw <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.2-eme-cw</h2>
     <span class="release-date">2026-09-06</span>
   </div>
 
@@ -196,7 +271,7 @@
 
 <footer>
   <p>WSJT-X EME CW Mod &mdash; II9P &mdash;
-  <a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a></p>
+  <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>
 
 </body>

@@ -4379,6 +4379,12 @@ void MainWindow::createStatusBar()                           //createStatusBar
   mode_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&mode_label);
 
+  cw_mode_label.setAlignment (Qt::AlignHCenter);
+  cw_mode_label.setMinimumSize (QSize {40, 18});
+  cw_mode_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
+  statusBar()->addWidget (&cw_mode_label);
+  cw_mode_label.hide ();
+
   ndecodes_label.setAlignment (Qt::AlignHCenter);
   ndecodes_label.setMinimumSize (QSize {30, 18});
   ndecodes_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
@@ -4433,6 +4439,13 @@ void MainWindow::setup_status_bar (bool vhf)
     mode_label.setStyleSheet ("QLabel{color: #000000; background-color: #6699ff}");
   } else if ("FreqCal" == m_mode) {
     mode_label.setStyleSheet ("QLabel{color: #000000; background-color: #ff9933}");
+  }
+  if (m_config.data_mode () == Configuration::data_mode_CW) {
+    cw_mode_label.setText ("CW");
+    cw_mode_label.setStyleSheet ("QLabel{color: #ffffff; background-color: #0000cc}");
+    cw_mode_label.show ();
+  } else {
+    cw_mode_label.hide ();
   }
   keep_last_tx_label = true;
   last_tx_label.setText (QString {});
@@ -5237,7 +5250,8 @@ void MainWindow::on_actionSpecial_mouse_commands_triggered()
   </tr>
   <tr>
     <td align="right">Dial Frequency:</td>
-    <td><b>Turn the mouse wheel</b> to change the kHz values, or:<br/>
+    <td><b>Turn the mouse wheel</b> to change frequency:<br/>
+        No modifier: 1 kHz, Shift: 100 Hz, Ctrl: 10 Hz, Ctrl+Shift: 1 Hz.<br/>
         <b>Right-click</b> to increase frequency by 1 kHz.<br/>
         <b>Left-click</b> to decrease frequency by 1 kHz.<br/>
         The mouse pointer must be over the Dial Frequency indicator.
@@ -10107,14 +10121,22 @@ void MainWindow::on_DX_Call_Button_clicked (bool checked)
 
 void MainWindow::wheelEvent(QWheelEvent *event)         // mouse wheel events
 {
-  if(ui->labDialFreq->hasFocus() && !m_transmitting) {                         // kHz + or -
+  if(ui->labDialFreq->hasFocus() && !m_transmitting) {
     Frequency dial_frequency {m_rigState.ptt () && m_rigState.split () ?
         m_rigState.tx_frequency () : m_rigState.frequency ()};
+    Frequency step {1000};
+    if ((event->modifiers() & Qt::ControlModifier) && (event->modifiers() & Qt::ShiftModifier)) {
+      step = 1;
+    } else if (event->modifiers() & Qt::ControlModifier) {
+      step = 10;
+    } else if (event->modifiers() & Qt::ShiftModifier) {
+      step = 100;
+    }
     if (event->angleDelta().x() > 2 or event->angleDelta().y() > 2) {
-      dial_frequency = dial_frequency + 1000;
+      dial_frequency = dial_frequency + step;
       ui->labDialFreq->setText (Radio::pretty_frequency_MHz_string (dial_frequency));
     } else if (event->angleDelta().x() < -2 or event->angleDelta().y() < -2) {
-      dial_frequency = dial_frequency - 1000;
+      dial_frequency = dial_frequency - step;
       ui->labDialFreq->setText (Radio::pretty_frequency_MHz_string (dial_frequency));
     }
   if (m_astroWidget && m_astroWidget->doppler_tracking() && m_astroWidget->DopplerMethod()!=0) {

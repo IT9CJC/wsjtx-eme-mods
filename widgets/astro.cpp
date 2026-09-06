@@ -382,7 +382,14 @@ void Astro::nominal_frequency (Frequency rx, Frequency tx)
   if (!ui_->cbLockSkedFreq->isChecked() or astroStart or QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
     ui_->sked_frequency_label->setText (Radio::pretty_frequency_MHz_string (rx));
     ui_->sked_tx_frequency_label->setText (Radio::pretty_frequency_MHz_string (tx));
-    if (ui_->cbEnableShift->isChecked()) ui_->sked_tx_frequency_label->setText ("N/A Tx Shift!");
+    if (ui_->cbEnableShift->isChecked()) {
+      FrequencyDelta shift = ui_->sbibShift->value() * 1000000LL;
+      Frequency shifted_tx = static_cast<Frequency>(static_cast<FrequencyDelta>(tx) + shift);
+      ui_->sked_tx_frequency_label->setText (Radio::pretty_frequency_MHz_string (shifted_tx));
+      ui_->sked_tx_frequency_label->setStyleSheet ("* { font-family: Courier; font-size: 12pt; font-weight: bold; color: blue; }");
+    } else {
+      ui_->sked_tx_frequency_label->setStyleSheet ("* { font-family: Courier; font-size: 12pt; font-weight: bold; }");
+    }
     if (rx > 450000) astroStart = false;
   }
 }

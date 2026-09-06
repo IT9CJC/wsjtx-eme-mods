@@ -80,6 +80,7 @@ public:
   void select_tab (int);
   int exec ();
   bool is_active () const;
+  DataMode data_mode () const;
 
   QDir temp_dir () const;
   QDir doc_dir () const;

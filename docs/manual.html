@@ -91,7 +91,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">User Manual &mdash; Version 3.0.2-eme-cw &mdash; II9P</p>
+<p class="subtitle">User Manual &mdash; Version 3.0.3-devel &mdash; II9P</p>
 
 <nav class="toc">
 <strong>Contents</strong>
@@ -101,6 +101,7 @@
   <li><a href="#cw-mode">CW Mode Setup</a></li>
   <li><a href="#doppler">Doppler Tracking</a></li>
   <li><a href="#txshift">TX Shift</a></li>
+  <li><a href="#wheel">Fine Frequency Control (Mouse Wheel)</a></li>
   <li><a href="#procedure">EME CW Operating Procedure</a></li>
   <li><a href="#cat">CAT / Hamlib Configuration</a></li>
   <li><a href="#resolution">Frequency Resolution</a></li>
@@ -150,7 +151,7 @@ offsets or deliberate frequency splits.</p>
 
 <ol>
   <li>Download <code>wsjtx-eme-mods-win64.zip</code> from the
-    <a href="https://github.com/54-11-12/wsjtx-eme-mods/releases/tag/v3.0.2-eme-cw">GitHub Releases page</a>.</li>
+    <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases/tag/v3.0.2-eme-cw">GitHub Releases page</a>.</li>
   <li>Extract the ZIP to any location (e.g. <code>C:\wsjtx-eme</code>).</li>
   <li>Run <code>bin\wsjtx.exe</code>.</li>
 </ol>
@@ -194,6 +195,13 @@ offsets or deliberate frequency splits.</p>
 to the transceiver via Hamlib every time it updates the frequency (which happens
 continuously during Doppler tracking). The rig stays in CW mode, and frequency
 corrections are applied via CAT.</p>
+
+<h3>CW mode status indicator</h3>
+<p>When CW mode is active, a <strong style="color: #ffffff; background-color: #0000cc; padding: 0 .3em;">CW</strong>
+label appears in the main window status bar (next to the digital mode label).
+This provides a quick visual confirmation that the rig is being commanded to
+CW mode via CAT. The label is hidden when any other mode is selected.
+<span class="tag">NEW</span></p>
 
 <!-- ===== 4. DOPPLER TRACKING ===== -->
 <h2 id="doppler">4. Doppler Tracking</h2>
@@ -262,11 +270,43 @@ a fixed frequency offset to the TX frequency, on top of any Doppler correction.<
     microwave bands.</li>
 </ul>
 
+<div class="callout">
+  <strong>Shifted frequency display</strong>
+  When "Enable Shift" is checked, the Sked TX frequency label in the Astronomical
+  Data window shows the actual shifted TX frequency (RX + Shift) in
+  <strong style="color: blue;">blue text</strong>, so you can verify the applied
+  offset at a glance. When shift is disabled, the label returns to its normal color.
+</div>
+
 <div class="callout warn">
   <strong>Original limit was &plusmn;30 MHz</strong>
   Stock WSJT-X limits the TX Shift to &plusmn;30 MHz. This mod extends it to
   &plusmn;200 MHz for microwave EME use. The underlying Doppler correction
   engine handles the full range without modification.
+</div>
+
+<!-- ===== 5b. FINE FREQUENCY WHEEL ===== -->
+<h2 id="wheel">5b. Fine Frequency Control (Mouse Wheel)</h2>
+
+<p>The dial frequency display in the main window supports mouse wheel tuning
+with modifier keys for sub-kHz resolution: <span class="tag">NEW</span></p>
+
+<table>
+  <tr><th>Modifier</th><th>Step Size</th><th>Use Case</th></tr>
+  <tr><td>(none)</td><td>1 kHz</td><td>Band scanning, coarse tuning</td></tr>
+  <tr><td>Shift</td><td>100 Hz</td><td>Fine tuning within a band segment</td></tr>
+  <tr><td>Ctrl</td><td>10 Hz</td><td>Precise frequency setting</td></tr>
+  <tr><td>Ctrl + Shift</td><td>1 Hz</td><td>Exact frequency match</td></tr>
+</table>
+
+<p>To use: click on the dial frequency display to give it focus, then scroll
+the mouse wheel. Hold the modifier key(s) while scrolling for finer steps.</p>
+
+<div class="callout">
+  <strong>Tip for EME CW</strong>
+  The 1&nbsp;Hz and 10&nbsp;Hz steps are particularly useful for setting the
+  exact nominal frequency before enabling Doppler tracking, ensuring your
+  signal lands precisely where expected on the Moon bounce path.
 </div>
 
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
@@ -426,7 +466,7 @@ support 1&nbsp;Hz or 10&nbsp;Hz CAT resolution.</p>
 <h2 id="build">10. Building from Source</h2>
 
 <p>The source code is available at
-<a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a>.</p>
+<a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a>.</p>
 
 <h3>Requirements</h3>
 <ul>
@@ -469,12 +509,18 @@ repository. Edit it to match your local dependency paths.</p>
   <tr><td><code>Configuration.cpp</code></td><td>Registered CW radio button; added CW case to <code>set_cached_mode()</code></td></tr>
   <tr><td><code>Configuration.ui</code></td><td>Added CW radio button to Mode group box</td></tr>
   <tr><td><code>widgets/astro.ui</code></td><td>Extended TX Shift spinbox range to &plusmn;200 MHz</td></tr>
+  <tr><td><code>widgets/astro.cpp</code></td><td>Show shifted TX frequency (blue) instead of "N/A Tx Shift!" label</td></tr>
+  <tr><td><code>widgets/mainwindow.h</code></td><td>Added <code>cw_mode_label</code> QLabel member for CW status indicator</td></tr>
+  <tr><td><code>widgets/mainwindow.cpp</code></td><td>CW status label in status bar; modifier-key wheel steps (Shift: 100 Hz, Ctrl: 10 Hz, Ctrl+Shift: 1 Hz); help text</td></tr>
+  <tr><td><code>Configuration.hpp</code></td><td>Added public <code>data_mode()</code> accessor</td></tr>
+  <tr><td><code>Configuration.cpp</code></td><td>PIMPL forwarding for <code>data_mode()</code></td></tr>
+  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.3.0</td></tr>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.2-eme-cw &mdash; Built by II9P &mdash; September 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.3-devel &mdash; Built by II9P &mdash; September 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
-  <p>Source: <a href="https://github.com/54-11-12/wsjtx-eme-mods">github.com/54-11-12/wsjtx-eme-mods</a></p>
+  <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>
 
 </body>

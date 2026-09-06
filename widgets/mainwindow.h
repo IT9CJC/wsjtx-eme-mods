@@ -789,6 +789,7 @@ private:
   QLabel tx_status_label;
   QLabel config_label;
   QLabel mode_label;
+  QLabel cw_mode_label;
   QLabel last_tx_label;
   QLabel auto_tx_label;
   QLabel band_hopping_label;

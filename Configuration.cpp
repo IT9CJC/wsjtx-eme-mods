@@ -1015,6 +1015,7 @@ QDir Configuration::temp_dir () const {return m_->temp_dir_;}
 void Configuration::select_tab (int index) {m_->ui_->configuration_tabs->setCurrentIndex (index);}
 int Configuration::exec () {return m_->exec ();}
 bool Configuration::is_active () const {return m_->isVisible ();}
+Configuration::DataMode Configuration::data_mode () const {return m_->data_mode_;}
 
 QAudioDeviceInfo const& Configuration::audio_input_device () const {return m_->audio_input_device_;}
 AudioDevice::Channel Configuration::audio_input_channel () const {return m_->audio_input_channel_;}

@@ -88,10 +88,69 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.0.4-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.4-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-09-06</span>
+  </div>
+
+  <p>Per-callsign QSO log files.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Per-callsign QSO log</strong> &mdash; The log file is now named
+      <code>wsjtx_log_CALLSIGN.adi</code> (e.g. <code>wsjtx_log_II9P.adi</code>)
+      based on the callsign in Settings&nbsp;&gt;&nbsp;General. When the callsign
+      changes, the program switches to the corresponding log file. Existing logs
+      are reused; new ones are created automatically. Falls back to
+      <code>wsjtx_log.adi</code> if no callsign is set.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th><th>Lines</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped project VERSION from 3.0.3.0 to 3.0.4.0</td>
+      <td>Line 64</td>
+    </tr>
+    <tr>
+      <td><code>logbook/WorkedBefore.hpp</code></td>
+      <td>Added <code>set_callsign()</code> public slot</td>
+      <td>Line 25</td>
+    </tr>
+    <tr>
+      <td><code>logbook/WorkedBefore.cpp</code></td>
+      <td>Replaced hardcoded <code>wsjtx_log.adi</code> with dynamic
+        callsign-based path; added <code>update_path()</code> and
+        <code>set_callsign()</code></td>
+      <td>Lines 227, 369&ndash;390, 430&ndash;435</td>
+    </tr>
+    <tr>
+      <td><code>logbook/logbook.h</code></td>
+      <td>Added <code>set_callsign()</code> method declaration</td>
+      <td>Line 38</td>
+    </tr>
+    <tr>
+      <td><code>logbook/logbook.cpp</code></td>
+      <td>Added <code>set_callsign()</code> forwarding to WorkedBefore</td>
+      <td>Lines 71&ndash;74</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>Call <code>set_callsign()</code> on callsign change; updated erase
+        function to use dynamic log path</td>
+      <td>Lines 3568, 12022&ndash;12032</td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.3-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.3-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.3-devel</h2>
     <span class="release-date">2026-09-06</span>
   </div>
 

@@ -3565,6 +3565,7 @@ void MainWindow::on_actionSettings_triggered()           // Setup Dialog (Settin
   if (QDialog::Accepted == m_config.exec ()) {
     checkMSK144ContestType();
     if (m_config.my_callsign () != callsign) {
+      m_logBook.set_callsign ();
       m_baseCall = Radio::base_callsign (m_config.my_callsign ());
       ui->tx1->setEnabled (elide_tx1_not_allowed () || ui->tx1->isEnabled ());
       morse_(const_cast<char *> (m_config.my_callsign ().toLatin1().constData()),
@@ -12021,11 +12022,13 @@ void MainWindow::on_actionExport_Cabrillo_log_triggered()
 
 void MainWindow::on_actionErase_wsjtx_log_adi_triggered()
 {
+  auto logName = QFileInfo {m_logBook.path ()}.fileName ();
   int ret = MessageBox::query_message (this, tr ("Confirm Erase"),
-                                       tr ("Are you sure you want to erase file wsjtx_log.adi?"));
+                                       tr ("Are you sure you want to erase file %1?").arg (logName));
   if(ret==MessageBox::Yes) {
-    QFile f {m_config.writeable_data_dir ().absoluteFilePath ("wsjtx_log.adi")};
+    QFile f {m_logBook.path ()};
     f.remove();
+    m_logBook.rescan ();
   }
 }
 

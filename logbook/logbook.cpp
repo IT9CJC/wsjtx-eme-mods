@@ -69,6 +69,11 @@ void LogBook::rescan ()
   worked_before_.reload ();
 }
 
+void LogBook::set_callsign ()
+{
+  worked_before_.set_callsign ();
+}
+
 QString const LogBook::cty_version() const
 {
   return worked_before_.cty_version();

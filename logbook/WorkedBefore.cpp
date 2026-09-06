@@ -224,7 +224,6 @@ typedef multi_index_container<
 
 namespace
 {
-  auto const logFileName = "wsjtx_log.adi";
 
   // Exception class suitable for using with QtConcurrent across
   // thread boundaries
@@ -368,9 +367,21 @@ class WorkedBefore::impl final
 public:
   impl (Configuration const * configuration)
     : configuration_ {configuration}
-    , path_ {QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath (logFileName)}
     , prefixes_ {configuration}
   {
+    update_path ();
+  }
+
+  void update_path ()
+  {
+    auto call = configuration_->my_callsign ().trimmed ();
+    QString name;
+    if (call.isEmpty ()) {
+      name = "wsjtx_log.adi";
+    } else {
+      name = "wsjtx_log_" + QString {call}.replace ('/', '-') + ".adi";
+    }
+    path_ = QDir {QStandardPaths::writableLocation (QStandardPaths::DataLocation)}.absoluteFilePath (name);
   }
 
   void reload ()
@@ -414,6 +425,12 @@ WorkedBefore::WorkedBefore (Configuration const * configuration)
 QString WorkedBefore::cty_version () const
 {
   return m_->prefixes_.version ();
+}
+
+void WorkedBefore::set_callsign ()
+{
+  m_->update_path ();
+  reload ();
 }
 
 void WorkedBefore::reload ()

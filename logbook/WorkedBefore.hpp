@@ -22,6 +22,7 @@ public:
   ~WorkedBefore ();
 
   Q_SLOT void reload ();
+  Q_SLOT void set_callsign ();
   Q_SLOT bool add (QString const& call
                    , QString const& grid
                    , QString const& band

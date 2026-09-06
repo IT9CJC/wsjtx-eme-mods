@@ -91,7 +91,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">User Manual &mdash; Version 3.0.3-devel &mdash; II9P</p>
+<p class="subtitle">User Manual &mdash; Version 3.0.4-devel &mdash; II9P</p>
 
 <nav class="toc">
 <strong>Contents</strong>
@@ -102,6 +102,7 @@
   <li><a href="#doppler">Doppler Tracking</a></li>
   <li><a href="#txshift">TX Shift</a></li>
   <li><a href="#wheel">Fine Frequency Control (Mouse Wheel)</a></li>
+  <li><a href="#log">Per-Callsign QSO Log</a></li>
   <li><a href="#procedure">EME CW Operating Procedure</a></li>
   <li><a href="#cat">CAT / Hamlib Configuration</a></li>
   <li><a href="#resolution">Frequency Resolution</a></li>
@@ -309,6 +310,32 @@ the mouse wheel. Hold the modifier key(s) while scrolling for finer steps.</p>
   signal lands precisely where expected on the Moon bounce path.
 </div>
 
+<!-- ===== 5c. PER-CALLSIGN LOG ===== -->
+<h2 id="log">5c. Per-Callsign QSO Log</h2>
+
+<p>The QSO log file is now named after your callsign from
+Settings&nbsp;&gt;&nbsp;General&nbsp;&gt;&nbsp;Station Details:
+<span class="tag">NEW</span></p>
+
+<table>
+  <tr><th>Callsign</th><th>Log File</th></tr>
+  <tr><td>II9P</td><td><code>wsjtx_log_II9P.adi</code></td></tr>
+  <tr><td>IT9CJC</td><td><code>wsjtx_log_IT9CJC.adi</code></td></tr>
+  <tr><td>(empty)</td><td><code>wsjtx_log.adi</code> (fallback)</td></tr>
+</table>
+
+<p>When you change the callsign in Settings, the program automatically switches
+to the corresponding log file. If a log with that name already exists, new QSOs
+are appended to it. If it does not exist, a new file is created on the first
+logged QSO.</p>
+
+<div class="callout">
+  <strong>Multi-station operation</strong>
+  This feature is useful when operating under different callsigns (e.g. a personal
+  call and a club call). Each callsign maintains its own "worked before" database,
+  so DXCC/grid/call highlighting is accurate per station.
+</div>
+
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>
 
@@ -514,11 +541,14 @@ repository. Edit it to match your local dependency paths.</p>
   <tr><td><code>widgets/mainwindow.cpp</code></td><td>CW status label in status bar; modifier-key wheel steps (Shift: 100 Hz, Ctrl: 10 Hz, Ctrl+Shift: 1 Hz); help text</td></tr>
   <tr><td><code>Configuration.hpp</code></td><td>Added public <code>data_mode()</code> accessor</td></tr>
   <tr><td><code>Configuration.cpp</code></td><td>PIMPL forwarding for <code>data_mode()</code></td></tr>
-  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.3.0</td></tr>
+  <tr><td><code>logbook/WorkedBefore.hpp</code></td><td>Added <code>set_callsign()</code> slot for per-callsign log switching</td></tr>
+  <tr><td><code>logbook/WorkedBefore.cpp</code></td><td>Dynamic log file path from callsign; <code>update_path()</code> and <code>set_callsign()</code></td></tr>
+  <tr><td><code>logbook/logbook.h / .cpp</code></td><td>Added <code>set_callsign()</code> forwarding method</td></tr>
+  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.4.0</td></tr>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.3-devel &mdash; Built by II9P &mdash; September 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.4-devel &mdash; Built by II9P &mdash; September 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

@@ -9,6 +9,19 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
+      <widget class="QLabel" name="log_source_label">
+       <property name="text">
+        <string>Log source:</string>
+       </property>
+       <property name="buddy">
+        <cstring>log_source_combo</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="log_source_combo"/>
+     </item>
+     <item row="1" column="0">
       <widget class="QLabel" name="location_label">
        <property name="text">
         <string>Location:</string>
@@ -18,7 +31,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QLineEdit" name="location_line_edit">
        <property name="text">
         <string>SNJ</string>
@@ -28,7 +41,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="contest_label">
        <property name="text">
         <string>Contest:</string>
@@ -38,7 +51,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QLineEdit" name="contest_line_edit">
        <property name="text">
         <string>ARRL-RTTY</string>
@@ -48,7 +61,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="call_label">
        <property name="text">
         <string>Callsign:</string>
@@ -58,7 +71,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QLineEdit" name="call_line_edit">
        <property name="text">
         <string/>
@@ -68,7 +81,7 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="category_op_label">
        <property name="text">
         <string>Category-Operator: </string>
@@ -78,7 +91,7 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QLineEdit" name="category_op_line_edit">
        <property name="text">
         <string>SINGLE-OP</string>
@@ -88,7 +101,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="category_xmtr_label">
        <property name="text">
         <string>Category-Transmitter:</string>
@@ -98,7 +111,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QLineEdit" name="category_xmtr_line_edit">
        <property name="text">
         <string>ONE</string>
@@ -108,7 +121,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="category_pwr_label">
        <property name="text">
         <string>Category-Power:</string>
@@ -118,7 +131,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QLineEdit" name="category_pwr_line_edit">
        <property name="text">
         <string>LOW</string>
@@ -128,7 +141,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="category_assisted_label">
        <property name="text">
         <string>Category-Assisted:</string>
@@ -138,7 +151,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QLineEdit" name="category_assisted_line_edit">
        <property name="text">
         <string>NON-ASSISTED</string>
@@ -148,7 +161,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="category_band_label">
        <property name="text">
         <string>Category-Band:</string>
@@ -158,7 +171,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="QLineEdit" name="category_band_line_edit">
        <property name="text">
         <string>ALL</string>
@@ -168,7 +181,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="claimed_label">
        <property name="text">
         <string>Claimed-Score:</string>
@@ -178,7 +191,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="QLineEdit" name="claimed_line_edit">
        <property name="text">
         <string/>
@@ -188,7 +201,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="operators_label">
        <property name="text">
         <string>Operators:</string>
@@ -198,7 +211,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="QLineEdit" name="operators_line_edit">
        <property name="text">
         <string/>
@@ -208,7 +221,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="club_label">
        <property name="text">
         <string>Club:</string>
@@ -218,14 +231,14 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="QLineEdit" name="club_line_edit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="name_label">
        <property name="text">
         <string>Name:</string>
@@ -235,7 +248,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="QLineEdit" name="name_line_edit">
        <property name="text">
         <string/>
@@ -245,7 +258,7 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="addr_1_label">
        <property name="text">
         <string>Address:</string>
@@ -255,14 +268,14 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="13" column="1">
       <widget class="QLineEdit" name="addr_1_line_edit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="addr_2_label">
        <property name="text">
         <string>Address:</string>
@@ -272,7 +285,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="14" column="1">
       <widget class="QLineEdit" name="addr_2_line_edit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>

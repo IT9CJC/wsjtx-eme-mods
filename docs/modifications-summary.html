@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSJT-X EME CW Mod &mdash; Complete Modifications Summary</title>
+<style>
+  :root {
+    --bg: #fdfdfd;
+    --fg: #1a1a1a;
+    --accent: #1a5276;
+    --accent-light: #d4e6f1;
+    --border: #bdc3c7;
+    --code-bg: #f4f6f7;
+    --green: #27ae60;
+    --green-bg: #eafaf1;
+    --orange: #e67e22;
+    --orange-bg: #fef5e7;
+    --red: #c0392b;
+    --red-bg: #fdedec;
+    --blue: #2980b9;
+    --blue-bg: #ebf5fb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.65;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2rem; color: var(--accent); margin-bottom: .2rem; }
+  h2 { font-size: 1.4rem; color: var(--accent); margin-top: 2.5rem;
+       border-bottom: 2px solid var(--accent-light); padding-bottom: .25rem; }
+  h3 { font-size: 1.15rem; margin-top: 1.4rem; color: #333; }
+  h4 { font-size: 1rem; margin-top: 1rem; color: #555; }
+  p, li { margin-top: .5rem; }
+  ul, ol { padding-left: 1.5rem; }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: var(--code-bg);
+    padding: .1em .35em;
+    border-radius: 3px;
+    font-size: .92em;
+  }
+  pre { background: var(--code-bg); padding: .8rem 1rem; border-radius: 5px;
+        overflow-x: auto; margin-top: .6rem; }
+  pre code { background: none; padding: 0; }
+  .subtitle { color: #555; font-size: 1.05rem; margin-bottom: 1.5rem; }
+  .toc { background: var(--accent-light); padding: 1rem 1.5rem; border-radius: 6px;
+         margin-bottom: 2rem; }
+  .toc ol { margin-top: .3rem; }
+  .toc li { margin-top: .25rem; }
+  .tag {
+    display: inline-block;
+    padding: .15em .5em;
+    border-radius: 3px;
+    font-size: .8em;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .tag-new { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+  .tag-fix { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange); }
+  .tag-arch { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
+  .section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1.5rem;
+    background: #fff;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: .8rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .4rem .7rem;
+    text-align: left;
+    font-size: .93em;
+  }
+  th { background: var(--accent-light); font-weight: 600; }
+  .callout {
+    background: var(--blue-bg);
+    border-left: 4px solid var(--blue);
+    padding: .8rem 1rem;
+    margin-top: 1rem;
+    border-radius: 0 4px 4px 0;
+  }
+  a { color: var(--accent); }
+  .version-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    padding: .2em .6em;
+    border-radius: 4px;
+    font-size: .85em;
+    font-weight: 600;
+    margin-right: .4em;
+  }
+  .file-list { columns: 2; column-gap: 2rem; }
+  .file-list li { break-inside: avoid; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border);
+           color: #888; font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<h1>WSJT-X EME CW Mod</h1>
+<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; September 2026</p>
+
+<p>This document describes all modifications made to
+<a href="https://physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X 3.0.2</a>
+(by Joe Taylor K1JT and the WSJT Development Group) to support
+<strong>EME (Earth-Moon-Earth) CW operation</strong> on microwave bands.
+The modified source code is maintained at
+<a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a>.</p>
+
+<nav class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#motivation">Motivation &amp; Goals</a></li>
+  <li><a href="#overview">Feature Overview</a></li>
+  <li><a href="#cw-mode">CW Rig Mode via CAT</a></li>
+  <li><a href="#txshift">TX Shift &plusmn;200 MHz</a></li>
+  <li><a href="#wheel">Fine Frequency Control</a></li>
+  <li><a href="#cw-indicator">CW Mode Status Indicator</a></li>
+  <li><a href="#per-callsign-log">Per-Callsign QSO Log</a></li>
+  <li><a href="#cabrillo">Cabrillo Export with Log Source Selector</a></li>
+  <li><a href="#language">Language Selector</a></li>
+  <li><a href="#offset">Fixed Frequency Offset</a></li>
+  <li><a href="#offline">Offline Operation &amp; Rig Failure Handling</a></li>
+  <li><a href="#files">Complete File Change Summary</a></li>
+  <li><a href="#versions">Version History</a></li>
+  <li><a href="#build">Building from Source</a></li>
+</ol>
+</nav>
+
+<!-- ===== 1. MOTIVATION ===== -->
+<h2 id="motivation">1. Motivation &amp; Goals</h2>
+
+<p>WSJT-X is designed for digital weak-signal communication. EME CW operators on
+microwave bands (10&nbsp;GHz and above) need capabilities that the stock program
+does not provide:</p>
+
+<ul>
+  <li><strong>CW mode control via CAT</strong> &mdash; commanding the transceiver
+    into CW mode while retaining full Doppler tracking</li>
+  <li><strong>Large TX frequency shifts</strong> &mdash; separate RX and TX
+    frequencies offset by up to 200&nbsp;MHz for transverter setups</li>
+  <li><strong>Fixed frequency offsets</strong> &mdash; static IF corrections for
+    transverter chains with different RX/TX LO frequencies</li>
+  <li><strong>Operation without a connected rig</strong> &mdash; computing and
+    displaying Doppler corrections for planning, even when the station
+    hardware is not connected</li>
+</ul>
+
+<p>All modifications preserve the original WSJT-X functionality. Digital modes
+(FT8, JT65, Q65, etc.) continue to work exactly as in the upstream release.</p>
+
+<!-- ===== 2. OVERVIEW ===== -->
+<h2 id="overview">2. Feature Overview</h2>
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Version</th>
+    <th>Category</th>
+    <th>Location</th>
+  </tr>
+  <tr>
+    <td>CW rig mode via CAT</td>
+    <td><span class="version-badge">v3.0.2</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; Radio &gt; Mode</td>
+  </tr>
+  <tr>
+    <td>TX Shift &plusmn;200 MHz</td>
+    <td><span class="version-badge">v3.0.2</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Astronomical Data window</td>
+  </tr>
+  <tr>
+    <td>TX Shift frequency display fix</td>
+    <td><span class="version-badge">v3.0.3</span></td>
+    <td><span class="tag tag-fix">FIX</span></td>
+    <td>Astronomical Data window</td>
+  </tr>
+  <tr>
+    <td>Fine frequency wheel control</td>
+    <td><span class="version-badge">v3.0.3</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Main window dial</td>
+  </tr>
+  <tr>
+    <td>CW mode status indicator</td>
+    <td><span class="version-badge">v3.0.3</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Main window status bar</td>
+  </tr>
+  <tr>
+    <td>Per-callsign QSO log</td>
+    <td><span class="version-badge">v3.0.4</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Automatic (based on callsign)</td>
+  </tr>
+  <tr>
+    <td>Cabrillo export log source selector</td>
+    <td><span class="version-badge">v3.0.5</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>File &gt; Export Cabrillo log</td>
+  </tr>
+  <tr>
+    <td>Language selector</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; General</td>
+  </tr>
+  <tr>
+    <td>Fixed frequency offset (RX/TX)</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; Offset</td>
+  </tr>
+  <tr>
+    <td>Split with &ldquo;None&rdquo; rig</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; Radio</td>
+  </tr>
+  <tr>
+    <td>Offline Doppler tracking</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-fix">FIX</span></td>
+    <td>Astronomical Data window</td>
+  </tr>
+  <tr>
+    <td>Rig failure dialog loop fix</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-fix">FIX</span></td>
+    <td>Startup / rig connection</td>
+  </tr>
+  <tr>
+    <td>Band frequency display without rig</td>
+    <td><span class="version-badge">v3.0.6</span></td>
+    <td><span class="tag tag-fix">FIX</span></td>
+    <td>Main window dial</td>
+  </tr>
+</table>
+
+<!-- ===== 3. CW MODE ===== -->
+<h2 id="cw-mode">3. CW Rig Mode via CAT</h2>
+
+<div class="section">
+<p>A new <strong>CW</strong> radio button has been added to
+<strong>Settings &gt; Radio &gt; Mode</strong>, alongside the existing
+USB, Data/Pkt, and other options.</p>
+
+<h4>How it works</h4>
+<ul>
+  <li>When selected, the program commands the transceiver into CW mode through
+    Hamlib using <code>RIG_MODE_CW</code>.</li>
+  <li>Doppler tracking remains fully active on both RX and TX &mdash; the
+    frequency is continuously updated via CAT just as it is in USB/Data modes.</li>
+  <li>The audio processing pipeline is unchanged. WSJT-X still generates and
+    decodes digital waveforms internally; only the rig mode command differs.</li>
+</ul>
+
+<h4>Implementation</h4>
+<ul>
+  <li><code>Configuration.hpp</code> &mdash; added <code>data_mode_CW</code> to
+    the <code>DataMode</code> enum</li>
+  <li><code>Configuration.cpp</code> &mdash; registered the CW radio button in
+    the TX mode button group; added <code>case data_mode_CW</code> to
+    <code>set_cached_mode()</code> which maps it to
+    <code>Transceiver::MODE_CW</code></li>
+  <li><code>Configuration.ui</code> &mdash; added <code>mode_CW_radio_button</code>
+    to the Mode group box (row&nbsp;0, column&nbsp;3)</li>
+</ul>
+</div>
+
+<!-- ===== 4. TX SHIFT ===== -->
+<h2 id="txshift">4. TX Shift &plusmn;200 MHz</h2>
+
+<div class="section">
+<p>The TX Shift spinbox in the Astronomical Data window has been extended from
+&plusmn;30&nbsp;MHz to <strong>&plusmn;200&nbsp;MHz</strong>. This allows EME
+microwave stations to operate with large frequency offsets between RX and TX,
+which is common with separate transverters or different LO chains for uplink
+and downlink.</p>
+
+<h4>Implementation</h4>
+<ul>
+  <li><code>widgets/astro.ui</code> &mdash; changed <code>sbibShift</code>
+    QSpinBox minimum from &minus;30 to &minus;200 and maximum from 30 to 200</li>
+</ul>
+
+<h4>TX Shift display fix <span class="tag tag-fix">v3.0.3</span></h4>
+<p>When &ldquo;Enable Shift&rdquo; is checked, the Sked TX frequency label now
+shows the actual shifted TX frequency (RX&nbsp;+&nbsp;Shift) in
+<strong style="color:blue;">blue text</strong> instead of the previous
+uninformative &ldquo;N/A Tx Shift!&rdquo; message.</p>
+</div>
+
+<!-- ===== 5. WHEEL ===== -->
+<h2 id="wheel">5. Fine Frequency Control (Mouse Wheel)</h2>
+
+<div class="section">
+<p>The dial frequency mouse wheel now supports modifier keys for sub-kHz
+tuning steps:</p>
+
+<table>
+  <tr><th>Modifier</th><th>Step Size</th></tr>
+  <tr><td>None</td><td>1 kHz (original behavior)</td></tr>
+  <tr><td>Shift</td><td>100 Hz</td></tr>
+  <tr><td>Ctrl</td><td>10 Hz</td></tr>
+  <tr><td>Ctrl + Shift</td><td>1 Hz</td></tr>
+</table>
+
+<p>This allows precise frequency adjustment for EME CW without needing to type
+exact values or use rig controls.</p>
+</div>
+
+<!-- ===== 6. CW INDICATOR ===== -->
+<h2 id="cw-indicator">6. CW Mode Status Indicator</h2>
+
+<div class="section">
+<p>A <strong style="color:blue;">CW</strong> label appears in the main window
+status bar when CW data mode is active in Settings &gt; Radio &gt; Mode.
+The label is hidden when any other mode is selected, providing clear visual
+confirmation of the operating mode.</p>
+</div>
+
+<!-- ===== 7. PER-CALLSIGN LOG ===== -->
+<h2 id="per-callsign-log">7. Per-Callsign QSO Log</h2>
+
+<div class="section">
+<p>The QSO log file is now named based on the callsign configured in
+Settings &gt; General:</p>
+
+<pre><code>wsjtx_log_II9P.adi    (callsign = II9P)
+wsjtx_log_W1ABC.adi   (callsign = W1ABC)
+wsjtx_log.adi         (no callsign set &mdash; fallback)</code></pre>
+
+<h4>Behavior</h4>
+<ul>
+  <li>When the callsign changes in settings, the program automatically switches
+    to the corresponding log file.</li>
+  <li>Existing log files are reused; new ones are created automatically.</li>
+  <li>Each callsign&rsquo;s QSO history is kept separate, which is useful for
+    multi-callsign stations or contest operations.</li>
+</ul>
+
+<h4>Implementation</h4>
+<ul>
+  <li><code>logbook/WorkedBefore.hpp/.cpp</code> &mdash; added
+    <code>set_callsign()</code> slot and <code>update_path()</code> for dynamic
+    log file switching</li>
+  <li><code>logbook/logbook.h/.cpp</code> &mdash; forwarding
+    <code>set_callsign()</code></li>
+  <li><code>widgets/mainwindow.cpp</code> &mdash; calls
+    <code>set_callsign()</code> on callsign change</li>
+</ul>
+</div>
+
+<!-- ===== 8. CABRILLO ===== -->
+<h2 id="cabrillo">8. Cabrillo Export with Log Source Selector</h2>
+
+<div class="section">
+<p>The <strong>File &gt; Export Cabrillo log</strong> dialog now includes a
+<strong>Log source</strong> combo box at the top. It lists:</p>
+
+<ul>
+  <li><strong>(Contest log)</strong> &mdash; the original internal SQLite contest
+    log (default, preserving existing behavior)</li>
+  <li>All <code>wsjtx_log*.adi</code> files found in the WSJT-X data directory</li>
+</ul>
+
+<p>When an ADI log file is selected, the dialog parses its ADIF records and
+writes them as Cabrillo 3.0 QSO lines. Exchange fields are auto-detected:</p>
+
+<table>
+  <tr><th>Priority</th><th>Exchange Sent</th><th>Exchange Received</th></tr>
+  <tr><td>1 (highest)</td><td><code>STX_STRING</code></td><td><code>SRX_STRING</code></td></tr>
+  <tr><td>2</td><td><code>STX</code></td><td><code>SRX</code></td></tr>
+  <tr><td>3 (fallback)</td><td><code>RST_SENT</code></td><td><code>RST_RCVD</code></td></tr>
+</table>
+
+<p>The combo box automatically pre-selects the ADI file matching the current
+callsign in Settings.</p>
+</div>
+
+<!-- ===== 9. LANGUAGE ===== -->
+<h2 id="language">9. Language Selector</h2>
+
+<div class="section">
+<p>A <strong>Language</strong> combo box has been added to
+<strong>Settings &gt; General</strong> with two options:</p>
+
+<ul>
+  <li><strong>System default</strong> &mdash; uses the operating system locale
+    (original WSJT-X behavior)</li>
+  <li><strong>English</strong> &mdash; forces the UI to English regardless of
+    OS locale</li>
+</ul>
+
+<p>Changing the language requires a <strong>restart</strong> of WSJT-X because
+Qt translations are loaded at startup. A message box reminds the user when the
+selection changes.</p>
+
+<h4>Implementation</h4>
+<ul>
+  <li>The language preference is stored in QSettings as
+    <code>UILanguage</code> (empty string for system default,
+    <code>"en"</code> for English).</li>
+  <li>In <code>main.cpp</code>, the setting is read before creating
+    <code>L10nLoader</code> and passed as the language override. The existing
+    <code>L10nLoader</code> skip-locale logic handles forcing English when the
+    override is <code>"en"</code>.</li>
+  <li>The <code>-l</code> command-line flag continues to work and takes priority
+    if the stored setting is &ldquo;System default.&rdquo;</li>
+</ul>
+</div>
+
+<!-- ===== 10. OFFSET ===== -->
+<h2 id="offset">10. Fixed Frequency Offset</h2>
+
+<div class="section">
+<p>A new <strong>Offset</strong> tab has been added to the Settings dialog,
+providing two independent controls:</p>
+
+<ul>
+  <li><strong>RX offset</strong> &mdash; added to the receive frequency sent to
+    the radio</li>
+  <li><strong>TX offset</strong> &mdash; added to the transmit frequency</li>
+</ul>
+
+<p>Both values are in Hz and range from &minus;100&nbsp;MHz to +100&nbsp;MHz
+(step size: 1000&nbsp;Hz). They are applied alongside station offsets before
+the calibration correction:</p>
+
+<pre><code>RIG_freq = calibration(dial_freq + station_offset + fixed_offset)</code></pre>
+
+<h4>Typical uses</h4>
+<ul>
+  <li>Transverter IF offsets where the RX and TX chains use different LO
+    frequencies</li>
+  <li>Fixed frequency corrections for EME microwave setups</li>
+  <li>Any scenario requiring a constant shift between the displayed frequency
+    and the frequency sent to the radio</li>
+</ul>
+
+<h4>Implementation details</h4>
+<ul>
+  <li>Stored in QSettings as <code>FixedRxOffset</code> and
+    <code>FixedTxOffset</code> (<code>FrequencyDelta</code> / <code>qint64</code>)</li>
+  <li>Applied in <code>transceiver_frequency()</code> and
+    <code>transceiver_tx_frequency()</code></li>
+  <li>Subtracted in the rig feedback handler to prevent accumulation on each
+    polling cycle</li>
+</ul>
+</div>
+
+<!-- ===== 11. OFFLINE ===== -->
+<h2 id="offline">11. Offline Operation &amp; Rig Failure Handling</h2>
+
+<div class="section">
+<p>WSJT-X can now be used productively without a physical radio connected:</p>
+
+<h4>Band frequency display</h4>
+<p>When no rig is connected, switching bands shows the correct default frequency
+for the selected band. Previously, the display showed a stale or meaningless
+value because it read from the rig state object, which was never updated.</p>
+
+<h4>Split with &ldquo;None&rdquo; rig</h4>
+<p>Split operation is now available when rig is set to &ldquo;None&rdquo; in
+Settings &gt; Radio. This is enabled at build time via the
+<code>WSJT_RIG_NONE_CAN_SPLIT=ON</code> CMake option. With split enabled,
+Doppler tracking calculations work correctly.</p>
+
+<h4>Doppler tracking without rig</h4>
+<p>Doppler corrections are computed and stored in
+<code>m_astroCorrection</code> even when the rig is set to &ldquo;None&rdquo;,
+regardless of monitoring or transmitting state. The corrections are visible
+in the Astronomical Data window.</p>
+
+<h4>Rig failure handling</h4>
+<p>When a selected rig is unavailable (e.g., COM port not connected), the
+previous behavior was an infinite loop of error dialogs. The new behavior:</p>
+
+<ol>
+  <li>First failure: show the error dialog once</li>
+  <li>Subsequent failures: silently ignored &mdash; the program continues
+    without a rig</li>
+  <li>The counter resets when a rig successfully connects or when the user
+    explicitly clicks &ldquo;Retry&rdquo;</li>
+</ol>
+
+<p>All transceiver failure handling is centralized in the main window. The
+Configuration dialog no longer shows its own error dialog, preventing
+duplicate popups.</p>
+</div>
+
+<!-- ===== 12. FILE CHANGES ===== -->
+<h2 id="files">12. Complete File Change Summary</h2>
+
+<p>All files modified or added relative to upstream WSJT-X 3.0.2:</p>
+
+<table>
+  <tr><th>File</th><th>Changes</th></tr>
+  <tr>
+    <td><code>CMakeLists.txt</code></td>
+    <td>Version bumped from 3.0.2.0 to 3.0.6.0; enabled
+      <code>WSJT_RIG_NONE_CAN_SPLIT</code></td>
+  </tr>
+  <tr>
+    <td><code>Configuration.hpp</code></td>
+    <td>Added <code>data_mode_CW</code> to <code>DataMode</code> enum;
+      added <code>data_mode()</code> public accessor</td>
+  </tr>
+  <tr>
+    <td><code>Configuration.cpp</code></td>
+    <td>CW mode registration; language combo and UILanguage read/write;
+      fixed RX/TX offset members, read/write, and transceiver pipeline;
+      fixed offset subtraction in rig feedback path; centralized failure
+      handling</td>
+  </tr>
+  <tr>
+    <td><code>Configuration.ui</code></td>
+    <td>CW radio button in Mode group; language combo in General tab;
+      new Offset tab with RX/TX spinboxes</td>
+  </tr>
+  <tr>
+    <td><code>main.cpp</code></td>
+    <td>Read UILanguage from QSettings before L10nLoader creation</td>
+  </tr>
+  <tr>
+    <td><code>widgets/astro.ui</code></td>
+    <td>TX Shift spinbox range extended to &plusmn;200 MHz</td>
+  </tr>
+  <tr>
+    <td><code>widgets/astro.cpp</code></td>
+    <td>TX Shift frequency display shows actual shifted value in blue</td>
+  </tr>
+  <tr>
+    <td><code>widgets/mainwindow.h</code></td>
+    <td>Added <code>cw_mode_label</code> QLabel; replaced
+      <code>m_first_error</code> bool with <code>m_rig_fail_count</code> int</td>
+  </tr>
+  <tr>
+    <td><code>widgets/mainwindow.cpp</code></td>
+    <td>CW status label; modifier-key wheel steps; per-callsign log
+      switching; rig failure counter with single-popup behavior; band
+      frequency display fallback to <code>m_freqNominal</code>; Doppler
+      tracking for dummy rig</td>
+  </tr>
+  <tr>
+    <td><code>widgets/ExportCabrillo.ui</code></td>
+    <td>Added log source combo box</td>
+  </tr>
+  <tr>
+    <td><code>widgets/ExportCabrillo.h</code></td>
+    <td>Added <code>QsoRecord</code> struct and new methods</td>
+  </tr>
+  <tr>
+    <td><code>widgets/ExportCabrillo.cpp</code></td>
+    <td>ADIF parser, log source population, ADI-to-Cabrillo export</td>
+  </tr>
+  <tr>
+    <td><code>logbook/WorkedBefore.hpp</code></td>
+    <td>Added <code>set_callsign()</code> public slot</td>
+  </tr>
+  <tr>
+    <td><code>logbook/WorkedBefore.cpp</code></td>
+    <td>Dynamic callsign-based log path; <code>update_path()</code> and
+      <code>set_callsign()</code></td>
+  </tr>
+  <tr>
+    <td><code>logbook/logbook.h / .cpp</code></td>
+    <td>Added <code>set_callsign()</code> forwarding</td>
+  </tr>
+</table>
+
+<h4>Files added</h4>
+<table>
+  <tr><th>File</th><th>Description</th></tr>
+  <tr>
+    <td><code>wsjtx-toolchain.cmake</code></td>
+    <td>CMake toolchain file for Windows builds</td>
+  </tr>
+  <tr>
+    <td><code>docs/manual.html</code></td>
+    <td>User manual for the EME CW mod</td>
+  </tr>
+  <tr>
+    <td><code>docs/changelog.html</code></td>
+    <td>Per-version revision history</td>
+  </tr>
+  <tr>
+    <td><code>docs/modifications-summary.html</code></td>
+    <td>This document</td>
+  </tr>
+</table>
+
+<!-- ===== 13. VERSIONS ===== -->
+<h2 id="versions">13. Version History</h2>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
+  <tr>
+    <td><span class="version-badge">v3.0.2-eme-cw</span></td>
+    <td>2026-09-05</td>
+    <td>Initial release: CW rig mode via CAT, TX Shift &plusmn;200 MHz</td>
+  </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.3-devel</span></td>
+    <td>2026-09-06</td>
+    <td>TX Shift display fix, fine wheel control, CW status indicator</td>
+  </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.4-devel</span></td>
+    <td>2026-09-06</td>
+    <td>Per-callsign QSO log files</td>
+  </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.5-devel</span></td>
+    <td>2026-09-13</td>
+    <td>Log source selector for Cabrillo export</td>
+  </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.6-devel</span></td>
+    <td>2026-09-14</td>
+    <td>Language selector, fixed frequency offset, rig failure fix, offline
+      operation (Doppler, band display, split with None rig)</td>
+  </tr>
+</table>
+
+<!-- ===== 14. BUILD ===== -->
+<h2 id="build">14. Building from Source</h2>
+
+<h4>Requirements</h4>
+<ul>
+  <li>Windows 10/11 64-bit</li>
+  <li>CMake 3.10+</li>
+  <li>Qt 5.15.2 with MinGW 8.1.0 64-bit</li>
+  <li>Boost 1.74 (log, stacktrace, timer)</li>
+  <li>FFTW 3.3.5 (64-bit DLL)</li>
+  <li>Hamlib 4.x (pre-built Windows 64-bit)</li>
+  <li>libusb 1.0.x</li>
+  <li>libbacktrace 1.0</li>
+  <li>OmniRig (type library for COM interface)</li>
+</ul>
+
+<h4>Build commands</h4>
+<pre><code>set PATH=C:\Qt\Tools\mingw810_64\bin;%PATH%
+
+mkdir build-wsjtx &amp;&amp; cd build-wsjtx
+
+cmake -G "MinGW Makefiles" ^
+  -DCMAKE_TOOLCHAIN_FILE=C:\Tools\wsjtx-toolchain.cmake ^
+  -DCMAKE_BUILD_TYPE=Release ^
+  -DWSJT_SKIP_MANPAGES=ON ^
+  -DWSJT_GENERATE_DOCS=OFF ^
+  -DWSJT_SKIP_MAP65=ON ^
+  -DWSJT_RIG_NONE_CAN_SPLIT=ON ^
+  -DOMNIRIG_TYPE_LIB=C:\Tools\omnirig-extracted\app\OmniRig.exe ^
+  -DCMAKE_INSTALL_PREFIX=C:\Tools\wsjtx-install ^
+  C:\src\wsjtx
+
+cmake --build . -j8
+cmake --build . --target install</code></pre>
+
+<p>The toolchain file <code>wsjtx-toolchain.cmake</code> is included in the
+repository. Edit it to match your local dependency paths.</p>
+
+<footer>
+  <p>WSJT-X EME CW Mod v3.0.6-devel &mdash; Built by II9P &mdash; September 2026</p>
+  <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
+  <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
+</footer>
+
+</body>
+</html>

@@ -88,10 +88,113 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.0.6-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.6-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-09-13</span>
+  </div>
+
+  <p>Language selector and fixed frequency offset.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Language selector</strong> &mdash; Choose between &ldquo;System
+      default&rdquo; and &ldquo;English&rdquo; in Settings&nbsp;&gt;&nbsp;General.
+      Forces the UI language regardless of OS locale. Requires a restart to take
+      effect.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Fixed frequency offset</strong> &mdash; Separate RX and TX
+      frequency offsets (&plusmn;100&nbsp;MHz) on the new
+      Settings&nbsp;&gt;&nbsp;Offset tab. Applied alongside station offsets before
+      calibration. Useful for transverter IF corrections and EME microwave setups.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th><th>Lines</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped project VERSION from 3.0.5.0 to 3.0.6.0</td>
+      <td>Line 64</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.ui</code></td>
+      <td>Added <code>language_combo_box</code> in General tab; added new
+        Offset tab with <code>fixed_offset_group_box</code> and RX/TX spinboxes</td>
+      <td>General row 1; new Offset tab</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.cpp</code></td>
+      <td>Language combo population, read/write <code>UILanguage</code>,
+        restart message; fixed offset members, read/write
+        <code>FixedRxOffset</code>/<code>FixedTxOffset</code>, applied in
+        <code>transceiver_frequency()</code> and
+        <code>transceiver_tx_frequency()</code></td>
+      <td>Multiple sections</td>
+    </tr>
+    <tr>
+      <td><code>main.cpp</code></td>
+      <td>Read <code>UILanguage</code> from QSettings before creating
+        <code>L10nLoader</code>; override language if set</td>
+      <td>Line ~259</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== v3.0.5-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.5-devel</h2>
+    <span class="release-date">2026-09-13</span>
+  </div>
+
+  <p>Log source selector in Cabrillo export.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Log source selector for Cabrillo export</strong> &mdash; The
+      Export Cabrillo dialog now includes a &ldquo;Log source&rdquo; combo box
+      that lists all internal <code>wsjtx_log*.adi</code> files alongside the
+      original contest log. Select any per-callsign ADI log to convert it to
+      Cabrillo format. Exchange fields are auto-detected: contest serial numbers
+      (STX/SRX) take priority, falling back to RST reports.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th><th>Lines</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped project VERSION from 3.0.4.0 to 3.0.5.0</td>
+      <td>Line 64</td>
+    </tr>
+    <tr>
+      <td><code>widgets/ExportCabrillo.ui</code></td>
+      <td>Added <code>log_source_combo</code> QComboBox at row 0 of the form layout</td>
+      <td>Row 0</td>
+    </tr>
+    <tr>
+      <td><code>widgets/ExportCabrillo.h</code></td>
+      <td>Added <code>QsoRecord</code> struct; added <code>populate_log_sources()</code>,
+        <code>parse_adi_file()</code>, <code>cabrillo_frequency_string()</code> methods</td>
+      <td>New declarations</td>
+    </tr>
+    <tr>
+      <td><code>widgets/ExportCabrillo.cpp</code></td>
+      <td>Added ADIF field parser, log source population, ADI-to-Cabrillo QSO export
+        branch in <code>save_log()</code></td>
+      <td>Full rework</td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.4-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.4-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.4-devel</h2>
     <span class="release-date">2026-09-06</span>
   </div>
 

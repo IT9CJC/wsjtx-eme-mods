@@ -147,6 +147,7 @@
 #include <QAudioOutput>
 #include <QSound>
 #include <QDialog>
+#include <QMessageBox>
 #include <QAction>
 #include <QFileDialog>
 #include <QDir>
@@ -757,6 +758,9 @@ private:
   StationList next_stations_;
   FrequencyDelta current_offset_;
   FrequencyDelta current_tx_offset_;
+  FrequencyDelta fixed_rx_offset_;
+  FrequencyDelta fixed_tx_offset_;
+  QString ui_language_;
 
   QAction * frequency_delete_action_;
   QAction * frequency_insert_action_;
@@ -1996,6 +2000,10 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   // setup IARU region combo box model
   ui_->region_combo_box->setModel (&regions_);
 
+  // setup language combo box
+  ui_->language_combo_box->addItem (tr ("System default"), QString {});
+  ui_->language_combo_box->addItem ("English", QString {"en"});
+
   //
   // setup working frequencies table model & view
   //
@@ -2512,6 +2520,17 @@ void Configuration::impl::read_settings ()
 
   region_ = settings_->value ("Region", QVariant::fromValue (IARURegions::ALL)).value<IARURegions::Region> ();
 
+  ui_language_ = settings_->value ("UILanguage", QString {}).toString ();
+  {
+    int idx = ui_->language_combo_box->findData (ui_language_);
+    if (idx >= 0) ui_->language_combo_box->setCurrentIndex (idx);
+  }
+
+  fixed_rx_offset_ = settings_->value ("FixedRxOffset", 0).toLongLong ();
+  fixed_tx_offset_ = settings_->value ("FixedTxOffset", 0).toLongLong ();
+  ui_->fixed_rx_offset_spin_box->setValue (static_cast<int> (fixed_rx_offset_));
+  ui_->fixed_tx_offset_spin_box->setValue (static_cast<int> (fixed_tx_offset_));
+
   LOG_INFO(QString{"Reading frequencies"});
 
   if (settings_->contains ("FrequenciesForRegionModes_v2"))
@@ -2950,6 +2969,9 @@ void Configuration::impl::write_settings ()
   settings_->setValue ("pwrBandTxMemory", pwrBandTxMemory_);
   settings_->setValue ("pwrBandTuneMemory", pwrBandTuneMemory_);
   settings_->setValue ("Region", QVariant::fromValue (region_));
+  settings_->setValue ("UILanguage", ui_language_);
+  settings_->setValue ("FixedRxOffset", static_cast<qlonglong> (fixed_rx_offset_));
+  settings_->setValue ("FixedTxOffset", static_cast<qlonglong> (fixed_tx_offset_));
   settings_->setValue ("AutoGrid", use_dynamic_grid_);
   settings_->setValue ("highlight_DXcall", highlight_DXcall_);
   settings_->setValue ("clear_DXcall", clear_DXcall_);
@@ -3577,6 +3599,16 @@ void Configuration::impl::accept ()
     }
 
   region_ = IARURegions::value (ui_->region_combo_box->currentText ());
+
+  auto new_ui_language = ui_->language_combo_box->currentData ().toString ();
+  if (new_ui_language != ui_language_)
+    {
+      ui_language_ = new_ui_language;
+      QMessageBox::information (this, tr ("Language"), tr ("Language change requires a restart of WSJT-X to take effect."));
+    }
+
+  fixed_rx_offset_ = ui_->fixed_rx_offset_spin_box->value ();
+  fixed_tx_offset_ = ui_->fixed_tx_offset_spin_box->value ();
 
   if (frequencies_.frequency_list () != next_frequencies_.frequency_list ())
     {
@@ -5142,7 +5174,7 @@ void Configuration::impl::transceiver_frequency (Frequency f)
   // simply picking an offset when the Rx frequency is set and
   // sticking to it we get sane behaviour
   current_offset_ = stations_.offset (f);
-  cached_rig_state_.frequency (apply_calibration (f + current_offset_));
+  cached_rig_state_.frequency (apply_calibration (f + current_offset_ + fixed_rx_offset_));
 
   // qDebug () << "Configuration::impl::transceiver_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;
   LOG_TRACE ("emitting set_transceiver: requested state:" << cached_rig_state_);
@@ -5168,7 +5200,7 @@ void Configuration::impl::transceiver_tx_frequency (Frequency f)
           // apply but by simply picking an offset when the Rx
           // frequency is set and sticking to it we get sane behaviour
           current_tx_offset_ = stations_.offset (f);
-          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_));
+          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ + fixed_tx_offset_));
         }
 
       // qDebug () << "Configuration::impl::transceiver_tx_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;

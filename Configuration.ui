@@ -112,6 +112,23 @@
                 </property>
                </widget>
               </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="language_label">
+                <property name="text">
+                 <string>Language:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>language_combo_box</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="language_combo_box">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the user interface language. Requires a restart to take effect.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
@@ -4212,6 +4229,93 @@ Right click for insert and delete options.</string>
           <size>
            <width>20</width>
            <height>10</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="offset_tab">
+      <attribute name="title">
+       <string>Offset</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_offset">
+       <item>
+        <widget class="QGroupBox" name="fixed_offset_group_box">
+         <property name="title">
+          <string>Fixed Frequency Offset</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_fixed_offset">
+          <item row="0" column="0">
+           <widget class="QLabel" name="fixed_rx_offset_label">
+            <property name="text">
+             <string>RX offset:</string>
+            </property>
+            <property name="buddy">
+             <cstring>fixed_rx_offset_spin_box</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="fixed_rx_offset_spin_box">
+            <property name="toolTip">
+             <string>Fixed offset added to the RX frequency sent to the radio (Hz). Use for transverter IF offsets.</string>
+            </property>
+            <property name="suffix">
+             <string>  Hz</string>
+            </property>
+            <property name="minimum">
+             <number>-100000000</number>
+            </property>
+            <property name="maximum">
+             <number>100000000</number>
+            </property>
+            <property name="singleStep">
+             <number>1000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="fixed_tx_offset_label">
+            <property name="text">
+             <string>TX offset:</string>
+            </property>
+            <property name="buddy">
+             <cstring>fixed_tx_offset_spin_box</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="fixed_tx_offset_spin_box">
+            <property name="toolTip">
+             <string>Fixed offset added to the TX frequency sent to the radio (Hz). Use for transverter IF offsets.</string>
+            </property>
+            <property name="suffix">
+             <string>  Hz</string>
+            </property>
+            <property name="minimum">
+             <number>-100000000</number>
+            </property>
+            <property name="maximum">
+             <number>100000000</number>
+            </property>
+            <property name="singleStep">
+             <number>1000</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="offset_tab_spacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
           </size>
          </property>
         </spacer>

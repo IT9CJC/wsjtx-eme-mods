@@ -91,7 +91,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">User Manual &mdash; Version 3.0.4-devel &mdash; II9P</p>
+<p class="subtitle">User Manual &mdash; Version 3.0.6-devel &mdash; II9P</p>
 
 <nav class="toc">
 <strong>Contents</strong>
@@ -103,6 +103,9 @@
   <li><a href="#txshift">TX Shift</a></li>
   <li><a href="#wheel">Fine Frequency Control (Mouse Wheel)</a></li>
   <li><a href="#log">Per-Callsign QSO Log</a></li>
+  <li><a href="#cabrillo-export">Cabrillo Export with Log Source Selector</a></li>
+  <li><a href="#language">Language Selector</a></li>
+  <li><a href="#fixed-offset">Fixed Frequency Offset</a></li>
   <li><a href="#procedure">EME CW Operating Procedure</a></li>
   <li><a href="#cat">CAT / Hamlib Configuration</a></li>
   <li><a href="#resolution">Frequency Resolution</a></li>
@@ -336,6 +339,83 @@ logged QSO.</p>
   so DXCC/grid/call highlighting is accurate per station.
 </div>
 
+<!-- ===== 5d. CABRILLO EXPORT ===== -->
+<h2 id="cabrillo-export">5d. Cabrillo Export with Log Source Selector</h2>
+
+<p>The <strong>File&nbsp;&gt;&nbsp;Export Cabrillo log&nbsp;...</strong> dialog now
+includes a <strong>Log source</strong> combo box at the top. It lists:</p>
+
+<ul>
+  <li><strong>(Contest log)</strong> &mdash; the original internal SQLite contest log
+    (default, preserving existing behavior).</li>
+  <li>All <code>wsjtx_log*.adi</code> files found in the WSJT-X data directory
+    (e.g. <code>wsjtx_log_II9P.adi</code>, <code>wsjtx_log.adi</code>).</li>
+</ul>
+
+<p>When an ADI log file is selected, the dialog parses its ADIF records and writes
+them as Cabrillo 3.0 QSO lines. The exchange fields are auto-detected:</p>
+
+<table>
+  <tr><th>Priority</th><th>Exchange Sent</th><th>Exchange Received</th></tr>
+  <tr><td>1 (highest)</td><td><code>STX_STRING</code></td><td><code>SRX_STRING</code></td></tr>
+  <tr><td>2</td><td><code>STX</code></td><td><code>SRX</code></td></tr>
+  <tr><td>3 (fallback)</td><td><code>RST_SENT</code></td><td><code>RST_RCVD</code></td></tr>
+</table>
+
+<p>Fill in the contest metadata fields (Contest, Callsign, Category, etc.) as usual,
+then click <strong>Save</strong> to write the <code>.cbr</code> file.</p>
+
+<div class="callout">
+  <strong>Tip</strong>
+  The combo box automatically pre-selects the ADI file matching your current callsign
+  in Settings.
+</div>
+
+<!-- ===== 5e. LANGUAGE SELECTOR ===== -->
+<h2 id="language">5e. Language Selector</h2>
+
+<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;General</strong>. The
+<strong>Language</strong> combo box lets you choose between:</p>
+
+<ul>
+  <li><strong>System default</strong> &mdash; uses the operating system locale
+    (original WSJT-X behavior).</li>
+  <li><strong>English</strong> &mdash; forces the UI to English regardless of OS
+    locale.</li>
+</ul>
+
+<p>After changing the language, click OK. A message will remind you that the change
+requires a <strong>restart</strong> of WSJT-X to take effect. Close and relaunch
+the program to see the new language.</p>
+
+<div class="callout">
+  <strong>Note</strong>
+  The <code>-l</code> command-line flag still works and takes priority if the
+  stored setting is &ldquo;System default.&rdquo;
+</div>
+
+<!-- ===== 5f. FIXED FREQUENCY OFFSET ===== -->
+<h2 id="fixed-offset">5f. Fixed Frequency Offset</h2>
+
+<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;Offset</strong>. The
+<strong>Fixed Frequency Offset</strong> group provides two independent controls:</p>
+
+<ul>
+  <li><strong>RX offset</strong> &mdash; added to the receive frequency sent to the
+    radio, alongside the per-band station offset and calibration correction.</li>
+  <li><strong>TX offset</strong> &mdash; added to the transmit frequency in the same
+    pipeline.</li>
+</ul>
+
+<p>Both values are in Hz and can range from &minus;100&nbsp;MHz to +100&nbsp;MHz
+(step size: 1000&nbsp;Hz). They are applied before the calibration slope/intercept
+correction:</p>
+
+<pre><code>RIG_freq = calibration(dial_freq + station_offset + fixed_offset)</code></pre>
+
+<p>Typical uses include transverter IF offsets and fixed frequency corrections for
+EME microwave setups where the RX and TX chains have different LO offsets.</p>
+
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>
 
@@ -544,11 +624,11 @@ repository. Edit it to match your local dependency paths.</p>
   <tr><td><code>logbook/WorkedBefore.hpp</code></td><td>Added <code>set_callsign()</code> slot for per-callsign log switching</td></tr>
   <tr><td><code>logbook/WorkedBefore.cpp</code></td><td>Dynamic log file path from callsign; <code>update_path()</code> and <code>set_callsign()</code></td></tr>
   <tr><td><code>logbook/logbook.h / .cpp</code></td><td>Added <code>set_callsign()</code> forwarding method</td></tr>
-  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.4.0</td></tr>
+  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.6.0</td></tr>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.4-devel &mdash; Built by II9P &mdash; September 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.6-devel &mdash; Built by II9P &mdash; September 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

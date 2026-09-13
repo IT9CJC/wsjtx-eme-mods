@@ -256,7 +256,12 @@ int main(int argc, char *argv[])
         }
 
       // load UI translations
-      L10nLoader l10n {&a, locale, parser.value (lang_option)};
+      QString ui_lang;
+      {
+        SettingsGroup g {multi_settings.settings (), "Configuration"};
+        ui_lang = multi_settings.settings ()->value ("UILanguage").toString ();
+      }
+      L10nLoader l10n {&a, locale, ui_lang.isEmpty () ? parser.value (lang_option) : ui_lang};
 
       // Create a unique writeable temporary directory in a suitable location
       bool temp_ok {false};

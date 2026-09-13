@@ -165,7 +165,7 @@ option (WSJT_TRACE_CAT_POLLS "Debugging option that turns on CAT diagnostics dur
 option (WSJT_SOFT_KEYING "Apply a ramp to CW keying envelope to reduce transients." ON)
 option (WSJT_SKIP_MANPAGES "Skip *nix manpage generation.")
 option (WSJT_GENERATE_DOCS "Generate documentation files." ON)
-option (WSJT_RIG_NONE_CAN_SPLIT "Allow split operation with \"None\" as rig.")
+option (WSJT_RIG_NONE_CAN_SPLIT "Allow split operation with \"None\" as rig." ON)
 option (WSJT_TRACE_UDP "Debugging option that turns on UDP message protocol diagnostics.")
 option (WSJT_BUILD_UTILS "Build simulators and code demonstrators." ON)
 option (WSJT_BUILD_TESTS "Build test programs." ON)

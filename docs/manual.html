@@ -106,6 +106,7 @@
   <li><a href="#cabrillo-export">Cabrillo Export with Log Source Selector</a></li>
   <li><a href="#language">Language Selector</a></li>
   <li><a href="#fixed-offset">Fixed Frequency Offset</a></li>
+  <li><a href="#offline">Offline Operation (No Rig)</a></li>
   <li><a href="#procedure">EME CW Operating Procedure</a></li>
   <li><a href="#cat">CAT / Hamlib Configuration</a></li>
   <li><a href="#resolution">Frequency Resolution</a></li>
@@ -415,6 +416,26 @@ correction:</p>
 
 <p>Typical uses include transverter IF offsets and fixed frequency corrections for
 EME microwave setups where the RX and TX chains have different LO offsets.</p>
+
+<!-- ===== 5g. OFFLINE OPERATION ===== -->
+<h2 id="offline">5g. Offline Operation (No Rig)</h2>
+
+<p>WSJT-X can now be used without a physical radio connected:</p>
+
+<ul>
+  <li><strong>Band frequency display</strong> &mdash; When no rig is connected,
+    switching bands shows the correct default frequency for the selected band
+    instead of a stale value.</li>
+  <li><strong>Split with &ldquo;None&rdquo; rig</strong> &mdash; Split operation
+    is available even when rig is set to &ldquo;None&rdquo; in
+    Settings&nbsp;&gt;&nbsp;Radio. This enables Doppler tracking calculations.</li>
+  <li><strong>Doppler tracking</strong> &mdash; Doppler corrections are computed
+    and displayed in the Astronomical Data window regardless of rig connection
+    status. Select a Doppler method and enable tracking as usual.</li>
+  <li><strong>Rig failure handling</strong> &mdash; If a selected rig is
+    unavailable, the error dialog appears once and the program continues
+    normally. No repeated popups.</li>
+</ul>
 
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>

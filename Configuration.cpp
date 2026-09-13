@@ -1194,7 +1194,7 @@ void Configuration::set_calibration (CalibrationParams params)
 
 void Configuration::enable_calibration (bool on)
 {
-  auto target_frequency = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_;
+  auto target_frequency = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_ - m_->fixed_rx_offset_;
   m_->frequency_calibration_disabled_ = !on;
   transceiver_frequency (target_frequency);
 }
@@ -5436,12 +5436,12 @@ void Configuration::impl::handle_transceiver_update (TransceiverState const& sta
     {
       TransceiverState reported_state {state};
       // take off calibration & offset
-      reported_state.frequency (remove_calibration (reported_state.frequency ()) - current_offset_);
+      reported_state.frequency (remove_calibration (reported_state.frequency ()) - current_offset_ - fixed_rx_offset_);
 
       if (reported_state.tx_frequency ())
         {
           // take off calibration & offset
-          reported_state.tx_frequency (remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_);
+          reported_state.tx_frequency (remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_ - fixed_tx_offset_);
         }
 
       Q_EMIT self_->transceiver_update (reported_state);
@@ -5455,15 +5455,8 @@ void Configuration::impl::handle_transceiver_failure (QString const& reason)
   close_rig ();
   ui_->test_PTT_push_button->setChecked (false);
 
-  if (isVisible ())
-    {
-      MessageBox::critical_message (this, tr ("Rig failure"), reason);
-    }
-  else
-    {
-      // pass on if our dialog isn't active
-      Q_EMIT self_->transceiver_failure (reason);
-    }
+  // always forward to mainwindow for centralized failure handling
+  Q_EMIT self_->transceiver_failure (reason);
 }
 
 void Configuration::impl::close_rig ()

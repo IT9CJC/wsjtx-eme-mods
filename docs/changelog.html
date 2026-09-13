@@ -92,10 +92,11 @@
 <div class="release">
   <div class="release-header">
     <h2>v3.0.6-devel <span class="tag tag-new">Latest</span></h2>
-    <span class="release-date">2026-09-13</span>
+    <span class="release-date">2026-09-14</span>
   </div>
 
-  <p>Language selector and fixed frequency offset.</p>
+  <p>Language selector, fixed frequency offset, rig failure handling, and
+  offline operation improvements.</p>
 
   <h3>New Features</h3>
   <ul>
@@ -109,6 +110,28 @@
       Settings&nbsp;&gt;&nbsp;Offset tab. Applied alongside station offsets before
       calibration. Useful for transverter IF corrections and EME microwave setups.
       <span class="tag tag-new">NEW</span></li>
+    <li><strong>Split with &ldquo;None&rdquo; rig</strong> &mdash; Split
+      operation is now available when rig is set to &ldquo;None&rdquo;, enabling
+      Doppler tracking calculations without a physical radio.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Bug Fixes</h3>
+  <ul>
+    <li><strong>Fixed frequency offset accumulation</strong> &mdash; Fixed offsets
+      were being re-applied on every rig polling cycle because the feedback path
+      did not subtract them back. Now correctly removed in the rig state feedback
+      handler.</li>
+    <li><strong>Rig failure dialog loop</strong> &mdash; When a rig was unavailable,
+      the error dialog would pop up repeatedly in an infinite loop. Now shows the
+      error once and lets the program continue without a rig. Counter resets on
+      successful connection or explicit Retry.</li>
+    <li><strong>Band frequency display without rig</strong> &mdash; When no rig is
+      connected, switching bands now shows the correct default frequency for the
+      selected band instead of a stale/meaningless value.</li>
+    <li><strong>Doppler tracking without rig</strong> &mdash; Doppler corrections
+      are now computed even when rig is set to &ldquo;None&rdquo;, regardless of
+      monitoring state.</li>
   </ul>
 
   <h3>Files Modified</h3>
@@ -116,8 +139,9 @@
     <tr><th>File</th><th>Change</th><th>Lines</th></tr>
     <tr>
       <td><code>CMakeLists.txt</code></td>
-      <td>Bumped project VERSION from 3.0.5.0 to 3.0.6.0</td>
-      <td>Line 64</td>
+      <td>Bumped VERSION to 3.0.6.0; enabled
+        <code>WSJT_RIG_NONE_CAN_SPLIT</code></td>
+      <td>Lines 64, 168</td>
     </tr>
     <tr>
       <td><code>Configuration.ui</code></td>
@@ -127,11 +151,9 @@
     </tr>
     <tr>
       <td><code>Configuration.cpp</code></td>
-      <td>Language combo population, read/write <code>UILanguage</code>,
-        restart message; fixed offset members, read/write
-        <code>FixedRxOffset</code>/<code>FixedTxOffset</code>, applied in
-        <code>transceiver_frequency()</code> and
-        <code>transceiver_tx_frequency()</code></td>
+      <td>Language combo, fixed offset read/write and transceiver pipeline;
+        fixed offset subtracted in rig feedback path; centralized failure
+        handling (always forwards to mainwindow)</td>
       <td>Multiple sections</td>
     </tr>
     <tr>
@@ -139,6 +161,19 @@
       <td>Read <code>UILanguage</code> from QSettings before creating
         <code>L10nLoader</code>; override language if set</td>
       <td>Line ~259</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.h</code></td>
+      <td>Replaced <code>m_first_error</code> bool with
+        <code>m_rig_fail_count</code> int</td>
+      <td>Line 784</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>Single-attempt rig failure with suppression of repeats; band
+        frequency display falls back to <code>m_freqNominal</code> when rig
+        offline; Doppler tracking enabled for dummy rig</td>
+      <td>Multiple sections</td>
     </tr>
   </table>
 </div>

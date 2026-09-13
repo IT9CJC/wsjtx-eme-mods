@@ -464,7 +464,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_btxok0 {false},
   m_nsendingsh {0},
   m_onAirFreq0 {0.0},
-  m_first_error {true},
+  m_rig_fail_count {0},
   tx_status_label {tr ("Receiving")},
   wsprNet {new WSPRNet {this}},
   Eqsl {new EQSL {this}},
@@ -4139,8 +4139,10 @@ void MainWindow::bumpFqso(int n)                                 //bumpFqso()
 void MainWindow::displayDialFrequency ()
 {
   if (ui->actionUse_Dark_Style->isChecked()) ui->bandComboBox->setStyleSheet("QLineEdit {background-color: #31363b}");  // initialize dark style at startup
-  Frequency dial_frequency {m_rigState.ptt () && m_rigState.split () ?
-      m_rigState.tx_frequency () : m_rigState.frequency ()};
+  Frequency dial_frequency {m_config.is_transceiver_online ()
+      ? (m_rigState.ptt () && m_rigState.split ()
+         ? m_rigState.tx_frequency () : m_rigState.frequency ())
+      : m_freqNominal};
 
   // lookup band
   auto const& band_name = m_config.bands ()->find (dial_frequency);
@@ -12531,6 +12533,7 @@ void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const&
   if (old_state.online () == false && s.online () == true)
     {
       // initializing
+      m_rig_fail_count = 0;
       on_monitorButton_clicked (!(m_config.monitor_off_at_startup() or m_mode=="Echo"));
     }
   if (s.frequency () != old_state.frequency () || s.split () != m_splitMode)
@@ -12580,6 +12583,7 @@ void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const&
 
 void MainWindow::handle_transceiver_failure (QString const& reason)
 {
+  if (m_rig_fail_count > 0) return;   // already handled, suppress repeats
   update_dynamic_property (ui->readFreq, "state", "error");
   ui->readFreq->setEnabled (true);
   on_stopTxButton_clicked ();
@@ -12590,13 +12594,10 @@ void MainWindow::handle_transceiver_failure (QString const& reason)
 
 void MainWindow::rigFailure (QString const& reason)
 {
-  if (m_first_error)
-    {
-      // one automatic retry
-      QTimer::singleShot (0, this, SLOT (rigOpen ()));
-      m_first_error = false;
-    }
-  else
+  ++m_rig_fail_count;
+
+  // show error dialog once, then stop retrying
+  if (m_rig_fail_count == 1)
     {
       if (m_splash && m_splash->isVisible ()) m_splash->hide ();
       m_rigErrorMessageBox.setDetailedText (reason + "\n\nTimestamp: "
@@ -12607,7 +12608,6 @@ void MainWindow::rigFailure (QString const& reason)
 #endif
                                             );
 
-      // don't call slot functions directly to avoid recursion
       m_rigErrorMessageBox.exec ();
       auto const clicked_button = m_rigErrorMessageBox.clickedButton ();
       if (clicked_button == m_configurations_button)
@@ -12624,6 +12624,7 @@ void MainWindow::rigFailure (QString const& reason)
               break;
 
             case MessageBox::Retry:
+              m_rig_fail_count = 0;
               QTimer::singleShot (0, this, SLOT (rigOpen ()));
               break;
 
@@ -12631,11 +12632,11 @@ void MainWindow::rigFailure (QString const& reason)
               QTimer::singleShot (0, this, SLOT (close ()));
               break;
 
-            default: break;     // squashing compile warnings
+            default: break;
             }
         }
-      m_first_error = true;     // reset
     }
+  // m_rig_fail_count > 2: silently ignore further failures
 }
 
 void MainWindow::transmit (double snr)
@@ -13831,9 +13832,9 @@ void MainWindow::astroUpdate ()
       m_fAudioShift=m_fDop;
     }
 
-    if ((m_monitoring || m_transmitting)
-        && m_freqNominal >= 21000000          // No Doppler correction below 15m
-        && m_config.split_mode ())            // Doppler correcion needs split mode
+    if (m_freqNominal >= 21000000          // No Doppler correction below 15m
+        && (m_config.is_dummy_rig ()          // always compute Doppler when no rig
+            || ((m_monitoring || m_transmitting) && m_config.split_mode ())))
       {
         // adjust for rig resolution
         if (m_config.transceiver_resolution () > 2)
@@ -13895,6 +13896,7 @@ void MainWindow::setRig (Frequency f)
       m_config.transceiver_frequency (m_freqNominal + m_astroCorrection.rx);
     }
   }
+  displayDialFrequency ();
 }
 
 void MainWindow::fastPick(int x0, int x1, int y)

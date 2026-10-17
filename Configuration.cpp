@@ -1691,6 +1691,13 @@ void Configuration::setSpecial_On()
   m_->write_settings();
 }
 
+void Configuration::set_data_mode(DataMode mode)
+{
+  m_->data_mode_ = mode;
+  m_->ui_->TX_mode_button_group->button(mode)->setChecked(true);
+  m_->write_settings();
+}
+
 void Configuration::toggle_SF()
 {
   if (m_->bSuperFox_) {

@@ -278,6 +278,7 @@ public:
   void setSpecial_Fox();
   void setSpecial_None();
   void setSpecial_On();
+  void set_data_mode(DataMode);
   void toggle_SF();
   bool highlight_DXcall () const;
   bool clear_DXcall () const;

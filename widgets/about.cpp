@@ -14,9 +14,10 @@ CAboutDlg::CAboutDlg(QWidget *parent) :
   ui->setupUi(this);
 
   ui->labelTxt->setText ("<h2>" + QString {"WSJT-X v"
-                                             + QCoreApplication::applicationVersion ()
-                                             + " " + display_revision ()}.simplified () + "<br />"
+                                             + QCoreApplication::applicationVersion ()}.simplified () + "<br />"
 
+    "<b>Revised and modified by IT9CJC Marcello Criscione<br />"
+    "for EME and CW Microwaves use</b><br /><br />"
     "WSJT-X implements a number of digital modes designed for <br />"
     "weak-signal Amateur Radio communication.  <br /><br />"
     "&copy; 2001-2026 by Joe Taylor, K1JT, Bill Somerville, G4WJS, <br />"

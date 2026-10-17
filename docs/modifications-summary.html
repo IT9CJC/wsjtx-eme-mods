@@ -110,7 +110,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; September 2026</p>
+<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; October 2026</p>
 
 <p>This document describes all modifications made to
 <a href="https://physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X 3.0.2</a>
@@ -133,6 +133,7 @@ The modified source code is maintained at
   <li><a href="#language">Language Selector</a></li>
   <li><a href="#offset">Fixed Frequency Offset</a></li>
   <li><a href="#offline">Offline Operation &amp; Rig Failure Handling</a></li>
+  <li><a href="#cw-menu">CW Mode in Mode Menu</a></li>
   <li><a href="#files">Complete File Change Summary</a></li>
   <li><a href="#versions">Version History</a></li>
   <li><a href="#build">Building from Source</a></li>
@@ -248,6 +249,30 @@ does not provide:</p>
     <td><span class="version-badge">v3.0.6</span></td>
     <td><span class="tag tag-fix">FIX</span></td>
     <td>Main window dial</td>
+  </tr>
+  <tr>
+    <td>CW mode in Mode menu</td>
+    <td><span class="version-badge">v3.0.7</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Mode menu</td>
+  </tr>
+  <tr>
+    <td>Automatic radio mode switching (CW/USB)</td>
+    <td><span class="version-badge">v3.0.7</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Mode menu &rarr; CAT</td>
+  </tr>
+  <tr>
+    <td>Digital UI lockout in CW mode</td>
+    <td><span class="version-badge">v3.0.7</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Main window</td>
+  </tr>
+  <tr>
+    <td>About dialog with IT9CJC credit</td>
+    <td><span class="version-badge">v3.0.7</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Help &gt; About</td>
   </tr>
 </table>
 
@@ -504,8 +529,66 @@ Configuration dialog no longer shows its own error dialog, preventing
 duplicate popups.</p>
 </div>
 
-<!-- ===== 12. FILE CHANGES ===== -->
-<h2 id="files">12. Complete File Change Summary</h2>
+<!-- ===== 12. CW MODE MENU ===== -->
+<h2 id="cw-menu">12. CW Mode in Mode Menu</h2>
+
+<div class="section">
+<p>CW is now a full entry in the main <strong>Mode</strong> menu, alongside
+FT8, JT65, Q65, and all other digital modes. Selecting CW from the menu
+is equivalent to setting CW mode in Settings &gt; Radio, but faster.</p>
+
+<h4>How it works</h4>
+<ul>
+  <li><strong>Mutually exclusive</strong> &mdash; CW is part of the same
+    <code>QActionGroup</code> as all digital modes. Only one mode can be
+    active at a time (radio-button behavior).</li>
+  <li><strong>Automatic radio mode switching</strong> &mdash; selecting CW
+    from the menu sends a <code>Transceiver::CW</code> command to the radio
+    via CAT. Selecting any digital mode sends <code>Transceiver::USB</code>.</li>
+  <li><strong>Digital UI lockout</strong> &mdash; when CW is active, all
+    digital-only controls are hidden: mode quick-buttons (FT8, FT4, MSK144,
+    Q65, JT65, Echo, Hound), Decode/Monitor/Tune/Enable&nbsp;TX buttons,
+    the TX message panel, and the decode splitter. The Mode menu itself
+    remains enabled so the user can switch back at any time.</li>
+  <li><strong>CW status label</strong> &mdash; a blue &ldquo;CW&rdquo; badge
+    appears in the status bar, replacing the digital mode tag (e.g.,
+    &ldquo;JT65A&rdquo;).</li>
+  <li><strong>Keyboard guard</strong> &mdash; the F1&ndash;F5 TX shortcuts
+    and Shift+D decode shortcut are blocked in CW mode to prevent
+    accidental digital transmissions.</li>
+</ul>
+
+<h4>About dialog</h4>
+<p>The Help &gt; About dialog now shows
+&ldquo;<strong>Revised and modified by IT9CJC Marcello Criscione for EME
+and CW Microwaves use</strong>&rdquo; below the version string. The git
+revision hash and &ldquo;-dirty&rdquo; suffix have been removed for a
+cleaner display.</p>
+
+<h4>Implementation</h4>
+<ul>
+  <li><code>widgets/mainwindow.ui</code> &mdash; added checkable
+    <code>actionCW</code> to <code>menuMode</code> after a separator</li>
+  <li><code>widgets/mainwindow.h</code> &mdash; added
+    <code>updateCWModeUI(bool)</code> and
+    <code>m_dataModePriorToCW</code></li>
+  <li><code>widgets/mainwindow.cpp</code> &mdash; <code>actionCW</code>
+    joined the <code>modeGroup</code> QActionGroup; a single
+    <code>QActionGroup::triggered</code> lambda handles CW/digital switching
+    and rig commands; <code>updateCWModeUI()</code> hides/shows controls;
+    startup and settings-return paths save/restore CW state</li>
+  <li><code>Configuration.hpp</code> &mdash; added public
+    <code>set_data_mode(DataMode)</code></li>
+  <li><code>Configuration.cpp</code> &mdash; <code>set_data_mode()</code>
+    updates internal state, syncs Settings radio button, persists to
+    QSettings</li>
+  <li><code>widgets/about.cpp</code> &mdash; added IT9CJC credit line;
+    removed <code>display_revision()</code> call</li>
+</ul>
+</div>
+
+<!-- ===== 13. FILE CHANGES ===== -->
+<h2 id="files">13. Complete File Change Summary</h2>
 
 <p>All files modified or added relative to upstream WSJT-X 3.0.2:</p>
 
@@ -513,17 +596,19 @@ duplicate popups.</p>
   <tr><th>File</th><th>Changes</th></tr>
   <tr>
     <td><code>CMakeLists.txt</code></td>
-    <td>Version bumped from 3.0.2.0 to 3.0.6.0; enabled
+    <td>Version bumped from 3.0.2.0 to 3.0.7.0; enabled
       <code>WSJT_RIG_NONE_CAN_SPLIT</code></td>
   </tr>
   <tr>
     <td><code>Configuration.hpp</code></td>
     <td>Added <code>data_mode_CW</code> to <code>DataMode</code> enum;
-      added <code>data_mode()</code> public accessor</td>
+      added <code>data_mode()</code> public accessor;
+      added <code>set_data_mode(DataMode)</code> public setter</td>
   </tr>
   <tr>
     <td><code>Configuration.cpp</code></td>
-    <td>CW mode registration; language combo and UILanguage read/write;
+    <td>CW mode registration; <code>set_data_mode()</code> implementation;
+      language combo and UILanguage read/write;
       fixed RX/TX offset members, read/write, and transceiver pipeline;
       fixed offset subtraction in rig feedback path; centralized failure
       handling</td>
@@ -546,16 +631,30 @@ duplicate popups.</p>
     <td>TX Shift frequency display shows actual shifted value in blue</td>
   </tr>
   <tr>
+    <td><code>widgets/mainwindow.ui</code></td>
+    <td>Added checkable <code>actionCW</code> to <code>menuMode</code>
+      after separator</td>
+  </tr>
+  <tr>
     <td><code>widgets/mainwindow.h</code></td>
     <td>Added <code>cw_mode_label</code> QLabel; replaced
-      <code>m_first_error</code> bool with <code>m_rig_fail_count</code> int</td>
+      <code>m_first_error</code> bool with <code>m_rig_fail_count</code> int;
+      added <code>updateCWModeUI(bool)</code>,
+      <code>m_dataModePriorToCW</code></td>
   </tr>
   <tr>
     <td><code>widgets/mainwindow.cpp</code></td>
-    <td>CW status label; modifier-key wheel steps; per-callsign log
+    <td>CW in <code>modeGroup</code> QActionGroup;
+      <code>QActionGroup::triggered</code> lambda for CW/USB rig commands;
+      <code>updateCWModeUI()</code> hides/shows digital controls;
+      CW status label; modifier-key wheel steps; per-callsign log
       switching; rig failure counter with single-popup behavior; band
       frequency display fallback to <code>m_freqNominal</code>; Doppler
       tracking for dummy rig</td>
+  </tr>
+  <tr>
+    <td><code>widgets/about.cpp</code></td>
+    <td>Added IT9CJC credit line; removed git revision display</td>
   </tr>
   <tr>
     <td><code>widgets/ExportCabrillo.ui</code></td>
@@ -605,8 +704,8 @@ duplicate popups.</p>
   </tr>
 </table>
 
-<!-- ===== 13. VERSIONS ===== -->
-<h2 id="versions">13. Version History</h2>
+<!-- ===== 14. VERSIONS ===== -->
+<h2 id="versions">14. Version History</h2>
 
 <table>
   <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
@@ -636,10 +735,17 @@ duplicate popups.</p>
     <td>Language selector, fixed frequency offset, rig failure fix, offline
       operation (Doppler, band display, split with None rig)</td>
   </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.7-devel</span></td>
+    <td>2026-10-17</td>
+    <td>CW mode in Mode menu (QActionGroup, mutually exclusive with digital
+      modes), automatic radio mode switching (CW/USB via CAT), digital UI
+      lockout when CW active, About dialog with IT9CJC credit</td>
+  </tr>
 </table>
 
-<!-- ===== 14. BUILD ===== -->
-<h2 id="build">14. Building from Source</h2>
+<!-- ===== 15. BUILD ===== -->
+<h2 id="build">15. Building from Source</h2>
 
 <h4>Requirements</h4>
 <ul>
@@ -677,7 +783,7 @@ cmake --build . --target install</code></pre>
 repository. Edit it to match your local dependency paths.</p>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.6-devel &mdash; Built by II9P &mdash; September 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.7-devel &mdash; Built by II9P &mdash; October 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

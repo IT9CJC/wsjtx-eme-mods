@@ -734,6 +734,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   ui->actionMSK144->setActionGroup(modeGroup);
   ui->actionQ65->setActionGroup(modeGroup);
   ui->actionFreqCal->setActionGroup(modeGroup);
+  ui->actionCW->setActionGroup(modeGroup);
 
   QActionGroup* saveGroup = new QActionGroup(this);
   ui->actionNone->setActionGroup(saveGroup);
@@ -955,6 +956,29 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // Hook up signals.
   connect (band_validator, &LiveFrequencyValidator::valid, this, &MainWindow::band_changed);
   connect (ui->bandComboBox->lineEdit (), &QLineEdit::textEdited, [this] (QString const&) {m_bandEdited = true;});
+
+  // CW/digital mode switching via the Mode menu.
+  // QActionGroup::triggered fires once per user click, after the action's
+  // own auto-connected slot has already run. It does NOT fire for internal
+  // calls to on_actionXXX_triggered() or for setChecked().
+  connect (modeGroup, &QActionGroup::triggered, this, [this] (QAction *action) {
+    if (action == ui->actionCW) {
+      if (m_config.data_mode () != Configuration::data_mode_CW) {
+        m_config.set_data_mode (Configuration::data_mode_CW);
+        m_config.transceiver_frequency (m_freqNominal);
+        setup_status_bar (m_config.enable_VHF_features ());
+      }
+    } else {
+      bool was_cw = (m_config.data_mode () == Configuration::data_mode_CW);
+      if (m_config.data_mode () != Configuration::data_mode_USB) {
+        m_config.set_data_mode (Configuration::data_mode_USB);
+        m_config.transceiver_frequency (m_freqNominal);
+      }
+      if (was_cw) {
+        setup_status_bar (m_config.enable_VHF_features ());
+      }
+    }
+  });
 
   // hook up configuration signals
   connect (&m_config, &Configuration::leavingSettings, this, &MainWindow::handle_leavingSettings);
@@ -1183,7 +1207,14 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   if(m_bFast9) m_bFastMode=true;
   ui->cbFast9->setChecked(m_bFast9 or m_bFastMode);
 
-  set_mode (m_mode);
+  {
+    auto saved_cw = m_config.data_mode ();
+    set_mode (m_mode);
+    if (saved_cw == Configuration::data_mode_CW) {
+      m_config.set_data_mode (Configuration::data_mode_CW);
+      statusChanged ();
+    }
+  }
   if(m_mode=="Echo") monitor(false);  //Don't auto-start Monitor in Echo mode.
 
   // Ensure that the correct frequency is set and displayed
@@ -3678,7 +3709,14 @@ void MainWindow::on_actionSettings_triggered()           // Setup Dialog (Settin
           "Fox-and-Hound operation is available only in FT8 mode.\nGo back and change your selection.");
     }
     ui->labDXped->setVisible(SpecOp::NONE != m_specOp);
-    set_mode(m_mode);
+    {
+      auto saved_cw = m_config.data_mode ();
+      set_mode(m_mode);
+      if (saved_cw == Configuration::data_mode_CW) {
+        m_config.set_data_mode (Configuration::data_mode_CW);
+        statusChanged ();
+      }
+    }
 
     // ensure a balanced layout
     qreal pointSize = m_config.text_font().pointSizeF();
@@ -3890,6 +3928,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
       }
     return;
     case Qt::Key_D:
+      if (m_config.data_mode () == Configuration::data_mode_CW) break;
       if(m_mode != "WSPR" && e->modifiers() & Qt::ShiftModifier) {
         if(!m_decoderBusy) {
           dec_data.params.newdat=0;
@@ -3900,6 +3939,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
       }
       break;
     case Qt::Key_F1:
+      if (bAltF1F6 && m_config.data_mode () == Configuration::data_mode_CW) return;
       if(bAltF1F6) {
         auto_tx_mode(true);
         on_txb6_clicked();
@@ -3909,6 +3949,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
         return;
       }
     case Qt::Key_F2:
+      if (bAltF1F6 && m_config.data_mode () == Configuration::data_mode_CW) return;
       if(bAltF1F6) {
         auto_tx_mode(true);
         on_txb2_clicked();
@@ -3918,6 +3959,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
         return;
       }
     case Qt::Key_F3:
+      if (bAltF1F6 && m_config.data_mode () == Configuration::data_mode_CW) return;
       if(bAltF1F6) {
         auto_tx_mode(true);
         on_txb3_clicked();
@@ -3927,6 +3969,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
         return;
       }
     case Qt::Key_F4:
+      if (bAltF1F6 && m_config.data_mode () == Configuration::data_mode_CW) return;
       if(bAltF1F6) {
         auto_tx_mode(true);
         on_txb4_clicked();
@@ -3937,6 +3980,7 @@ void MainWindow::keyPressEvent (QKeyEvent * e)
         return;
       }
     case Qt::Key_F5:
+      if (bAltF1F6 && m_config.data_mode () == Configuration::data_mode_CW) return;
       if(bAltF1F6) {
         auto_tx_mode(true);
         on_txb5_clicked();
@@ -4419,7 +4463,7 @@ void MainWindow::setup_status_bar (bool vhf)
     mode_label.setText (t);
   } else {
     mode_label.setText (m_mode);
-  } 
+  }
   if ("JT9" == m_mode) {
     mode_label.setStyleSheet ("QLabel{color: #000000; background-color: #ff6ec7}");
   } else if ("JT4" == m_mode) {
@@ -4447,9 +4491,12 @@ void MainWindow::setup_status_bar (bool vhf)
     cw_mode_label.setText ("CW");
     cw_mode_label.setStyleSheet ("QLabel{color: #ffffff; background-color: #0000cc}");
     cw_mode_label.show ();
+    mode_label.hide ();
   } else {
     cw_mode_label.hide ();
+    mode_label.show ();
   }
+  updateCWModeUI (m_config.data_mode () == Configuration::data_mode_CW);
   keep_last_tx_label = true;
   last_tx_label.setText (QString {});
   if (m_mode.contains (QRegularExpression {R"(^(Echo))"})) {
@@ -4463,6 +4510,30 @@ void MainWindow::setup_status_bar (bool vhf)
     }
   } else {
     if (!m_config.PWR_and_SWR () && band_hopping_label.isVisible ()) statusBar ()->removeWidget (&band_hopping_label);
+  }
+}
+
+void MainWindow::updateCWModeUI (bool cw_mode)
+{
+  ui->actionCW->setChecked (cw_mode);
+
+  ui->ft8Button->setVisible (!cw_mode);
+  ui->ft4Button->setVisible (!cw_mode);
+  ui->msk144Button->setVisible (!cw_mode);
+  ui->q65Button->setVisible (!cw_mode);
+  ui->jt65Button->setVisible (!cw_mode);
+  ui->echoButton->setVisible (!cw_mode);
+  ui->houndButton->setVisible (!cw_mode);
+
+  ui->DecodeButton->setVisible (!cw_mode);
+  ui->autoButton->setVisible (!cw_mode);
+  ui->monitorButton->setVisible (!cw_mode);
+  ui->tuneButton->setVisible (!cw_mode);
+  ui->controls_stack_widget->setVisible (!cw_mode);
+  ui->decodes_splitter->setVisible (!cw_mode);
+
+  if (cw_mode && m_auto) {
+    auto_tx_mode (false);
   }
 }
 
@@ -13033,7 +13104,9 @@ void MainWindow::transmitDisplay (bool transmitting)
     }
 
     // the following are always disallowed in transmit
-    ui->menuMode->setEnabled (!transmitting);
+    if (m_config.data_mode () != Configuration::data_mode_CW) {
+      ui->menuMode->setEnabled (!transmitting);
+    }
   }
 }
 

@@ -4928,6 +4928,8 @@ QPushButton[state=&quot;ok&quot;] {
     <addaction name="actionEcho"/>
     <addaction name="separator"/>
     <addaction name="actionFreqCal"/>
+    <addaction name="separator"/>
+    <addaction name="actionCW"/>
    </widget>
    <widget class="QMenu" name="menuConfig">
     <property name="title">
@@ -5279,6 +5281,14 @@ QPushButton[state=&quot;ok&quot;] {
    </property>
    <property name="text">
     <string>FreqCal</string>
+   </property>
+  </action>
+  <action name="actionCW">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>CW</string>
    </property>
   </action>
   <action name="actionMeasure_reference_spectrum">

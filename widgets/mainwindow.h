@@ -579,6 +579,7 @@ private:
   Astro::Correction m_astroCorrection;
   bool m_reverse_Doppler;
 
+  Configuration::DataMode m_dataModePriorToCW {Configuration::data_mode_USB};
   double  m_tRemaining;
   double  m_TRperiod;
   double  m_fSpread;
@@ -993,6 +994,7 @@ private:
   void msgtype(QString t, QLineEdit* tx);
   void stub();
   void statusChanged();
+  void updateCWModeUI(bool cw_mode);
   void fixStop();
   bool shortList(QString callsign) const;
   void transmit (double snr = 99.);

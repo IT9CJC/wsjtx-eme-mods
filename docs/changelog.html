@@ -88,10 +88,75 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.0.7-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.7-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-10-17</span>
+  </div>
+
+  <p>CW added as a top-level mode in the main window Mode menu, with automatic
+  radio mode switching between CW and USB via CAT.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>CW in the Mode menu</strong> &mdash; CW is now an exclusive
+      option alongside the digital modes (FT4, FT8, JT65, Q65, etc.) in the
+      main window Mode menu. Implemented via <code>QActionGroup</code>.
+      Selecting CW hides all digital-mode controls (decode, TX, mode buttons,
+      waterfall splitter) and shows the blue
+      <strong style="color:#fff; background:#0000cc; padding:0 .3em;">CW</strong>
+      label in the status bar. Selecting any digital mode exits CW and restores
+      the digital-mode UI.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Automatic radio mode switching</strong> &mdash; The Mode menu
+      drives the radio directly: picking CW sends <code>Transceiver::CW</code>
+      via Hamlib; picking any digital mode sends <code>Transceiver::USB</code>.
+      No manual rig-mode change required when switching between CW and digital
+      sessions. Uses <code>QActionGroup::triggered</code> so rig commands fire
+      only on user clicks, not on internal mode handler calls.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>About dialog credit</strong> &mdash; Added &ldquo;Revised and
+      modified by IT9CJC Marcello Criscione for EME and CW Microwaves use.&rdquo;
+      Removed git hash / dirty-tree suffix from the version string.</li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped VERSION to 3.0.7.0</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.ui</code></td>
+      <td>Added <code>actionCW</code> (checkable) to <code>menuMode</code>
+        after the digital-mode separator</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.h</code></td>
+      <td>Added <code>m_dataModePriorToCW</code>, <code>updateCWModeUI()</code>,
+        <code>handleCWModeToggle()</code> declarations</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>CW added to the <code>modeGroup</code> <code>QActionGroup</code>;
+        <code>QActionGroup::triggered</code> lambda handles CW/USB auto-switching
+        and sends the rig command via <code>transceiver_frequency()</code>;
+        <code>updateCWModeUI()</code> hides/shows digital controls</td>
+    </tr>
+    <tr>
+      <td><code>widgets/about.cpp</code></td>
+      <td>Added IT9CJC credit line; removed git hash / dirty suffix from
+        version string</td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.6-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.6-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.6-devel</h2>
     <span class="release-date">2026-09-14</span>
   </div>
 

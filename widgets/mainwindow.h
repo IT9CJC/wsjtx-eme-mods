@@ -492,6 +492,9 @@ private:
   Q_SIGNAL void outAttenuationChanged (qreal) const;
   Q_SIGNAL void toggleShorthand () const;
   Q_SIGNAL void reset_audio_input_stream (bool report_dropped_frames) const;
+  // Starts streaming the given QIODevice through the TX SoundOutput
+  // (= WSJT's configured audio_output_device). Used for soundcard CW.
+  Q_SIGNAL void restartCWAudio (QIODevice * src) const;
 
 private:
   void set_mode (QString const& mode);
@@ -582,6 +585,18 @@ private:
   bool m_reverse_Doppler;
 
   Configuration::DataMode m_dataModePriorToCW {Configuration::data_mode_USB};
+
+  // CW keyer panel state
+  int m_cwWpm {25};
+  int m_cwTxOffsetHz {0};
+  QStringList m_cwMacroText;    // text sent for each of 6 macros
+  bool m_cwPanelSyncing {false}; // guard against astro<->panel feedback loops
+  bool m_cwLastRigPTT {false};   // last known rig PTT state (CW mode PTT edge detection)
+  QTimer * m_cwDopplerTimer {nullptr}; // keeps Doppler fresh while rig in TX (CW)
+  bool m_cwKeyerAvailable {false}; // rig backend supports rig_send_morse
+  class CwToneGenerator * m_cwTone {nullptr};
+  bool m_cwAudioActive {false};    // soundcard CW currently playing
+  Transceiver::MODE m_cwSavedMode {Transceiver::UNK}; // for restore after soundcard CW
   double  m_tRemaining;
   double  m_TRperiod;
   double  m_fSpread;
@@ -998,6 +1013,30 @@ private:
   void stub();
   void statusChanged();
   void updateCWModeUI(bool cw_mode);
+  void setupCWPanel();
+  void loadCWSettings();
+  void saveCWSettings();
+  void sendCWMacro(int idx);
+  void onCWSendClicked();
+  void onCWStopClicked();
+  void onCWEditMacrosClicked();
+  void onCWPTTToggled(bool checked);
+  void onCWWpmChanged(int wpm);
+  void onCWTxOffsetChanged(int hz);
+  void onCWSkedMhzChanged(double mhz);
+  void onCWDopplerModeChanged();
+  void onCWLockSkedChanged(bool);
+  void onCWDopplerEnableChanged(bool);
+  void syncCWPanelFromAstro();
+  enum CWStatusKind { CWStatusInfo, CWStatusOK, CWStatusWarning, CWStatusError };
+  void setCWStatus(CWStatusKind kind, QString const& text);
+  Q_SLOT void onCWStatus(QString const& text, int kind);
+  void cwDopplerUpdate(bool tx_active);
+  void onCWRigPTTChanged(bool rigPtt);
+  void sendCWText(QString const& text);
+  void sendCWViaSoundcard(QString const& text);
+  void finishCWSoundcard();
+  Q_SLOT void onCWKeyerAvailable(bool avail);
   void updateRigModeLabel();
   void updateBandLabel();
   void fixStop();

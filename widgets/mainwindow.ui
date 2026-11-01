@@ -26,7 +26,7 @@
    <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0">
+   <layout class="QVBoxLayout" name="verticalLayout_6" stretch="1,1,0">
     <item>
      <widget class="QSplitter" name="decodes_splitter">
       <property name="orientation">
@@ -309,6 +309,154 @@
         </item>
        </layout>
       </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="cw_panel_widget" native="true">
+      <property name="visible"><bool>false</bool></property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="cw_panel_layout">
+       <property name="leftMargin"><number>4</number></property>
+       <property name="topMargin"><number>4</number></property>
+       <property name="rightMargin"><number>4</number></property>
+       <property name="bottomMargin"><number>4</number></property>
+       <item>
+        <widget class="QGroupBox" name="cw_keyer_group">
+         <property name="title"><string>CW Keyer</string></property>
+         <layout class="QVBoxLayout" name="cw_keyer_vlayout">
+          <item>
+           <layout class="QHBoxLayout" name="cw_keyer_row1">
+            <item><widget class="QLabel" name="lbl_cw_wpm"><property name="text"><string>WPM:</string></property></widget></item>
+            <item>
+             <widget class="QSpinBox" name="sb_cw_wpm">
+              <property name="minimum"><number>5</number></property>
+              <property name="maximum"><number>50</number></property>
+              <property name="value"><number>25</number></property>
+              <property name="toolTip"><string>Keyer speed (WPM) sent to rig via RIG_LEVEL_KEYSPD</string></property>
+             </widget>
+            </item>
+            <item><widget class="QLabel" name="lbl_cw_tx_offset"><property name="text"><string>   TX Offset (Hz):</string></property></widget></item>
+            <item>
+             <widget class="QSpinBox" name="sb_cw_tx_offset">
+              <property name="minimum"><number>-5000</number></property>
+              <property name="maximum"><number>5000</number></property>
+              <property name="singleStep"><number>100</number></property>
+              <property name="value"><number>0</number></property>
+              <property name="toolTip"><string>CW TX frequency offset relative to RX (applied only in CW mode)</string></property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="cw_row1_spacer">
+              <property name="orientation"><enum>Qt::Horizontal</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>20</width><height>10</height></size></property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pb_cw_ptt">
+              <property name="text"><string>TX / RX</string></property>
+              <property name="checkable"><bool>true</bool></property>
+              <property name="toolTip"><string>Toggle PTT (manual TX/RX)</string></property>
+              <property name="styleSheet"><string notr="true">QPushButton:checked { background-color: red; color: white; }</string></property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="cw_keyer_row2">
+            <item><widget class="QLabel" name="lbl_cw_message"><property name="text"><string>Free text:</string></property></widget></item>
+            <item>
+             <widget class="QLineEdit" name="le_cw_message">
+              <property name="toolTip"><string>Free-text CW to send. Return = Send.</string></property>
+             </widget>
+            </item>
+            <item><widget class="QPushButton" name="pb_cw_send"><property name="text"><string>Send</string></property></widget></item>
+            <item><widget class="QPushButton" name="pb_cw_stop"><property name="text"><string>Stop</string></property></widget></item>
+            <item><widget class="QPushButton" name="pb_cw_edit_macros"><property name="text"><string>Edit Macros...</string></property><property name="toolTip"><string>Open macro editor</string></property></widget></item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="cw_macro_grid">
+            <property name="horizontalSpacing"><number>4</number></property>
+            <property name="verticalSpacing"><number>2</number></property>
+            <item row="0" column="0"><widget class="QLineEdit" name="le_cw_macro1"><property name="text"><string>CQ CQ CQ DE MYCALL MYCALL MYCALL K</string></property><property name="toolTip"><string>Macro 1 text — click Tx1 to send</string></property></widget></item>
+            <item row="0" column="1"><widget class="QPushButton" name="pb_cw_tx1"><property name="text"><string>Tx 1</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+            <item row="1" column="0"><widget class="QLineEdit" name="le_cw_macro2"><property name="text"><string>R R R</string></property><property name="toolTip"><string>Macro 2 text — click Tx2 to send</string></property></widget></item>
+            <item row="1" column="1"><widget class="QPushButton" name="pb_cw_tx2"><property name="text"><string>Tx 2</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+            <item row="2" column="0"><widget class="QLineEdit" name="le_cw_macro3"><property name="text"><string>73 TU</string></property><property name="toolTip"><string>Macro 3 text — click Tx3 to send</string></property></widget></item>
+            <item row="2" column="1"><widget class="QPushButton" name="pb_cw_tx3"><property name="text"><string>Tx 3</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+            <item row="3" column="0"><widget class="QLineEdit" name="le_cw_macro4"><property name="text"><string>QRZ?</string></property><property name="toolTip"><string>Macro 4 text — click Tx4 to send</string></property></widget></item>
+            <item row="3" column="1"><widget class="QPushButton" name="pb_cw_tx4"><property name="text"><string>Tx 4</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+            <item row="4" column="0"><widget class="QLineEdit" name="le_cw_macro5"><property name="text"><string>AGN?</string></property><property name="toolTip"><string>Macro 5 text — click Tx5 to send</string></property></widget></item>
+            <item row="4" column="1"><widget class="QPushButton" name="pb_cw_tx5"><property name="text"><string>Tx 5</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+            <item row="5" column="0"><widget class="QLineEdit" name="le_cw_macro6"><property name="text"><string>RST 599</string></property><property name="toolTip"><string>Macro 6 text — click Tx6 to send</string></property></widget></item>
+            <item row="5" column="1"><widget class="QPushButton" name="pb_cw_tx6"><property name="text"><string>Tx 6</string></property><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="maximumSize"><size><width>60</width><height>16777215</height></size></property></widget></item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="lbl_cw_status">
+            <property name="text"><string>CW: Ready</string></property>
+            <property name="styleSheet"><string notr="true">QLabel { padding: 2px 6px; background-color: #e8f4e8; border: 1px solid #a0c0a0; }</string></property>
+            <property name="toolTip"><string>CW keyer status feedback</string></property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="cw_sked_group">
+         <property name="title"><string>Sked &amp; Doppler</string></property>
+         <layout class="QVBoxLayout" name="cw_sked_vlayout">
+          <item>
+           <layout class="QHBoxLayout" name="cw_sked_row1">
+            <item>
+             <widget class="QLabel" name="lbl_cw_sked">
+              <property name="text"><string>Sked Freq (MHz):</string></property>
+              <property name="font"><font><pointsize>12</pointsize><bold>true</bold></font></property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="sb_cw_sked_mhz">
+              <property name="minimum"><double>0.1</double></property>
+              <property name="maximum"><double>50000.0</double></property>
+              <property name="decimals"><number>6</number></property>
+              <property name="singleStep"><double>0.000100</double></property>
+              <property name="toolTip"><string>Sked frequency in MHz. Full editable, 1 Hz resolution. Mirrors Astro dialog.</string></property>
+              <property name="minimumSize"><size><width>220</width><height>36</height></size></property>
+              <property name="font"><font><pointsize>14</pointsize><bold>true</bold></font></property>
+              <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+              <property name="readOnly"><bool>false</bool></property>
+              <property name="keyboardTracking"><bool>false</bool></property>
+             </widget>
+            </item>
+            <item><widget class="QCheckBox" name="cb_cw_lock_sked"><property name="text"><string>Lock Sked</string></property></widget></item>
+            <item><widget class="QCheckBox" name="cb_cw_doppler"><property name="text"><string>Doppler Tracking</string></property></widget></item>
+            <item>
+             <spacer name="cw_sked_spacer">
+              <property name="orientation"><enum>Qt::Horizontal</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>20</width><height>10</height></size></property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="cw_doppler_grid">
+            <item row="0" column="0"><widget class="QRadioButton" name="rb_cw_full_track"><property name="text"><string>Full Doppler to DX Grid</string></property></widget></item>
+            <item row="0" column="1"><widget class="QRadioButton" name="rb_cw_own_echo"><property name="text"><string>Constant freq on own echoes</string></property></widget></item>
+            <item row="1" column="0"><widget class="QRadioButton" name="rb_cw_const_moon"><property name="text"><string>Constant freq on moon</string></property></widget></item>
+            <item row="1" column="1"><widget class="QRadioButton" name="rb_cw_on_dx_echo"><property name="text"><string>Constant freq on DX echoes</string></property></widget></item>
+            <item row="2" column="0"><widget class="QRadioButton" name="rb_cw_call_dx"><property name="text"><string>Call DX</string></property></widget></item>
+            <item row="2" column="1"><widget class="QRadioButton" name="rb_cw_no_doppler"><property name="text"><string>No Doppler</string></property><property name="checked"><bool>true</bool></property></widget></item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
     <item>

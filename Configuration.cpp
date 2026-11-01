@@ -736,6 +736,10 @@ private:
   Q_SIGNAL void set_transceiver (Transceiver::TransceiverState const&,
                                  unsigned sequence_number) const;
   Q_SIGNAL void stop_transceiver () const;
+  Q_SIGNAL void send_morse_transceiver (QString const& text) const;
+  Q_SIGNAL void stop_morse_transceiver () const;
+  Q_SIGNAL void set_wpm_transceiver (int wpm) const;
+  Q_SIGNAL void set_poll_interval_transceiver (int ms) const;
 
   Configuration * const self_;	// back pointer to public interface
 
@@ -789,6 +793,8 @@ private:
   FrequencyDelta current_tx_offset_;
   QList<TransverterProfile> transverter_profiles_;
   int active_transverter_band_;   // -1 = None
+  int cw_tx_offset_hz_ {0};       // CW TX frequency offset (CW mode only)
+  bool soundcard_cw_tx_active_ {false}; // suppresses data_mode_CW→RIG_MODE_CW enforcement
   QString ui_language_;
   Transceiver::MODE q65_echo_rig_mode_;
 
@@ -1093,6 +1099,26 @@ void Configuration::set_active_transverter_band (int index)
   Q_EMIT active_transverter_band_changed (index);
 }
 
+int Configuration::cw_tx_offset_hz () const
+{
+  return m_->cw_tx_offset_hz_;
+}
+
+void Configuration::set_cw_tx_offset_hz (int hz)
+{
+  m_->cw_tx_offset_hz_ = hz;
+}
+
+bool Configuration::soundcard_cw_tx_active () const
+{
+  return m_->soundcard_cw_tx_active_;
+}
+
+void Configuration::set_soundcard_cw_tx_active (bool active)
+{
+  m_->soundcard_cw_tx_active_ = active;
+}
+
 QAudioDeviceInfo const& Configuration::audio_input_device () const {return m_->audio_input_device_;}
 AudioDevice::Channel Configuration::audio_input_channel () const {return m_->audio_input_channel_;}
 QAudioDeviceInfo const& Configuration::audio_output_device () const {return m_->audio_output_device_;}
@@ -1340,6 +1366,30 @@ void Configuration::transceiver_tune (bool on)
 {
   LOG_TRACE (on << ' ' << m_->cached_rig_state_);
   m_->transceiver_tune (on);
+}
+
+void Configuration::transceiver_send_morse (QString const& text)
+{
+  LOG_TRACE ("send_morse: " << text);
+  Q_EMIT m_->send_morse_transceiver (text);
+}
+
+void Configuration::transceiver_stop_morse ()
+{
+  LOG_TRACE ("stop_morse");
+  Q_EMIT m_->stop_morse_transceiver ();
+}
+
+void Configuration::transceiver_set_wpm (int wpm)
+{
+  LOG_TRACE ("set_wpm: " << wpm);
+  Q_EMIT m_->set_wpm_transceiver (wpm);
+}
+
+void Configuration::transceiver_set_poll_interval (int ms)
+{
+  LOG_TRACE ("set_poll_interval: " << ms);
+  Q_EMIT m_->set_poll_interval_transceiver (ms);
 }
 
 void Configuration::transceiver_period (double period, bool force)
@@ -5231,6 +5281,21 @@ bool Configuration::impl::open_rig (bool force)
           rig_connections_ << connect (this, &Configuration::impl::set_transceiver,
                                        rig.get (), &Transceiver::set);
 
+          rig_connections_ << connect (this, &Configuration::impl::send_morse_transceiver,
+                                       rig.get (), &Transceiver::send_morse);
+          rig_connections_ << connect (this, &Configuration::impl::stop_morse_transceiver,
+                                       rig.get (), &Transceiver::stop_morse);
+          rig_connections_ << connect (this, &Configuration::impl::set_wpm_transceiver,
+                                       rig.get (), &Transceiver::set_wpm);
+          rig_connections_ << connect (this, &Configuration::impl::set_poll_interval_transceiver,
+                                       rig.get (), &Transceiver::set_poll_interval);
+
+          // Forward CW keyer status feedback up to mainwindow
+          rig_connections_ << connect (rig.get (), &Transceiver::cw_status,
+                                       self_, &Configuration::cw_status);
+          rig_connections_ << connect (rig.get (), &Transceiver::cw_keyer_available,
+                                       self_, &Configuration::cw_keyer_available);
+
           // hook up Transceiver signals to Configuration signals
           //
           // these connections cross the thread boundary
@@ -5387,12 +5452,21 @@ void Configuration::impl::set_cached_mode ()
   MODE mode {Transceiver::UNK};
   // override cache mode with what we want to enforce which includes
   // UNK (unknown) where we want to leave the rig mode untouched
-  switch (data_mode_)
+  if (soundcard_cw_tx_active_)
     {
-    case data_mode_USB: mode = Transceiver::USB; break;
-    case data_mode_data: mode = q65_echo_rig_mode_; break;
-    case data_mode_CW: mode = Transceiver::CW; break;
-    default: break;
+      // Soundcard CW TX in progress: rig has already been pushed to USB.
+      // Do NOT force it back to CW on each subsequent PTT/frequency call.
+      mode = Transceiver::USB;
+    }
+  else
+    {
+      switch (data_mode_)
+        {
+        case data_mode_USB: mode = Transceiver::USB; break;
+        case data_mode_data: mode = q65_echo_rig_mode_; break;
+        case data_mode_CW: mode = Transceiver::CW; break;
+        default: break;
+        }
     }
 
   cached_rig_state_.mode (mode);
@@ -5437,7 +5511,9 @@ void Configuration::impl::transceiver_tx_frequency (Frequency f)
           // apply but by simply picking an offset when the Rx
           // frequency is set and sticking to it we get sane behaviour
           current_tx_offset_ = stations_.offset (f);
-          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ - self_->transverter_tx_offset ()));
+          Radio::FrequencyDelta const cw_shift
+            = (data_mode_ == data_mode_CW) ? static_cast<Radio::FrequencyDelta> (cw_tx_offset_hz_) : 0;
+          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ - self_->transverter_tx_offset () + cw_shift));
         }
 
       // qDebug () << "Configuration::impl::transceiver_tx_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;

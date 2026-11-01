@@ -227,6 +227,15 @@ public:
   Q_SLOT virtual void start (unsigned sequence_number) noexcept = 0;
   Q_SLOT virtual void stop () noexcept = 0;
 
+  // CW keyer and WPM control. Fire-and-forget — not bundled in
+  // TransceiverState because the keyer is transient.
+  Q_SLOT virtual void send_morse (QString const& text) noexcept {Q_UNUSED (text);}
+  Q_SLOT virtual void stop_morse () noexcept {}
+  Q_SLOT virtual void set_wpm (int wpm) noexcept {Q_UNUSED (wpm);}
+
+  // Adjust polling interval (ms). Only PollingTransceiver subclasses honor this.
+  Q_SLOT virtual void set_poll_interval (int ms) noexcept {Q_UNUSED (ms);}
+
   //
   // asynchronous status updates
   //
@@ -249,6 +258,12 @@ public:
                         unsigned sequence_number) const;
   // something went wrong - not recoverable, start new instance
   Q_SIGNAL void failure (QString const& reason) const;
+
+  // CW keyer status feedback. kind: 0=Info, 1=OK, 2=Warning, 3=Error
+  Q_SIGNAL void cw_status (QString const& message, int kind) const;
+
+  // Fires after rig is opened. true = backend exposes rig_send_morse.
+  Q_SIGNAL void cw_keyer_available (bool has_cat_keyer) const;
 
   // Ready to be destroyed.
   Q_SIGNAL void finished () const;

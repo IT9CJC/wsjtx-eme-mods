@@ -5,6 +5,9 @@
 #include <QAudioOutput>
 #include <QSound>
 #include <QCoreApplication>
+#include <QDialogButtonBox>
+
+#include "Audio/CwToneGenerator.hpp"
 #include <cinttypes>
 #include <cstring>
 #include <cmath>
@@ -560,6 +563,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   setUnifiedTitleAndToolBarOnMac (true);
   createStatusBar();
   add_child_to_event_filter (this);
+  setupCWPanel();
   ui->dxGridEntry->setValidator (new MaidenheadLocatorValidator {this});
   ui->dxCallEntry->setValidator (new CallsignValidator {this});
   ui->sbTR->values ({5, 10, 15, 30, 60, 120, 300, 900, 1800});
@@ -606,6 +610,16 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // connect (m_soundOutput, &SoundOutput::status, this, &MainWindow::showStatusMessage);
   connect (this, &MainWindow::outAttenuationChanged, m_soundOutput, &SoundOutput::setAttenuation);
   connect (&m_audioThread, &QThread::finished, m_soundOutput, &QObject::deleteLater);
+
+  // Soundcard CW path: push a CwToneGenerator through the same SoundOutput
+  // that the Modulator uses — so CW audio lands on the configured TX device.
+  connect (this, &MainWindow::restartCWAudio, m_soundOutput, &SoundOutput::restart);
+  connect (m_soundOutput, &SoundOutput::status, this, [this] (QString const& st) {
+    if (!m_cwAudioActive) return;
+    if (st == QLatin1String ("Idle") || st == QLatin1String ("Stopped")) {
+      finishCWSoundcard ();
+    }
+  });
 
   // hook up Modulator slots and disposal
   connect (this, &MainWindow::transmitFrequency, m_modulator, &Modulator::setFrequency);
@@ -4542,6 +4556,459 @@ void MainWindow::setup_status_bar (bool vhf)
   }
 }
 
+void MainWindow::setupCWPanel ()
+{
+  QString const mycall = m_config.my_callsign ().isEmpty () ? QString ("MYCALL") : m_config.my_callsign ();
+  QString const defaultCQ = QString ("CQ CQ CQ DE %1 %1 %1 K").arg (mycall);
+
+  // Factory defaults
+  m_cwMacroText = QStringList {defaultCQ, "R R R", "73 TU", "QRZ?", "AGN?", "RST 599"};
+
+  loadCWSettings ();
+  m_config.set_cw_tx_offset_hz (m_cwTxOffsetHz);
+
+  // Apply settings to widgets
+  ui->sb_cw_wpm->setValue (m_cwWpm);
+  ui->sb_cw_tx_offset->setValue (m_cwTxOffsetHz);
+  QList<QLineEdit*> macroEdits {
+    ui->le_cw_macro1, ui->le_cw_macro2, ui->le_cw_macro3,
+    ui->le_cw_macro4, ui->le_cw_macro5, ui->le_cw_macro6};
+  QList<QPushButton*> txButtons {
+    ui->pb_cw_tx1, ui->pb_cw_tx2, ui->pb_cw_tx3,
+    ui->pb_cw_tx4, ui->pb_cw_tx5, ui->pb_cw_tx6};
+  for (int i = 0; i < macroEdits.size (); ++i) {
+    macroEdits[i]->setText (m_cwMacroText[i]);
+  }
+
+  // Wire signals
+  connect (ui->sb_cw_wpm, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWWpmChanged);
+  connect (ui->sb_cw_tx_offset, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWTxOffsetChanged);
+  connect (ui->sb_cw_sked_mhz, QOverload<double>::of (&QDoubleSpinBox::valueChanged), this, &MainWindow::onCWSkedMhzChanged);
+  connect (ui->cb_cw_lock_sked, &QCheckBox::toggled, this, &MainWindow::onCWLockSkedChanged);
+  connect (ui->cb_cw_doppler, &QCheckBox::toggled, this, &MainWindow::onCWDopplerEnableChanged);
+  connect (ui->pb_cw_send, &QPushButton::clicked, this, &MainWindow::onCWSendClicked);
+  connect (ui->pb_cw_stop, &QPushButton::clicked, this, &MainWindow::onCWStopClicked);
+  connect (ui->le_cw_message, &QLineEdit::returnPressed, this, &MainWindow::onCWSendClicked);
+  connect (ui->pb_cw_ptt, &QPushButton::toggled, this, &MainWindow::onCWPTTToggled);
+  connect (ui->pb_cw_edit_macros, &QPushButton::clicked, this, &MainWindow::onCWEditMacrosClicked);
+
+  for (int i = 0; i < txButtons.size (); ++i) {
+    QPushButton * btn = txButtons[i];
+    connect (btn, &QPushButton::clicked, this, [this, i] { sendCWMacro (i); });
+  }
+  for (int i = 0; i < macroEdits.size (); ++i) {
+    QLineEdit * ed = macroEdits[i];
+    connect (ed, &QLineEdit::editingFinished, this, [this, i, ed] {
+      m_cwMacroText[i] = ed->text ();
+      saveCWSettings ();
+    });
+    connect (ed, &QLineEdit::returnPressed, this, [this, i] { sendCWMacro (i); });
+  }
+
+  // Doppler mode radios
+  connect (ui->rb_cw_full_track, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+  connect (ui->rb_cw_own_echo,   &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+  connect (ui->rb_cw_const_moon, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+  connect (ui->rb_cw_on_dx_echo, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+  connect (ui->rb_cw_call_dx,    &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+  connect (ui->rb_cw_no_doppler, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
+
+  // CW status feedback from transceiver
+  connect (&m_config, &Configuration::cw_status, this, &MainWindow::onCWStatus);
+  connect (&m_config, &Configuration::cw_keyer_available, this, &MainWindow::onCWKeyerAvailable);
+
+  setCWStatus (CWStatusInfo, "Ready");
+}
+
+void MainWindow::onCWKeyerAvailable (bool avail)
+{
+  m_cwKeyerAvailable = avail;
+  setCWStatus (CWStatusInfo,
+               avail
+               ? QString ("Ready — CAT keyer available")
+               : QString ("Ready — soundcard CW (rig switches to USB for Tx)"));
+}
+
+void MainWindow::loadCWSettings ()
+{
+  m_settings->beginGroup ("CW");
+  m_cwWpm = m_settings->value ("WPM", 25).toInt ();
+  m_cwTxOffsetHz = m_settings->value ("TxOffsetHz", 0).toInt ();
+  for (int i = 0; i < 6; ++i) {
+    QString const defTxt = m_cwMacroText.value (i);
+    m_cwMacroText[i] = m_settings->value (QString ("Macro%1Text").arg (i + 1), defTxt).toString ();
+  }
+  m_settings->endGroup ();
+}
+
+void MainWindow::saveCWSettings ()
+{
+  m_settings->beginGroup ("CW");
+  m_settings->setValue ("WPM", m_cwWpm);
+  m_settings->setValue ("TxOffsetHz", m_cwTxOffsetHz);
+  for (int i = 0; i < 6; ++i) {
+    m_settings->setValue (QString ("Macro%1Text").arg (i + 1), m_cwMacroText[i]);
+  }
+  m_settings->endGroup ();
+}
+
+void MainWindow::sendCWMacro (int idx)
+{
+  if (idx < 0 || idx >= 6) return;
+  // Read live text from the UI (user may have edited inline)
+  QList<QLineEdit*> macroEdits {
+    ui->le_cw_macro1, ui->le_cw_macro2, ui->le_cw_macro3,
+    ui->le_cw_macro4, ui->le_cw_macro5, ui->le_cw_macro6};
+  QString const text = macroEdits[idx]->text ();
+  if (text.isEmpty ()) return;
+  m_cwMacroText[idx] = text;
+  saveCWSettings ();
+  sendCWText (text);
+}
+
+void MainWindow::onCWSendClicked ()
+{
+  QString text = ui->le_cw_message->text ();
+  if (text.isEmpty ()) return;
+  sendCWText (text);
+}
+
+void MainWindow::sendCWText (QString const& text)
+{
+  setCWStatus (CWStatusInfo, QString ("Sending: %1").arg (text));
+  if (m_cwKeyerAvailable) {
+    m_config.transceiver_set_wpm (m_cwWpm);
+    m_config.transceiver_send_morse (text);
+  } else {
+    sendCWViaSoundcard (text);
+  }
+}
+
+void MainWindow::sendCWViaSoundcard (QString const& text)
+{
+  if (m_cwAudioActive) {
+    setCWStatus (CWStatusWarning, "Still sending previous message");
+    return;
+  }
+  if (!m_config.transceiver_online ()) {
+    setCWStatus (CWStatusWarning, "Rig offline — connect in Settings > Radio");
+    return;
+  }
+
+  // SoundOutput uses 48kHz 16-bit mono/stereo PCM. Match that so our
+  // samples feed through unchanged.
+  QAudioFormat fmt;
+  fmt.setSampleRate (48000);
+  fmt.setSampleSize (16);
+  fmt.setChannelCount (1);
+  fmt.setCodec ("audio/pcm");
+  fmt.setByteOrder (QAudioFormat::LittleEndian);
+  fmt.setSampleType (QAudioFormat::SignedInt);
+
+  QAudioDeviceInfo const& dev = m_config.audio_output_device ();
+  if (dev.isNull ()) {
+    setCWStatus (CWStatusError, "No audio output device configured in Settings > Audio");
+    return;
+  }
+  // Show which device we are using so the user can verify routing
+  setCWStatus (CWStatusInfo, QString ("Audio device: %1").arg (dev.deviceName ()));
+
+  if (m_cwTone) {
+    m_cwTone->deleteLater ();
+    m_cwTone = nullptr;
+  }
+  m_cwTone = new CwToneGenerator;         // no parent, we'll move to audio thread
+  int const toneHz = 700;
+  if (!m_cwTone->generate (text, m_cwWpm, toneHz, fmt)) {
+    setCWStatus (CWStatusError, "Could not build CW tone (empty or unsupported chars)");
+    m_cwTone->deleteLater ();
+    m_cwTone = nullptr;
+    return;
+  }
+  m_cwTone->moveToThread (&m_audioThread);
+
+  // Remember current rig mode so we can restore after TX
+  m_cwSavedMode = m_rigState.mode ();
+
+  // Switch rig to USB, PTT on, play tones through SoundOutput, PTT off,
+  // restore CW mode. The 250 ms / 120 ms waits let the rig settle.
+  // The soundcard_cw_tx_active flag prevents set_cached_mode() from
+  // re-forcing RIG_MODE_CW on subsequent PTT/frequency commands.
+  m_config.set_soundcard_cw_tx_active (true);
+  m_config.transceiver_mode (Transceiver::USB);
+  setCWStatus (CWStatusInfo, QString ("Rig → USB, keying: %1").arg (text));
+  m_cwAudioActive = true;
+
+  QTimer::singleShot (250, this, [this] {
+    m_config.transceiver_ptt (true);
+    QTimer::singleShot (120, this, [this] {
+      Q_EMIT restartCWAudio (m_cwTone);
+    });
+  });
+}
+
+void MainWindow::finishCWSoundcard ()
+{
+  if (!m_cwAudioActive) return;
+  m_cwAudioActive = false;
+  // PTT off FIRST (while bypass still active so set_cached_mode doesn't
+  // flip back to CW mid-TX). Then clear the bypass and let the next
+  // transceiver_mode call push the rig back to CW.
+  m_config.transceiver_ptt (false);
+  QTimer::singleShot (120, this, [this] {
+    m_config.set_soundcard_cw_tx_active (false);
+    if (m_cwSavedMode != Transceiver::UNK) {
+      m_config.transceiver_mode (m_cwSavedMode);
+    } else {
+      m_config.transceiver_mode (Transceiver::CW);
+    }
+    setCWStatus (CWStatusOK, "Sent (soundcard CW), rig restored to CW");
+  });
+}
+
+void MainWindow::onCWStopClicked ()
+{
+  setCWStatus (CWStatusInfo, "Stop requested");
+  if (m_cwAudioActive) {
+    // SoundOutput::stop will emit status "Stopped" which triggers finishCWSoundcard
+    QMetaObject::invokeMethod (m_soundOutput, "stop", Qt::QueuedConnection);
+    return;
+  }
+  m_config.transceiver_stop_morse ();
+}
+
+void MainWindow::onCWEditMacrosClicked ()
+{
+  // Build a modal dialog with 6 editable rows
+  QDialog dlg (this);
+  dlg.setWindowTitle (tr ("Edit CW macros"));
+  QVBoxLayout * v = new QVBoxLayout (&dlg);
+  v->addWidget (new QLabel (tr ("Edit the 6 CW macro messages:"), &dlg));
+  QList<QLineEdit*> edits;
+  for (int i = 0; i < 6; ++i) {
+    QHBoxLayout * row = new QHBoxLayout;
+    row->addWidget (new QLabel (QString ("Tx %1:").arg (i + 1), &dlg));
+    QLineEdit * ed = new QLineEdit (m_cwMacroText[i], &dlg);
+    ed->setMinimumWidth (420);
+    edits.push_back (ed);
+    row->addWidget (ed);
+    v->addLayout (row);
+  }
+  QDialogButtonBox * bb = new QDialogButtonBox (QDialogButtonBox::Save | QDialogButtonBox::Cancel, &dlg);
+  connect (bb, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+  connect (bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+  v->addWidget (bb);
+  if (dlg.exec () != QDialog::Accepted) return;
+  QList<QLineEdit*> macroEdits {
+    ui->le_cw_macro1, ui->le_cw_macro2, ui->le_cw_macro3,
+    ui->le_cw_macro4, ui->le_cw_macro5, ui->le_cw_macro6};
+  for (int i = 0; i < 6; ++i) {
+    m_cwMacroText[i] = edits[i]->text ();
+    macroEdits[i]->setText (m_cwMacroText[i]);
+  }
+  saveCWSettings ();
+}
+
+void MainWindow::setCWStatus (CWStatusKind kind, QString const& text)
+{
+  QString color;
+  QString bg;
+  QString border;
+  switch (kind) {
+    case CWStatusInfo:    color = "#333"; bg = "#e8f4e8"; border = "#a0c0a0"; break;
+    case CWStatusOK:      color = "#fff"; bg = "#00802b"; border = "#004f1a"; break;
+    case CWStatusWarning: color = "#000"; bg = "#ffd54d"; border = "#aa8300"; break;
+    case CWStatusError:   color = "#fff"; bg = "#c62828"; border = "#8b1a1a"; break;
+  }
+  ui->lbl_cw_status->setText (QString ("CW: %1").arg (text));
+  ui->lbl_cw_status->setStyleSheet (QString (
+    "QLabel { padding: 2px 6px; color: %1; background-color: %2; border: 1px solid %3; }")
+    .arg (color).arg (bg).arg (border));
+}
+
+void MainWindow::onCWStatus (QString const& text, int kind)
+{
+  setCWStatus (static_cast<CWStatusKind> (kind), text);
+}
+
+// Edge-triggered: called when the rig PTT state changes AND we're in CW mode.
+// Applies the Doppler correction for the new direction (TX or RX) immediately,
+// and starts/stops a periodic re-run so corrections track moon motion during TX.
+void MainWindow::onCWRigPTTChanged (bool rigPtt)
+{
+  if (m_config.data_mode () != Configuration::data_mode_CW) return;
+  // Visual feedback
+  setCWStatus (rigPtt ? CWStatusOK : CWStatusInfo,
+               rigPtt ? QString ("Rig TX — Doppler applied") : QString ("Rig RX"));
+  // Also update the bottom-left status bar label so it reflects the rig's
+  // actual TX/RX state (WSJT's internal m_transmitting is false in CW).
+  if (rigPtt) {
+    tx_status_label.setStyleSheet ("QLabel{color: #000000; background-color: #ff6666}");
+    tx_status_label.setText (" Tx (CW) ");
+  } else {
+    tx_status_label.setStyleSheet ("QLabel{color: #000000; background-color: #00ff00}");
+    tx_status_label.setText (tr ("Receiving"));
+  }
+  cwDopplerUpdate (rigPtt);
+  if (rigPtt) {
+    if (!m_cwDopplerTimer) {
+      m_cwDopplerTimer = new QTimer (this);
+      m_cwDopplerTimer->setInterval (1000);  // 1 Hz refresh while TX held
+      connect (m_cwDopplerTimer, &QTimer::timeout, this, [this] {
+        if (m_config.data_mode () == Configuration::data_mode_CW && m_cwLastRigPTT) {
+          cwDopplerUpdate (true);
+        }
+      });
+    }
+    m_cwDopplerTimer->start ();
+  } else {
+    if (m_cwDopplerTimer) m_cwDopplerTimer->stop ();
+  }
+}
+
+// Compute Doppler correction for CW mode with explicit tx/rx flag.
+// Mirrors the key parts of astroUpdate but gates on rig PTT (not m_transmitting)
+// and bypasses the monitoring/split-mode checks since CW uses external keying.
+void MainWindow::cwDopplerUpdate (bool tx_active)
+{
+  if (!m_astroWidget) return;
+  if (!m_astroWidget->doppler_tracking ()) {
+    // Doppler disabled — still make sure rig is on dial frequency
+    m_astroCorrection = {};
+    setRig ();
+    return;
+  }
+
+  auto correction = m_astroWidget->astroUpdate (
+      QDateTime::currentDateTimeUtc (),
+      m_config.my_grid (), m_hisGrid, m_freqNominal,
+      false,                                        // not Echo mode
+      tx_active,                                    // bTx — our PTT state
+      m_auto,
+      !m_config.tx_QSY_allowed (),
+      m_TRperiod);
+
+  // Apply rig resolution rounding (same as astroUpdate)
+  int const r = m_config.transceiver_resolution ();
+  if (r > 2)       { correction.rx = (correction.rx + 50)/100*100; correction.tx = (correction.tx + 50)/100*100; }
+  else if (r > 1)  { correction.rx = (correction.rx + 10)/20*20;   correction.tx = (correction.tx + 10)/20*20; }
+  else if (r > 0)  { correction.rx = (correction.rx + 5)/10*10;    correction.tx = (correction.tx + 5)/10*10; }
+  else if (r < -2) { correction.rx = correction.rx/100*100;        correction.tx = correction.tx/100*100; }
+  else if (r < -1) { correction.rx = correction.rx/20*20;          correction.tx = correction.tx/20*20; }
+  else if (r < 0)  { correction.rx = correction.rx/10*10;          correction.tx = correction.tx/10*10; }
+
+  m_astroCorrection = correction;
+  if (m_reverse_Doppler) m_astroCorrection.reverse ();
+
+  // Apply correction to rig — bypass the monitoring/transmitting gate.
+  // In CW mode WSJT is not driving the TX; we just push the frequency.
+  if (m_config.transceiver_online ()) {
+    if (tx_active && m_config.split_mode ()) {
+      m_config.transceiver_tx_frequency (m_freqTxNominal + m_astroCorrection.tx);
+    } else {
+      m_config.transceiver_frequency (m_freqNominal + m_astroCorrection.rx);
+    }
+  }
+  displayDialFrequency ();
+}
+
+void MainWindow::onCWPTTToggled (bool checked)
+{
+  m_config.transceiver_ptt (checked);
+}
+
+void MainWindow::onCWWpmChanged (int wpm)
+{
+  m_cwWpm = wpm;
+  m_config.transceiver_set_wpm (wpm);
+  saveCWSettings ();
+}
+
+void MainWindow::onCWTxOffsetChanged (int hz)
+{
+  m_cwTxOffsetHz = hz;
+  m_config.set_cw_tx_offset_hz (hz);
+  saveCWSettings ();
+  // Re-apply TX frequency so offset takes effect immediately
+  if (m_config.data_mode () == Configuration::data_mode_CW) {
+    setRig ();
+  }
+}
+
+void MainWindow::onCWSkedMhzChanged (double mhz)
+{
+  if (m_cwPanelSyncing) return;
+  if (m_astroWidget) {
+    m_astroWidget->applySkedFreqMHz (mhz);
+  } else {
+    skedFreq (mhz);
+  }
+}
+
+void MainWindow::onCWLockSkedChanged (bool locked)
+{
+  if (m_cwPanelSyncing) return;
+  if (m_astroWidget) m_astroWidget->setLockSkedFreq (locked);
+  else m_settings->setValue ("Astro/LockSkedFreq", locked);
+}
+
+void MainWindow::onCWDopplerEnableChanged (bool enabled)
+{
+  if (m_cwPanelSyncing) return;
+  if (m_astroWidget) m_astroWidget->setDopplerTracking (enabled);
+  else m_settings->setValue ("Astro/DopplerTracking", enabled);
+}
+
+void MainWindow::onCWDopplerModeChanged ()
+{
+  if (m_cwPanelSyncing) return;
+  int method = 0;
+  if      (ui->rb_cw_full_track->isChecked ()) method = 1;
+  else if (ui->rb_cw_own_echo  ->isChecked ()) method = 3;
+  else if (ui->rb_cw_const_moon->isChecked ()) method = 2;
+  else if (ui->rb_cw_on_dx_echo->isChecked ()) method = 4;
+  else if (ui->rb_cw_call_dx   ->isChecked ()) method = 5;
+  else                                         method = 0;
+  if (m_astroWidget) m_astroWidget->setDopplerMethod (method);
+  else m_settings->setValue ("Astro/DopplerMethod", method);
+}
+
+void MainWindow::syncCWPanelFromAstro ()
+{
+  m_cwPanelSyncing = true;
+  int method = 0;
+  bool dopplerOn = false;
+  bool lock = false;
+  double skedMHz = m_skedFreq;
+  if (m_astroWidget) {
+    method = m_astroWidget->DopplerMethod ();
+    dopplerOn = m_astroWidget->doppler_tracking () || method != 0;
+    // doppler_tracking() returns the AND of checkbox+method, so read the checkbox effect differently
+    dopplerOn = (method != 0);
+    // but we also want the cbDopplerTracking state — not accessible directly; use settings
+    QVariant v = m_settings->value ("Astro/DopplerTracking");
+    if (v.isValid ()) dopplerOn = v.toBool ();
+    lock = m_astroWidget->lockSkedFreq ();
+    skedMHz = m_astroWidget->skedFreqMHz ();
+  } else {
+    method    = m_settings->value ("Astro/DopplerMethod", 0).toInt ();
+    dopplerOn = m_settings->value ("Astro/DopplerTracking", false).toBool ();
+    lock      = m_settings->value ("Astro/LockSkedFreq", false).toBool ();
+  }
+  switch (method) {
+    case 1:  ui->rb_cw_full_track->setChecked (true); break;
+    case 2:  ui->rb_cw_const_moon->setChecked (true); break;
+    case 3:  ui->rb_cw_own_echo  ->setChecked (true); break;
+    case 4:  ui->rb_cw_on_dx_echo->setChecked (true); break;
+    case 5:  ui->rb_cw_call_dx   ->setChecked (true); break;
+    default: ui->rb_cw_no_doppler->setChecked (true); break;
+  }
+  ui->cb_cw_doppler  ->setChecked (dopplerOn);
+  ui->cb_cw_lock_sked->setChecked (lock);
+  ui->sb_cw_sked_mhz->setValue (skedMHz);
+  m_cwPanelSyncing = false;
+}
+
 void MainWindow::updateCWModeUI (bool cw_mode)
 {
   ui->actionCW->setChecked (cw_mode);
@@ -4558,8 +5025,26 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->autoButton->setVisible (!cw_mode);
   ui->monitorButton->setVisible (!cw_mode);
   ui->tuneButton->setVisible (!cw_mode);
+  ui->stopButton->setVisible (!cw_mode);
+  ui->stopTxButton->setVisible (!cw_mode);
+  ui->EraseButton->setVisible (!cw_mode);
+  ui->ClrAvgButton->setVisible (!cw_mode);
+  ui->outAttenuation->setVisible (!cw_mode);
+  // ui->label (PWR reading) stays visible — shows power during CW TX
+  mode_label.setVisible (!cw_mode);
   ui->controls_stack_widget->setVisible (!cw_mode);
   ui->decodes_splitter->setVisible (!cw_mode);
+  ui->cw_panel_widget->setVisible (cw_mode);
+  if (cw_mode) {
+    syncCWPanelFromAstro ();
+    // Fast polling (100 ms) so we catch external paddle PTT edges quickly
+    m_config.transceiver_set_poll_interval (100);
+  } else {
+    // Restore default polling cadence
+    m_config.transceiver_set_poll_interval (500);
+    if (m_cwDopplerTimer) m_cwDopplerTimer->stop ();
+    m_cwLastRigPTT = false;
+  }
 
   if (cw_mode && m_auto) {
     auto_tx_mode (false);
@@ -4960,6 +5445,7 @@ void MainWindow::on_actionAstronomical_data_toggled (bool checked)
           displayDialFrequency ();
         });
       connect (m_astroWidget.data (), &Astro::skedFreq, this, &MainWindow::skedFreq);
+      connect (m_astroWidget.data (), &Astro::astroStateChanged, this, &MainWindow::syncCWPanelFromAstro);
 
       m_astroWidget->showNormal();
       m_astroWidget->raise ();
@@ -10973,6 +11459,10 @@ void MainWindow::displayWidgets(qint64 n)
   ui->sbNB->setVisible(b);
   genStdMsgs (m_rpt, true);
   configActiveStations();
+  // CW mode overrides any digital-mode widget visibility set above
+  if (m_config.data_mode () == Configuration::data_mode_CW) {
+    updateCWModeUI (true);
+  }
 }
 
 void MainWindow::on_actionFST4_triggered()
@@ -12609,6 +13099,15 @@ void MainWindow::setFreq4(int rxFreq, int txFreq)
 void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const& s)
 {
   Transceiver::TransceiverState old_state {m_rigState};
+
+  // CW mode: detect external paddle PTT edge from the rig and drive Doppler
+  if (m_config.data_mode () == Configuration::data_mode_CW) {
+    bool const rigPtt = s.ptt ();
+    if (rigPtt != m_cwLastRigPTT) {
+      m_cwLastRigPTT = rigPtt;
+      onCWRigPTTChanged (rigPtt);
+    }
+  }
   //transmitDisplay (s.ptt ());
   if (s.ptt () // && !m_rigState.ptt ()
       ) { // safe to start audio

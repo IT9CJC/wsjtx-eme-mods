@@ -321,17 +321,15 @@ void Astro::on_rbFullTrack_clicked(bool)
   m_DopplerMethod = 1;
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::on_rbOnDxEcho_clicked(bool)
 {
   m_DopplerMethod = 4;
   check_split ();
-  //if (checked) {
-  //  m_dx_two_way_dop = 2 * (m_dop - (m_dop00/2));
-  //  qDebug () << "Starting Doppler:" << m_dx_two_way_dop;
-  //}
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::on_rbOwnEcho_clicked(bool)
@@ -339,6 +337,7 @@ void Astro::on_rbOwnEcho_clicked(bool)
   m_DopplerMethod = 3;
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::on_rbCallDx_clicked(bool)
@@ -346,6 +345,7 @@ void Astro::on_rbCallDx_clicked(bool)
   m_DopplerMethod = 5;
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::on_rbConstFreqOnMoon_clicked(bool)
@@ -353,6 +353,7 @@ void Astro::on_rbConstFreqOnMoon_clicked(bool)
   m_DopplerMethod = 2;
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::on_rbNoDoppler_clicked(bool)
@@ -364,6 +365,7 @@ void Astro::on_rbNoDoppler_clicked(bool)
   }
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 bool Astro::doppler_tracking () const
@@ -375,6 +377,7 @@ void Astro::on_cbDopplerTracking_toggled(bool)
 {
   check_split ();
   Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
 }
 
 void Astro::nominal_frequency (Frequency rx, Frequency tx)
@@ -442,4 +445,53 @@ void Astro::setSkedFreq(double freqMHz)
   int MHz=m_skedFreq;
   int kHz=qRound(1000*(m_skedFreq - MHz));
   ui_->sbSked_kHz->setValue(kHz);
+}
+
+bool Astro::lockSkedFreq() const
+{
+  return ui_->cbLockSkedFreq->isChecked();
+}
+
+double Astro::skedFreqMHz() const
+{
+  return m_skedFreq;
+}
+
+void Astro::setDopplerMethod(int method)
+{
+  if (method == m_DopplerMethod) return;
+  m_DopplerMethod = method;
+  switch (method)
+    {
+    case 0:  ui_->rbNoDoppler->setChecked (true); break;
+    case 1:  ui_->rbFullTrack->setChecked (true); break;
+    case 2:  ui_->rbConstFreqOnMoon->setChecked (true); break;
+    case 3:  ui_->rbOwnEcho->setChecked (true); break;
+    case 4:  ui_->rbOnDxEcho->setChecked (true); break;
+    case 5:  ui_->rbCallDx->setChecked (true); break;
+    case 10: ui_->rbNoDoppler->setChecked (true); break;
+    }
+  Q_EMIT tracking_update ();
+  Q_EMIT astroStateChanged ();
+}
+
+void Astro::setDopplerTracking(bool enabled)
+{
+  if (ui_->cbDopplerTracking->isChecked () == enabled) return;
+  ui_->cbDopplerTracking->setChecked (enabled);
+  Q_EMIT astroStateChanged ();
+}
+
+void Astro::setLockSkedFreq(bool locked)
+{
+  if (ui_->cbLockSkedFreq->isChecked () == locked) return;
+  ui_->cbLockSkedFreq->setChecked (locked);
+  Q_EMIT astroStateChanged ();
+}
+
+void Astro::applySkedFreqMHz(double freqMHz)
+{
+  setSkedFreq (freqMHz);
+  Q_EMIT skedFreq (freqMHz);
+  Q_EMIT astroStateChanged ();
 }

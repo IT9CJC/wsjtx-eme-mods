@@ -43,6 +43,11 @@ protected:
   // in a non-intrusive manner.
   virtual void do_poll () = 0;
 
+public:
+  void set_poll_interval (int ms) noexcept override;
+
+protected:
+
   void do_post_start () override final;
   void do_post_stop () override final;
   void do_post_frequency (Frequency, MODE) override final;

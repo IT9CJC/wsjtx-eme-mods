@@ -61,7 +61,7 @@ if (POLICY CMP0075)
 endif ()
 
 project (wsjtx
-  VERSION 3.0.9.0
+  VERSION 3.1.0.0
   LANGUAGES C CXX Fortran
   )
 set (PROJECT_DESCRIPTION "WSJT-X: Digital Modes for Weak Signal Communications in Amateur Radio")
@@ -304,6 +304,7 @@ set (wsjt_qt_CXXSRCS
 
 set (wsjt_qtmm_CXXSRCS
   Audio/BWFFile.cpp
+  Audio/CwToneGenerator.cpp
   )
 
 set (jt9_FSRCS

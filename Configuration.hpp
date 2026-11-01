@@ -105,6 +105,16 @@ public:
   int active_transverter_band () const;            // -1 = None
   void set_active_transverter_band (int index);    // -1 = None
 
+  // CW TX offset — applied to rig TX frequency in CW mode only.
+  int cw_tx_offset_hz () const;
+  void set_cw_tx_offset_hz (int hz);
+
+  // When soundcard CW is actively transmitting, data_mode_CW's "force rig
+  // mode = CW" behavior is suppressed so the rig stays in USB for the
+  // duration of the audio playback.
+  void set_soundcard_cw_tx_active (bool active);
+  bool soundcard_cw_tx_active () const;
+
   QDir temp_dir () const;
   QDir doc_dir () const;
   QDir data_dir () const;
@@ -422,6 +432,15 @@ public:
   //
   Q_SLOT void transceiver_tune (bool = false);
 
+  // CW keyer (Hamlib rig_send_morse / rig_stop_morse / RIG_LEVEL_KEYSPD).
+  // Fire-and-forget; not state-bundled.
+  Q_SLOT void transceiver_send_morse (QString const& text);
+  Q_SLOT void transceiver_stop_morse ();
+  Q_SLOT void transceiver_set_wpm (int wpm);
+  // Adjust rig polling interval (ms). In CW mode we poll fast to catch
+  // external paddle PTT for Doppler correction.
+  Q_SLOT void transceiver_set_poll_interval (int ms);
+
   // Set period for TCI audio
   //
   Q_SLOT void transceiver_period (double = 15.0, bool force = false);
@@ -498,6 +517,12 @@ public:
   // re-established with a call to transceiver_online(true) assuming
   // the fault condition has been rectified or is transient.
   Q_SIGNAL void transceiver_failure (QString const& reason) const;
+
+  // CW keyer status feedback from Transceiver layer. kind: 0=Info,1=OK,2=Warning,3=Error
+  Q_SIGNAL void cw_status (QString const& message, int kind) const;
+
+  // Reports CAT keyer capability of currently connected rig.
+  Q_SIGNAL void cw_keyer_available (bool has_cat_keyer) const;
 
   // signal announces audio devices are being enumerated
   //

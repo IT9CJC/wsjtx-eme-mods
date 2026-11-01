@@ -206,6 +206,88 @@ void TransceiverBase::set (TransceiverState const& s,
     }
 }
 
+void TransceiverBase::send_morse (QString const& text) noexcept
+{
+  CAT_TRACE ("send_morse: " << text);
+  QString message;
+  try
+    {
+      if (requested_.online ())
+        {
+          do_send_morse (text);
+        }
+      else
+        {
+          Q_EMIT cw_status (tr ("Rig offline — connect in Settings > Radio"), 2);
+        }
+    }
+  catch (std::exception const& e)
+    {
+      CAT_TRACE ("send_morse what: " << e.what ());
+      message = e.what ();
+    }
+  catch (...)
+    {
+      message = unexpected;
+    }
+  if (!message.isEmpty ())
+    {
+      offline (message);
+    }
+}
+
+void TransceiverBase::stop_morse () noexcept
+{
+  CAT_TRACE ("stop_morse");
+  QString message;
+  try
+    {
+      if (requested_.online ())
+        {
+          do_stop_morse ();
+        }
+    }
+  catch (std::exception const& e)
+    {
+      CAT_TRACE ("stop_morse what: " << e.what ());
+      message = e.what ();
+    }
+  catch (...)
+    {
+      message = unexpected;
+    }
+  if (!message.isEmpty ())
+    {
+      offline (message);
+    }
+}
+
+void TransceiverBase::set_wpm (int wpm) noexcept
+{
+  CAT_TRACE ("set_wpm: " << wpm);
+  QString message;
+  try
+    {
+      if (requested_.online ())
+        {
+          do_set_wpm (wpm);
+        }
+    }
+  catch (std::exception const& e)
+    {
+      CAT_TRACE ("set_wpm what: " << e.what ());
+      message = e.what ();
+    }
+  catch (...)
+    {
+      message = unexpected;
+    }
+  if (!message.isEmpty ())
+    {
+      offline (message);
+    }
+}
+
 void TransceiverBase::startup ()
 {
   CAT_TRACE ("startup\n");

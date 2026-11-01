@@ -23,6 +23,16 @@ PollingTransceiver::PollingTransceiver (logger_type * logger, int poll_interval,
 {
 }
 
+void PollingTransceiver::set_poll_interval (int ms) noexcept
+{
+  if (ms < 50)  ms = 50;    // sanity floor
+  if (ms > 5000) ms = 5000; // sanity ceiling
+  interval_ = ms;
+  if (poll_timer_ && poll_timer_->isActive ()) {
+    poll_timer_->start (interval_);  // restart with new interval
+  }
+}
+
 void PollingTransceiver::start_timer ()
 {
   if (interval_)

@@ -72,9 +72,18 @@ public:
   qint32 DopplerMethod();
   qint32 largeOffset();
 
+  // CW panel sync accessors
+  bool lockSkedFreq() const;
+  double skedFreqMHz() const;
+  void setDopplerMethod(int method);
+  void setDopplerTracking(bool enabled);
+  void setLockSkedFreq(bool locked);
+  void applySkedFreqMHz(double freqMHz); // sets kHz spinbox AND emits skedFreq
+
   Q_SLOT void nominal_frequency (Frequency rx, Frequency tx);
   Q_SIGNAL void tracking_update () const;
   Q_SIGNAL void skedFreq(double freqMHz) const;
+  Q_SIGNAL void astroStateChanged () const; // fired when any UI control changes
 
 protected:
   void hideEvent (QHideEvent *) override;

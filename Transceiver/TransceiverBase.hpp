@@ -76,6 +76,10 @@ public:
             unsigned sequence_number) noexcept override final;
   void stop () noexcept override final;
 
+  void send_morse (QString const& text) noexcept override final;
+  void stop_morse () noexcept override final;
+  void set_wpm (int wpm) noexcept override final;
+
   //
   // Query operations
   //
@@ -112,6 +116,11 @@ protected:
 
   virtual void do_ptt (bool = true) = 0;
   virtual void do_post_ptt (bool = true) {}
+
+  // Default: no-op for backends without CW keyer support.
+  virtual void do_send_morse (QString const&) {}
+  virtual void do_stop_morse () {}
+  virtual void do_set_wpm (int) {}
   
   // this is the rig tuning -- use false if need to turn off tune -- do we need that for anyone?
   virtual void do_audio (bool = false) {}

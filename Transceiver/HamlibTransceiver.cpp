@@ -655,6 +655,13 @@ int HamlibTransceiver::do_start ()
 
   m_->error_check (rig_open (m_->rig_.data ()), tr ("opening connection to rig"));
 
+  // Report whether this backend supports CAT keyer so mainwindow can pick
+  // the right CW TX path (CAT send_morse vs. soundcard CW).
+  {
+    bool const has_keyer = (m_->rig_ && m_->rig_->caps && m_->rig_->caps->send_morse != nullptr);
+    Q_EMIT cw_keyer_available (has_keyer);
+  }
+
   // reset dynamic state
   m_->one_VFO_ = false;
   m_->reversed_ = false;
@@ -1345,4 +1352,67 @@ void HamlibTransceiver::do_tune (bool on)
         }
     }
 #endif
+}
+
+// CW keyer. Soft-fail: unsupported backend logs a warning, does not take rig offline.
+void HamlibTransceiver::do_send_morse (QString const& text)
+{
+  CAT_TRACE ("send_morse: " << text);
+  if (!m_->rig_ || !m_->rig_->caps || !m_->rig_->caps->send_morse)
+    {
+      CAT_WARNING ("rig_send_morse not supported by this backend");
+      Q_EMIT cw_status (tr ("Keyer not supported by this rig (CAT send_morse unavailable)"), 2);
+      return;
+    }
+  QByteArray const utf8 {text.toUtf8 ()};
+  int const rc = rig_send_morse (m_->rig_.data (), RIG_VFO_CURR, utf8.constData ());
+  if (RIG_OK != rc)
+    {
+      CAT_WARNING ("rig_send_morse failed: " << rigerror (rc));
+      Q_EMIT cw_status (tr ("send_morse failed: %1").arg (rigerror (rc)), 3);
+    }
+  else
+    {
+      Q_EMIT cw_status (tr ("Sent: %1").arg (text), 1);
+    }
+}
+
+void HamlibTransceiver::do_stop_morse ()
+{
+  CAT_TRACE ("stop_morse");
+  if (!m_->rig_ || !m_->rig_->caps || !m_->rig_->caps->stop_morse)
+    {
+      CAT_WARNING ("rig_stop_morse not supported by this backend");
+      Q_EMIT cw_status (tr ("Stop not supported by this rig"), 2);
+      return;
+    }
+  int const rc = rig_stop_morse (m_->rig_.data (), RIG_VFO_CURR);
+  if (RIG_OK != rc)
+    {
+      CAT_WARNING ("rig_stop_morse failed: " << rigerror (rc));
+      Q_EMIT cw_status (tr ("stop_morse failed: %1").arg (rigerror (rc)), 3);
+    }
+  else
+    {
+      Q_EMIT cw_status (tr ("Stopped"), 1);
+    }
+}
+
+void HamlibTransceiver::do_set_wpm (int wpm)
+{
+  CAT_TRACE ("set_wpm: " << wpm);
+  if (!m_->rig_)
+    {
+      return;
+    }
+  if (wpm < 5)  wpm = 5;
+  if (wpm > 50) wpm = 50;
+  value_t v;
+  v.i = wpm;
+  int const rc = rig_set_level (m_->rig_.data (), RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v);
+  if (RIG_OK != rc)
+    {
+      CAT_WARNING ("rig_set_level KEYSPD failed: " << rigerror (rc));
+      Q_EMIT cw_status (tr ("WPM set failed: %1").arg (rigerror (rc)), 2);
+    }
 }

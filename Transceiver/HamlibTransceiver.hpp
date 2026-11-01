@@ -32,6 +32,9 @@ private:
   void do_mode (MODE) override;
   void do_ptt (bool) override;
   void do_tune (bool) override;
+  void do_send_morse (QString const&) override;
+  void do_stop_morse () override;
+  void do_set_wpm (int) override;
 
   void do_poll () override;
 

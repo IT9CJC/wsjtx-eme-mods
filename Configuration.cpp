@@ -761,6 +761,7 @@ private:
   FrequencyDelta fixed_rx_offset_;
   FrequencyDelta fixed_tx_offset_;
   QString ui_language_;
+  Transceiver::MODE q65_echo_rig_mode_;
 
   QAction * frequency_delete_action_;
   QAction * frequency_insert_action_;
@@ -1020,6 +1021,7 @@ void Configuration::select_tab (int index) {m_->ui_->configuration_tabs->setCurr
 int Configuration::exec () {return m_->exec ();}
 bool Configuration::is_active () const {return m_->isVisible ();}
 Configuration::DataMode Configuration::data_mode () const {return m_->data_mode_;}
+Configuration::MODE Configuration::q65_echo_rig_mode () const {return m_->q65_echo_rig_mode_;}
 
 QAudioDeviceInfo const& Configuration::audio_input_device () const {return m_->audio_input_device_;}
 AudioDevice::Channel Configuration::audio_input_channel () const {return m_->audio_input_channel_;}
@@ -1793,6 +1795,7 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   , next_stations_ {&bands_}
   , current_offset_ {0}
   , current_tx_offset_ {0}
+  , q65_echo_rig_mode_ {Transceiver::DIG_U}
   , frequency_dialog_ {new FrequencyDialog {&regions_, &modes_, this}}
   , station_delete_action_ {tr ("&Delete"), nullptr}
   , station_insert_action_ {tr ("&Insert ..."), nullptr}
@@ -1824,6 +1827,15 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   , default_audio_output_device_selected_ {false}
 {
   ui_->setupUi (this);
+
+  // Q65/Echo rig mode combo: attach Transceiver::MODE enum values as itemData.
+  // Order must match the <item> entries in Configuration.ui.
+  ui_->q65_echo_rig_mode_combo_box->setItemData (0, static_cast<int> (Transceiver::DIG_U));
+  ui_->q65_echo_rig_mode_combo_box->setItemData (1, static_cast<int> (Transceiver::DIG_L));
+  ui_->q65_echo_rig_mode_combo_box->setItemData (2, static_cast<int> (Transceiver::USB));
+  ui_->q65_echo_rig_mode_combo_box->setItemData (3, static_cast<int> (Transceiver::LSB));
+  ui_->q65_echo_rig_mode_combo_box->setItemData (4, static_cast<int> (Transceiver::FSK));
+  ui_->q65_echo_rig_mode_combo_box->setItemData (5, static_cast<int> (Transceiver::FM));
 
   {
     // Make sure the default save directory exists
@@ -2538,6 +2550,13 @@ void Configuration::impl::read_settings ()
   ui_->fixed_rx_offset_spin_box->setValue (static_cast<int> (fixed_rx_offset_));
   ui_->fixed_tx_offset_spin_box->setValue (static_cast<int> (fixed_tx_offset_));
 
+  q65_echo_rig_mode_ = static_cast<Transceiver::MODE> (
+      settings_->value ("Q65EchoRigMode", static_cast<int> (Transceiver::DIG_U)).toInt ());
+  {
+    int idx = ui_->q65_echo_rig_mode_combo_box->findData (static_cast<int> (q65_echo_rig_mode_));
+    if (idx >= 0) ui_->q65_echo_rig_mode_combo_box->setCurrentIndex (idx);
+  }
+
   LOG_INFO(QString{"Reading frequencies"});
 
   if (settings_->contains ("FrequenciesForRegionModes_v2"))
@@ -2979,6 +2998,7 @@ void Configuration::impl::write_settings ()
   settings_->setValue ("UILanguage", ui_language_);
   settings_->setValue ("FixedRxOffset", static_cast<qlonglong> (fixed_rx_offset_));
   settings_->setValue ("FixedTxOffset", static_cast<qlonglong> (fixed_tx_offset_));
+  settings_->setValue ("Q65EchoRigMode", static_cast<int> (q65_echo_rig_mode_));
   settings_->setValue ("AutoGrid", use_dynamic_grid_);
   settings_->setValue ("highlight_DXcall", highlight_DXcall_);
   settings_->setValue ("clear_DXcall", clear_DXcall_);
@@ -3616,6 +3636,9 @@ void Configuration::impl::accept ()
 
   fixed_rx_offset_ = ui_->fixed_rx_offset_spin_box->value ();
   fixed_tx_offset_ = ui_->fixed_tx_offset_spin_box->value ();
+
+  q65_echo_rig_mode_ = static_cast<Transceiver::MODE> (
+      ui_->q65_echo_rig_mode_combo_box->currentData ().toInt ());
 
   if (frequencies_.frequency_list () != next_frequencies_.frequency_list ())
     {
@@ -5162,7 +5185,7 @@ void Configuration::impl::set_cached_mode ()
   switch (data_mode_)
     {
     case data_mode_USB: mode = Transceiver::USB; break;
-    case data_mode_data: mode = Transceiver::DIG_U; break;
+    case data_mode_data: mode = q65_echo_rig_mode_; break;
     case data_mode_CW: mode = Transceiver::CW; break;
     default: break;
     }

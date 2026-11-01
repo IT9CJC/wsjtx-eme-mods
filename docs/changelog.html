@@ -88,10 +88,96 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.0.8-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.8-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-01</span>
+  </div>
+
+  <p>User-configurable rig mode for Q65 and Echo (default Data/PktUSB) with
+  silent fallback to USB on unsupported rigs, and a persistent rig-mode
+  indicator in the main window status bar.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Q65 / Echo rig mode selector</strong> &mdash; Settings &gt;
+      Radio has a new <em>Q65 / Echo Rig Mode</em> group box with a dropdown.
+      When Q65 or Echo is selected from the Mode menu, this rig mode is sent
+      via CAT (default <code>Data/PktUSB</code>). Options:
+      <code>Data/PktUSB</code>, <code>Data/PktLSB</code>, <code>USB</code>,
+      <code>LSB</code>, <code>RTTY</code>, <code>FM</code>.
+      Other digital modes still use <code>USB</code>; CW still uses
+      <code>CW</code>.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Silent fallback to USB</strong> &mdash; If the connected rig
+      does not advertise the selected mode in its Hamlib capability bitmask
+      (<code>rig-&gt;state.mode_list</code>), <code>USB</code> is substituted
+      transparently. The user&rsquo;s configured choice is preserved so that
+      reconnecting a capable rig restores the preferred mode.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Rig-mode indicator in status bar</strong> &mdash; Replaces
+      the previous CW-only blue label with a persistent color-coded label
+      showing the resolved rig mode: blue <strong>CW</strong>, dark green
+      <strong>Data/PktUSB</strong> &mdash; <strong>FM</strong>, grey
+      <strong>USB</strong>/<strong>None</strong>. Updates on Mode menu
+      changes and when the Settings dialog is closed.
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped VERSION to 3.0.8.0</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.hpp</code></td>
+      <td>Added <code>q65_echo_rig_mode()</code> accessor returning
+        <code>Transceiver::MODE</code></td>
+    </tr>
+    <tr>
+      <td><code>Configuration.cpp</code></td>
+      <td>Added PIMPL member <code>q65_echo_rig_mode_</code> with default
+        <code>Transceiver::DIG_U</code>, QSettings key
+        <code>Q65EchoRigMode</code>, combo <code>itemData</code> setup after
+        <code>setupUi</code>; <code>set_cached_mode()</code> now returns the
+        user-selected rig mode for <code>data_mode_data</code> instead of a
+        hard-coded <code>DIG_U</code></td>
+    </tr>
+    <tr>
+      <td><code>Configuration.ui</code></td>
+      <td>New <code>q65_echo_rig_mode_group_box</code> at row 7, column 2 of
+        the Radio tab, containing a six-option combo</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>Mode-group lambda detects <code>actionQ65</code> and
+        <code>actionEcho</code>, sets <code>data_mode_data</code>, and
+        re-sends <code>transceiver_frequency()</code> so the configured rig
+        mode is applied; new <code>updateRigModeLabel()</code> helper
+        populates the status-bar label from
+        <code>data_mode()</code> and <code>q65_echo_rig_mode()</code></td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.h</code></td>
+      <td>Renamed <code>cw_mode_label</code> to <code>rig_mode_label_</code>;
+        declared <code>updateRigModeLabel()</code></td>
+    </tr>
+    <tr>
+      <td><code>Transceiver/HamlibTransceiver.cpp</code></td>
+      <td><code>map_mode()</code> checks <code>rig-&gt;state.mode_list</code>
+        and falls back to <code>RIG_MODE_USB</code> if the mapped Hamlib mode
+        is not advertised. CW and USB are passed through untouched.</td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.7-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.7-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.7-devel</h2>
     <span class="release-date">2026-10-17</span>
   </div>
 

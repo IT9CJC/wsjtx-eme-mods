@@ -108,6 +108,7 @@
   <li><a href="#fixed-offset">Fixed Frequency Offset</a></li>
   <li><a href="#offline">Offline Operation (No Rig)</a></li>
   <li><a href="#mode-menu">CW Mode Menu &amp; Automatic Radio Switching</a></li>
+  <li><a href="#q65-echo-mode">Q65 / Echo Rig Mode &amp; Status-bar Indicator</a></li>
   <li><a href="#procedure">EME CW Operating Procedure</a></li>
   <li><a href="#cat">CAT / Hamlib Configuration</a></li>
   <li><a href="#resolution">Frequency Resolution</a></li>
@@ -485,6 +486,74 @@ menu, alongside the digital modes (FT4, FT8, JT65, Q65, etc.).
   digital modes without reopening Settings.
 </div>
 
+<!-- ===== 5i. Q65 / ECHO RIG MODE ===== -->
+<h2 id="q65-echo-mode">5i. Q65 / Echo Rig Mode &amp; Status-bar Indicator</h2>
+
+<p>Q65 and Echo now use a user-configurable rig mode (default
+<code>Data/PktUSB</code>), and the resolved rig mode is shown in a persistent
+color-coded label in the main window status bar.
+<span class="tag">NEW in v3.0.8-devel</span></p>
+
+<h3>Why</h3>
+<p>Many rigs expose a dedicated <em>Data</em> or <em>Pkt</em> mode that bypasses
+microphone-path audio processing (compressors, equalisers, DSP shaping) and
+accepts audio on a rear-panel line input. For weak-signal digital modes such as
+Q65 and Echo, <em>Data</em> mode usually gives a cleaner transmit signal and
+avoids radios reporting the wrong CAT mode when the operator is on microwaves
+through a transverter. This mod lets WSJT-X command the correct rig mode via
+CAT whenever Q65 or Echo is active.</p>
+
+<h3>Selecting the Q65 / Echo rig mode</h3>
+<ol>
+  <li>Open <strong>File &gt; Settings</strong> (<kbd>F2</kbd>).</li>
+  <li>On the <strong>Radio</strong> tab, locate the <strong>Q65 / Echo Rig Mode</strong>
+    group box (below the <em>Mode</em> group).</li>
+  <li>Pick one of:
+    <ul>
+      <li><code>Data/PktUSB</code> &mdash; default; maps to <code>RIG_MODE_PKTUSB</code>.</li>
+      <li><code>Data/PktLSB</code> &mdash; <code>RIG_MODE_PKTLSB</code>.</li>
+      <li><code>USB</code> &mdash; plain USB (SSB).</li>
+      <li><code>LSB</code> &mdash; plain LSB (SSB).</li>
+      <li><code>RTTY</code> &mdash; <code>RIG_MODE_RTTY</code> (FSK).</li>
+      <li><code>FM</code> &mdash; <code>RIG_MODE_FM</code>.</li>
+    </ul>
+  </li>
+  <li>Click <strong>OK</strong>. The status-bar label updates immediately.</li>
+</ol>
+
+<p>When <strong>Q65</strong> or <strong>Echo</strong> is picked from the Mode
+menu, WSJT-X sends the configured rig mode via CAT. Other digital modes still
+send <code>USB</code>, and CW still sends <code>CW</code>.</p>
+
+<div class="callout">
+  <strong>Silent fallback to USB</strong>
+  If the connected rig does not advertise the selected mode in its Hamlib
+  capability bitmask (<code>rig-&gt;state.mode_list</code>) &mdash; for example,
+  a rig with no PKTUSB when the operator chose <code>Data/PktUSB</code> &mdash;
+  the mod substitutes <code>USB</code> silently at the Hamlib layer. The
+  user-configured dropdown value is preserved, so reconnecting a capable rig
+  restores the preferred mode automatically.
+</div>
+
+<h3>Rig-mode status indicator</h3>
+<p>The status bar at the bottom of the main window shows a persistent
+color-coded label with the resolved rig mode:</p>
+<ul>
+  <li><strong style="color:#fff; background:#0000cc; padding:0 .3em;">CW</strong>
+    &mdash; CW mode active (from Mode menu &gt; CW).</li>
+  <li><strong style="color:#fff; background:#006400; padding:0 .3em;">Data/PktUSB</strong>
+    (or <code>Data/PktLSB</code>, <code>USB</code>, <code>LSB</code>, <code>RTTY</code>,
+    <code>FM</code>) &mdash; Q65 or Echo mode active, showing the resolved
+    rig mode from the dropdown.</li>
+  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">USB</strong>
+    &mdash; any other digital mode (FT4, FT8, JT65, MSK144, etc.).</li>
+  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">None</strong>
+    &mdash; <em>Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode</em> set to <strong>None</strong>.</li>
+</ul>
+
+<p>This label replaces the CW-only blue label from v3.0.7-devel and gives a
+compact at-a-glance confirmation of what CAT mode WSJT-X is sending to the rig.</p>
+
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>
 
@@ -701,7 +770,7 @@ repository. Edit it to match your local dependency paths.</p>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.7-devel &mdash; Built by II9P &mdash; October 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.8-devel &mdash; Built by II9P &mdash; November 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

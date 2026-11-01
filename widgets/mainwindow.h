@@ -790,7 +790,7 @@ private:
   QLabel tx_status_label;
   QLabel config_label;
   QLabel mode_label;
-  QLabel cw_mode_label;
+  QLabel rig_mode_label_;
   QLabel last_tx_label;
   QLabel auto_tx_label;
   QLabel band_hopping_label;
@@ -995,6 +995,7 @@ private:
   void stub();
   void statusChanged();
   void updateCWModeUI(bool cw_mode);
+  void updateRigModeLabel();
   void fixStop();
   bool shortList(QString callsign) const;
   void transmit (double snr = 99.);

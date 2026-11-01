@@ -1370,6 +1370,55 @@ radio interface behave as expected.</string>
          </property>
         </widget>
        </item>
+       <item row="7" column="2">
+        <widget class="QGroupBox" name="q65_echo_rig_mode_group_box">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rig mode sent via CAT when WSJT-X mode is set to Q65 or Echo. Default is Data/PktUSB. If the connected rig does not support the selected mode, USB is used instead.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="title">
+          <string>Q65 / Echo Rig Mode</string>
+         </property>
+         <layout class="QHBoxLayout" name="q65_echo_rig_mode_layout">
+          <item>
+           <widget class="QComboBox" name="q65_echo_rig_mode_combo_box">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rig mode to use when Q65 or Echo is selected from the Mode menu. CW mode is handled by the Mode menu CW action and is not affected by this setting.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>Data/PktUSB</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Data/PktLSB</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>USB</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>LSB</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>RTTY</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>FM</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
        <item row="1" column="2">
         <widget class="QGroupBox" name="PTT_method_group_box">
          <property name="sizePolicy">

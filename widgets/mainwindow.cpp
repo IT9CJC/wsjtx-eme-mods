@@ -968,6 +968,21 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
         m_config.transceiver_frequency (m_freqNominal);
         setup_status_bar (m_config.enable_VHF_features ());
       }
+    } else if (action == ui->actionQ65 || action == ui->actionEcho) {
+      // Q65 and Echo use the user-configurable rig mode (default Data/PktUSB).
+      // The actual Transceiver::MODE is resolved in Configuration::set_cached_mode().
+      bool was_cw = (m_config.data_mode () == Configuration::data_mode_CW);
+      if (m_config.data_mode () != Configuration::data_mode_data) {
+        m_config.set_data_mode (Configuration::data_mode_data);
+        m_config.transceiver_frequency (m_freqNominal);
+      } else {
+        // same WSJT-X data_mode but the user may have changed the rig-mode
+        // dropdown while we were already in data_mode_data; re-send to rig.
+        m_config.transceiver_frequency (m_freqNominal);
+      }
+      if (was_cw) {
+        setup_status_bar (m_config.enable_VHF_features ());
+      }
     } else {
       bool was_cw = (m_config.data_mode () == Configuration::data_mode_CW);
       if (m_config.data_mode () != Configuration::data_mode_USB) {
@@ -1399,6 +1414,8 @@ void MainWindow::not_GA_warning_message ()
 void MainWindow::handle_leavingSettings ()
 {
   inSettings = false;
+  // Q65/Echo rig mode dropdown may have changed while in Settings.
+  updateRigModeLabel ();
 }
 
 void MainWindow::initialize_fonts ()
@@ -4426,11 +4443,12 @@ void MainWindow::createStatusBar()                           //createStatusBar
   mode_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
   statusBar()->addWidget (&mode_label);
 
-  cw_mode_label.setAlignment (Qt::AlignHCenter);
-  cw_mode_label.setMinimumSize (QSize {40, 18});
-  cw_mode_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
-  statusBar()->addWidget (&cw_mode_label);
-  cw_mode_label.hide ();
+  rig_mode_label_.setAlignment (Qt::AlignHCenter);
+  rig_mode_label_.setMinimumSize (QSize {90, 18});
+  rig_mode_label_.setFrameStyle (QFrame::Panel | QFrame::Sunken);
+  rig_mode_label_.setToolTip (tr ("Current rig mode sent via CAT (USB/LSB/Data/PktUSB/Data/PktLSB/CW/RTTY/FM)."));
+  statusBar()->addWidget (&rig_mode_label_);
+  updateRigModeLabel ();
 
   ndecodes_label.setAlignment (Qt::AlignHCenter);
   ndecodes_label.setMinimumSize (QSize {30, 18});
@@ -4487,15 +4505,7 @@ void MainWindow::setup_status_bar (bool vhf)
   } else if ("FreqCal" == m_mode) {
     mode_label.setStyleSheet ("QLabel{color: #000000; background-color: #ff9933}");
   }
-  if (m_config.data_mode () == Configuration::data_mode_CW) {
-    cw_mode_label.setText ("CW");
-    cw_mode_label.setStyleSheet ("QLabel{color: #ffffff; background-color: #0000cc}");
-    cw_mode_label.show ();
-    mode_label.hide ();
-  } else {
-    cw_mode_label.hide ();
-    mode_label.show ();
-  }
+  updateRigModeLabel ();
   updateCWModeUI (m_config.data_mode () == Configuration::data_mode_CW);
   keep_last_tx_label = true;
   last_tx_label.setText (QString {});
@@ -4535,6 +4545,35 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   if (cw_mode && m_auto) {
     auto_tx_mode (false);
   }
+}
+
+void MainWindow::updateRigModeLabel ()
+{
+  QString text;
+  QString style;
+  if (m_config.data_mode () == Configuration::data_mode_CW) {
+    text = "CW";
+    style = "QLabel{color: #ffffff; background-color: #0000cc}";
+  } else if (m_config.data_mode () == Configuration::data_mode_USB) {
+    text = "USB";
+    style = "QLabel{color: #000000; background-color: #cccccc}";
+  } else if (m_config.data_mode () == Configuration::data_mode_data) {
+    switch (m_config.q65_echo_rig_mode ()) {
+      case Transceiver::DIG_U: text = "Data/PktUSB"; break;
+      case Transceiver::DIG_L: text = "Data/PktLSB"; break;
+      case Transceiver::USB:   text = "USB";          break;
+      case Transceiver::LSB:   text = "LSB";          break;
+      case Transceiver::FSK:   text = "RTTY";         break;
+      case Transceiver::FM:    text = "FM";           break;
+      default:                 text = "Data";         break;
+    }
+    style = "QLabel{color: #ffffff; background-color: #006400}";
+  } else {
+    text = "None";
+    style = "QLabel{color: #000000; background-color: #cccccc}";
+  }
+  rig_mode_label_.setText (text);
+  rig_mode_label_.setStyleSheet (style);
 }
 
 bool MainWindow::subProcessFailed (QProcess * process, int exit_code, QProcess::ExitStatus status)

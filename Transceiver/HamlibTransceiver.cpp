@@ -391,22 +391,34 @@ auto HamlibTransceiver::impl::map_mode (rmode_t m) const -> MODE
 
 rmode_t HamlibTransceiver::impl::map_mode (MODE mode) const
 {
+  rmode_t rmode = RIG_MODE_USB;
   switch (mode)
     {
-    case AM: return RIG_MODE_AM;
-    case CW: return RIG_MODE_CW;
-    case CW_R: return RIG_MODE_CWR;
-    case USB: return RIG_MODE_USB;
-    case LSB: return RIG_MODE_LSB;
-    case FSK: return RIG_MODE_RTTY;
-    case FSK_R: return RIG_MODE_RTTYR;
-    case DIG_L: return RIG_MODE_PKTLSB;
-    case DIG_U: return RIG_MODE_PKTUSB;
-    case FM: return RIG_MODE_FM;
-    case DIG_FM: return RIG_MODE_PKTFM;
+    case AM: rmode = RIG_MODE_AM; break;
+    case CW: rmode = RIG_MODE_CW; break;
+    case CW_R: rmode = RIG_MODE_CWR; break;
+    case USB: rmode = RIG_MODE_USB; break;
+    case LSB: rmode = RIG_MODE_LSB; break;
+    case FSK: rmode = RIG_MODE_RTTY; break;
+    case FSK_R: rmode = RIG_MODE_RTTYR; break;
+    case DIG_L: rmode = RIG_MODE_PKTLSB; break;
+    case DIG_U: rmode = RIG_MODE_PKTUSB; break;
+    case FM: rmode = RIG_MODE_FM; break;
+    case DIG_FM: rmode = RIG_MODE_PKTFM; break;
     default: break;
     }
-  return RIG_MODE_USB;	// quieten compiler grumble
+  // Silent fallback to USB if the connected rig does not advertise the
+  // selected mode in its capability bitmask (e.g. a rig with no PKTUSB
+  // when the user set the Q65/Echo dropdown to Data/PktUSB). CW is left
+  // alone because that path has its own handling in the caller.
+  if (rmode != RIG_MODE_USB && rmode != RIG_MODE_CW && rmode != RIG_MODE_CWR
+      && rig_.data () && !(rig_->state.mode_list & rmode))
+    {
+      CAT_TRACE ("rig does not support mode " << rig_strrmode (rmode)
+                 << " - falling back to USB");
+      rmode = RIG_MODE_USB;
+    }
+  return rmode;
 }
 
 HamlibTransceiver::HamlibTransceiver (logger_type * logger,

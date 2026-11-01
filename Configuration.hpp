@@ -81,6 +81,7 @@ public:
   int exec ();
   bool is_active () const;
   DataMode data_mode () const;
+  MODE q65_echo_rig_mode () const;
 
   QDir temp_dir () const;
   QDir doc_dir () const;

@@ -81,6 +81,8 @@ class QSettings;
 class QLineEdit;
 class QFont;
 class QHostInfo;
+class QActionGroup;
+class QAction;
 class EchoGraph;
 class FastGraph;
 class WideGraph;
@@ -791,6 +793,7 @@ private:
   QLabel config_label;
   QLabel mode_label;
   QLabel rig_mode_label_;
+  QLabel band_label_;
   QLabel last_tx_label;
   QLabel auto_tx_label;
   QLabel band_hopping_label;
@@ -996,6 +999,7 @@ private:
   void statusChanged();
   void updateCWModeUI(bool cw_mode);
   void updateRigModeLabel();
+  void updateBandLabel();
   void fixStop();
   bool shortList(QString callsign) const;
   void transmit (double snr = 99.);

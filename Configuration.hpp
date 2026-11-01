@@ -73,6 +73,21 @@ public:
   enum Type2MsgGen {type_2_msg_1_full, type_2_msg_3_full, type_2_msg_5_only};
   Q_ENUM (Type2MsgGen)
 
+  // Transverter band profiles. The band list and the band center frequency
+  // are fixed; the user only enters the IF frequency and ticks Enabled.
+  // The offset applied to the rig frequency (RX and TX, same value) is
+  // computed as (band_center_hz - if_hz). Only enabled bands appear in the
+  // main window Band menu.
+  struct TransverterProfile
+  {
+    QString band_name;      // e.g. "3cm"
+    qint64 band_center_hz;  // fixed per band (10368 MHz for 3cm, etc.)
+    qint64 if_hz;           // user-entered IF frequency
+    bool enabled;           // visible in the Band menu
+  };
+  static int const transverter_band_count;
+  static QString const& transverter_band_name (int index);
+
   explicit Configuration (QNetworkAccessManager *, QDir const& temp_directory, QSettings * settings,
                           LogBook * logbook, QWidget * parent = nullptr);
   ~Configuration ();
@@ -82,6 +97,13 @@ public:
   bool is_active () const;
   DataMode data_mode () const;
   MODE q65_echo_rig_mode () const;
+
+  // Transverter profile API
+  QList<TransverterProfile> transverter_profiles () const;
+  Radio::FrequencyDelta transverter_rx_offset () const;
+  Radio::FrequencyDelta transverter_tx_offset () const;
+  int active_transverter_band () const;            // -1 = None
+  void set_active_transverter_band (int index);    // -1 = None
 
   QDir temp_dir () const;
   QDir doc_dir () const;
@@ -482,6 +504,10 @@ public:
   // As this can take some time, particularly on Linux, consumers
   // might like to notify the user.
   Q_SIGNAL void enumerating_audio_devices ();
+
+  // Emitted when the active transverter band changes or the profile list
+  // is edited. -1 means "None".
+  Q_SIGNAL void active_transverter_band_changed (int index) const;
 
 public slots:
   Q_SLOT void transceiver_volume (double = 0);

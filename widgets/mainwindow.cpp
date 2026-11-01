@@ -721,6 +721,16 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
 
   on_EraseButton_clicked ();
 
+  // The active transverter band is driven entirely by the Enabled checkbox
+  // in Settings > Transverter (at most one can be enabled). When the
+  // Settings dialog closes we repaint the status label and refresh the rig
+  // frequency so the new offset applies.
+  connect (&m_config, &Configuration::active_transverter_band_changed,
+           this, [this] (int) {
+             updateBandLabel ();
+             m_config.transceiver_frequency (m_freqNominal);
+           });
+
   QActionGroup* modeGroup = new QActionGroup(this);
   ui->actionFST4->setActionGroup(modeGroup);
   ui->actionFST4W->setActionGroup(modeGroup);
@@ -1416,6 +1426,8 @@ void MainWindow::handle_leavingSettings ()
   inSettings = false;
   // Q65/Echo rig mode dropdown may have changed while in Settings.
   updateRigModeLabel ();
+  // Transverter profiles may have been edited while in Settings.
+  updateBandLabel ();
 }
 
 void MainWindow::initialize_fonts ()
@@ -4450,6 +4462,13 @@ void MainWindow::createStatusBar()                           //createStatusBar
   statusBar()->addWidget (&rig_mode_label_);
   updateRigModeLabel ();
 
+  band_label_.setAlignment (Qt::AlignHCenter);
+  band_label_.setMinimumSize (QSize {130, 18});
+  band_label_.setFrameStyle (QFrame::Panel | QFrame::Sunken);
+  band_label_.setToolTip (tr ("Active transverter IF frequency (from Band menu). The CAT frequency sent to the rig equals main frequency - offset, where offset = band_center - IF."));
+  statusBar()->addWidget (&band_label_);
+  updateBandLabel ();
+
   ndecodes_label.setAlignment (Qt::AlignHCenter);
   ndecodes_label.setMinimumSize (QSize {30, 18});
   ndecodes_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
@@ -4545,6 +4564,23 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   if (cw_mode && m_auto) {
     auto_tx_mode (false);
   }
+}
+
+void MainWindow::updateBandLabel ()
+{
+  int i = m_config.active_transverter_band ();
+  QString text {"IF=NONE"};
+  QString style {"QLabel{color: #000000; background-color: #cccccc}"};
+  auto profiles = m_config.transverter_profiles ();
+  if (i >= 0 && i < profiles.size () && profiles.at (i).enabled
+      && profiles.at (i).if_hz > 0)
+    {
+      double if_mhz = static_cast<double> (profiles.at (i).if_hz) / 1000000.0;
+      text = QString ("IF=%1 MHz").arg (if_mhz, 0, 'f', 3);
+      style = "QLabel{color: #ffffff; background-color: #8e44ad}";
+    }
+  band_label_.setText (text);
+  band_label_.setStyleSheet (style);
 }
 
 void MainWindow::updateRigModeLabel ()

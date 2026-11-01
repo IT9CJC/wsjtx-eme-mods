@@ -88,10 +88,105 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.0.9-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.0.9-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-01</span>
+  </div>
+
+  <p>Microwave transverter band profiles with automatic offset computation
+  and a persistent IF indicator in the main window status bar. The
+  previous &ldquo;Fixed Frequency Offset&rdquo; settings are retired in
+  favour of this per-band mechanism.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>Transverter tab</strong> &mdash; Settings now has a
+      <em>Transverter</em> tab (replaces the old <em>Offset</em> tab) with a
+      9-row table covering 6m, 2m, 70cm, 23cm, 13cm, 9cm, 6cm, 3cm, 1.25cm.
+      Each row has the band's center frequency as metadata (50/144/432/1296/
+      2320/3400/5760/10368/24048 MHz), a user-entered <strong>IF</strong>
+      spinbox (MHz, 3 decimals), a read-only auto-computed <strong>Offset</strong>
+      (<code>band_center - IF</code>) that updates live, and an
+      <strong>Enabled</strong> checkbox.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Mutually exclusive band selection</strong> &mdash; At most one
+      band's Enabled checkbox can be ticked at a time. Ticking a different
+      band automatically unticks the previous one. The user does not pick a
+      band from a separate menu &mdash; the ticked Enabled row is the active
+      transverter.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>CAT frequency translation</strong> &mdash; When a band is
+      active, the CAT frequency sent to the rig is <code>main_frequency - offset</code>.
+      Example: 3cm with IF = 432 MHz &rarr; offset = 9936 MHz; WSJT-X on
+      10368.100 MHz &rarr; rig dial 432.100 MHz. Rig feedback is translated
+      back the same way so WSJT-X always displays the operating (sky)
+      frequency.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>IF status indicator</strong> &mdash; A new label in the main
+      window status bar shows <strong>IF=NONE</strong> (grey) when no
+      transverter is active, or <strong>IF=432.000 MHz</strong> (purple)
+      when a band is selected. Updates on Settings close.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Fixed RX/TX offsets removed</strong> &mdash; The v3.0.6
+      <em>Offset</em> tab with its separate RX / TX spinboxes is gone. All
+      transverter offsetting now goes through the per-band table. Old
+      <code>FixedRxOffset</code> / <code>FixedTxOffset</code> QSettings keys
+      are silently ignored.</li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped VERSION to 3.0.9.0</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.hpp</code></td>
+      <td>New <code>TransverterProfile</code> struct, accessors
+        <code>transverter_profiles()</code>, <code>transverter_rx_offset()</code>,
+        <code>transverter_tx_offset()</code>,
+        <code>active_transverter_band()</code>,
+        <code>set_active_transverter_band(int)</code>, signal
+        <code>active_transverter_band_changed(int)</code></td>
+    </tr>
+    <tr>
+      <td><code>Configuration.cpp</code></td>
+      <td>9-element profile list with hard-coded band center frequencies,
+        QSettings sub-group per band (<code>TransverterProfiles/BAND/{IF,Enabled}</code>),
+        <code>populate_transverter_table()</code> / <code>read_transverter_table_into_profiles()</code>
+        helpers, mutually-exclusive Enabled checkbox wiring, apply/subtract
+        pipeline switched from <code>fixed_rx/tx_offset_</code> to
+        <code>transverter_rx/tx_offset()</code> with sign flipped
+        (<code>rig_freq = main_freq - offset</code>)</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.ui</code></td>
+      <td>Renamed <em>Offset</em> tab to <em>Transverter</em>, replaced
+        the fixed-offset group box with
+        <code>transverter_table_widget</code> (3 columns: IF, Offset auto,
+        Enabled)</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.cpp</code></td>
+      <td>New <code>updateBandLabel()</code> helper; new <code>band_label_</code>
+        in the status bar; signal connect refreshes
+        <code>transceiver_frequency()</code> on band change</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.h</code></td>
+      <td>Added <code>band_label_</code>, declared
+        <code>updateBandLabel()</code></td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.8-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.8-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.8-devel</h2>
     <span class="release-date">2026-11-01</span>
   </div>
 

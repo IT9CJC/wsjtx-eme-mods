@@ -110,7 +110,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; October 2026</p>
+<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; v3.0.9-devel &mdash; November 2026</p>
 
 <p>This document describes all modifications made to
 <a href="https://physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X 3.0.2</a>
@@ -131,9 +131,10 @@ The modified source code is maintained at
   <li><a href="#per-callsign-log">Per-Callsign QSO Log</a></li>
   <li><a href="#cabrillo">Cabrillo Export with Log Source Selector</a></li>
   <li><a href="#language">Language Selector</a></li>
-  <li><a href="#offset">Fixed Frequency Offset</a></li>
+  <li><a href="#transverter">Transverter Band Profiles</a></li>
   <li><a href="#offline">Offline Operation &amp; Rig Failure Handling</a></li>
   <li><a href="#cw-menu">CW Mode in Mode Menu</a></li>
+  <li><a href="#q65-echo">Q65/Echo Rig Mode &amp; Rig-Mode Status Indicator</a></li>
   <li><a href="#files">Complete File Change Summary</a></li>
   <li><a href="#versions">Version History</a></li>
   <li><a href="#build">Building from Source</a></li>
@@ -221,7 +222,7 @@ does not provide:</p>
     <td>Settings &gt; General</td>
   </tr>
   <tr>
-    <td>Fixed frequency offset (RX/TX)</td>
+    <td>Fixed frequency offset (RX/TX) &mdash; retired in v3.0.9</td>
     <td><span class="version-badge">v3.0.6</span></td>
     <td><span class="tag tag-new">NEW</span></td>
     <td>Settings &gt; Offset</td>
@@ -273,6 +274,42 @@ does not provide:</p>
     <td><span class="version-badge">v3.0.7</span></td>
     <td><span class="tag tag-new">NEW</span></td>
     <td>Help &gt; About</td>
+  </tr>
+  <tr>
+    <td>Q65/Echo rig mode selector (Data/PktUSB default)</td>
+    <td><span class="version-badge">v3.0.8</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; Radio</td>
+  </tr>
+  <tr>
+    <td>Silent USB fallback for unsupported rig modes</td>
+    <td><span class="version-badge">v3.0.8</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Hamlib layer</td>
+  </tr>
+  <tr>
+    <td>Rig-mode status indicator (resolved mode, 7 states)</td>
+    <td><span class="version-badge">v3.0.8</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Main window status bar</td>
+  </tr>
+  <tr>
+    <td>Transverter band profiles (9 bands, IF-driven)</td>
+    <td><span class="version-badge">v3.0.9</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Settings &gt; Transverter</td>
+  </tr>
+  <tr>
+    <td>IF status indicator</td>
+    <td><span class="version-badge">v3.0.9</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Main window status bar</td>
+  </tr>
+  <tr>
+    <td>Fixed RX/TX offsets removed (replaced by Transverter table)</td>
+    <td><span class="version-badge">v3.0.9</span></td>
+    <td><span class="tag tag-fix">REMOVED</span></td>
+    <td>Settings</td>
   </tr>
 </table>
 
@@ -450,43 +487,77 @@ selection changes.</p>
 </ul>
 </div>
 
-<!-- ===== 10. OFFSET ===== -->
-<h2 id="offset">10. Fixed Frequency Offset</h2>
+<!-- ===== 10. TRANSVERTER BAND PROFILES ===== -->
+<h2 id="transverter">10. Transverter Band Profiles</h2>
 
 <div class="section">
-<p>A new <strong>Offset</strong> tab has been added to the Settings dialog,
-providing two independent controls:</p>
+<p><span class="version-badge">v3.0.9-devel</span> replaces the earlier
+<em>Fixed Frequency Offset</em> tab (v3.0.6) with a dedicated
+<strong>Transverter</strong> tab that manages all nine EME bands from a
+single table.</p>
 
+<h4>What the user sees</h4>
 <ul>
-  <li><strong>RX offset</strong> &mdash; added to the receive frequency sent to
-    the radio</li>
-  <li><strong>TX offset</strong> &mdash; added to the transmit frequency</li>
+  <li>Nine fixed rows &mdash; 6m, 2m, 70cm, 23cm, 13cm, 9cm, 6cm, 3cm, 1.25cm &mdash;
+    with each row&rsquo;s vertical header showing the band center frequency
+    (50 / 144 / 432 / 1296 / 2320 / 3400 / 5760 / 10368 / 24048 MHz).</li>
+  <li>One editable column per row: the <strong>IF</strong> spinbox
+    (MHz, 3 decimals).</li>
+  <li>A read-only <strong>Offset (auto)</strong> column that updates live
+    as the user types the IF: <code>offset = band_center &minus; IF</code>.</li>
+  <li>A mutually exclusive <strong>Enabled</strong> checkbox. Ticking a
+    different band automatically unticks the previously enabled one.</li>
 </ul>
 
-<p>Both values are in Hz and range from &minus;100&nbsp;MHz to +100&nbsp;MHz
-(step size: 1000&nbsp;Hz). They are applied alongside station offsets before
-the calibration correction:</p>
+<h4>CAT frequency pipeline</h4>
+<p>When a band is enabled, the frequency sent to the rig is:</p>
+<pre><code>rig_freq = main_freq - offset
+         = main_freq - (band_center - IF)</code></pre>
 
-<pre><code>RIG_freq = calibration(dial_freq + station_offset + fixed_offset)</code></pre>
+<p><strong>Example</strong> &mdash; 3cm (10368 MHz) with IF = 432 MHz &rarr;
+offset = 9936 MHz. WSJT-X operating on 10368.100 MHz &rarr; rig dial
+432.100 MHz. The rig&rsquo;s reported frequency is translated back the same
+way so WSJT-X&rsquo;s dial, Doppler engine, and logging all operate on the
+sky (microwave) frequency.</p>
 
-<h4>Typical uses</h4>
+<h4>Status indicator</h4>
+<p>A persistent <strong>IF</strong> label in the main window status bar
+shows:</p>
 <ul>
-  <li>Transverter IF offsets where the RX and TX chains use different LO
-    frequencies</li>
-  <li>Fixed frequency corrections for EME microwave setups</li>
-  <li>Any scenario requiring a constant shift between the displayed frequency
-    and the frequency sent to the radio</li>
+  <li><code>IF=NONE</code> (grey) &mdash; no transverter active.</li>
+  <li><code>IF=432.000 MHz</code> (purple) &mdash; the configured IF of the
+    currently enabled band.</li>
 </ul>
 
 <h4>Implementation details</h4>
 <ul>
-  <li>Stored in QSettings as <code>FixedRxOffset</code> and
-    <code>FixedTxOffset</code> (<code>FrequencyDelta</code> / <code>qint64</code>)</li>
-  <li>Applied in <code>transceiver_frequency()</code> and
-    <code>transceiver_tx_frequency()</code></li>
-  <li>Subtracted in the rig feedback handler to prevent accumulation on each
-    polling cycle</li>
+  <li>Public struct <code>Configuration::TransverterProfile {band_name,
+    band_center_hz, if_hz, enabled}</code>.</li>
+  <li>Nine profiles initialised in the <code>Configuration::impl</code>
+    constructor; band centers hard-coded in a parallel
+    <code>QList&lt;qint64&gt; transverter_band_centers_hz</code>.</li>
+  <li>Persisted in QSettings under
+    <code>TransverterProfiles/BAND_NAME/{IF,Enabled}</code>.</li>
+  <li>Accessors <code>transverter_rx_offset()</code> /
+    <code>transverter_tx_offset()</code> compute the offset on-the-fly
+    (same value for RX and TX).</li>
+  <li>Applied in the transceiver pipeline with the <strong>opposite sign</strong>
+    to the v3.0.6 fixed offsets: <code>cached_rig_state_.frequency = f
+    + current_offset - transverter_rx_offset()</code>. Rig feedback adds the
+    same offset back to restore the sky frequency.</li>
+  <li>Signal <code>active_transverter_band_changed(int)</code> fires when
+    the enabled row changes; <code>MainWindow</code> listens and calls
+    <code>transceiver_frequency()</code> to re-apply.</li>
+  <li>The old <code>FixedRxOffset</code> / <code>FixedTxOffset</code>
+    QSettings keys from v3.0.6 are silently ignored.</li>
 </ul>
+
+<div class="callout warn">
+  <strong>No main window Band menu</strong> &mdash; An earlier design
+  included a dynamically populated <em>Band</em> menu in the main window.
+  It was removed because the Transverter tab&rsquo;s Enabled checkbox is
+  simpler and already serves as the band selector.
+</div>
 </div>
 
 <!-- ===== 11. OFFLINE ===== -->
@@ -587,8 +658,74 @@ cleaner display.</p>
 </ul>
 </div>
 
-<!-- ===== 13. FILE CHANGES ===== -->
-<h2 id="files">13. Complete File Change Summary</h2>
+<!-- ===== 13. Q65/ECHO RIG MODE ===== -->
+<h2 id="q65-echo">13. Q65/Echo Rig Mode &amp; Rig-Mode Status Indicator</h2>
+
+<div class="section">
+<p><span class="version-badge">v3.0.8-devel</span> adds a user-configurable
+rig mode for Q65 and Echo, with a silent fallback to USB when the connected
+rig does not support the chosen mode, and a persistent rig-mode indicator in
+the status bar.</p>
+
+<h4>Q65/Echo rig mode selector</h4>
+<ul>
+  <li><strong>Settings &gt; Radio</strong> has a new <em>Q65 / Echo Rig
+    Mode</em> group box with a six-option combo: <code>Data/PktUSB</code>
+    (default), <code>Data/PktLSB</code>, <code>USB</code>, <code>LSB</code>,
+    <code>RTTY</code>, <code>FM</code>.</li>
+  <li>Selecting <strong>Q65</strong> or <strong>Echo</strong> from the Mode
+    menu now sends the configured rig mode via CAT.</li>
+  <li>Other digital modes (FT8, FT4, MSK144, JT65, etc.) still send
+    <code>USB</code>. CW still sends <code>CW</code>.</li>
+</ul>
+
+<h4>Silent fallback to USB</h4>
+<p>If the connected rig does not advertise the selected mode in its Hamlib
+capability bitmask (<code>rig-&gt;state.mode_list</code>), the mod
+substitutes <code>RIG_MODE_USB</code> at the Hamlib layer. The user&rsquo;s
+configured dropdown value is preserved, so reconnecting a capable rig
+restores the preferred mode without further action.</p>
+
+<h4>Rig-mode status indicator</h4>
+<p>Replaces the v3.0.3 CW-only blue label with a persistent color-coded
+indicator next to the WSJT-X mode label:</p>
+<ul>
+  <li>Blue <strong>CW</strong> &mdash; CW mode active.</li>
+  <li>Dark green <strong>Data/PktUSB</strong> / <strong>Data/PktLSB</strong>
+    / <strong>USB</strong> / <strong>LSB</strong> / <strong>RTTY</strong>
+    / <strong>FM</strong> &mdash; Q65 or Echo mode active, resolved from
+    the dropdown.</li>
+  <li>Grey <strong>USB</strong> or <strong>None</strong> &mdash; other
+    digital modes or no mode set.</li>
+</ul>
+
+<h4>Implementation details</h4>
+<ul>
+  <li>New accessor <code>Configuration::q65_echo_rig_mode()</code> returning
+    <code>Transceiver::MODE</code>.</li>
+  <li>PIMPL member <code>q65_echo_rig_mode_</code>, QSettings key
+    <code>Q65EchoRigMode</code>, default <code>Transceiver::DIG_U</code>.</li>
+  <li><code>Configuration::set_cached_mode()</code> now returns the user-selected
+    rig mode for <code>data_mode_data</code> instead of hard-coded
+    <code>DIG_U</code>.</li>
+  <li><code>HamlibTransceiver::map_mode()</code> checks the rig&rsquo;s
+    <code>state.mode_list</code> after mapping and falls back to
+    <code>RIG_MODE_USB</code> when the chosen mode is not advertised. CW
+    and USB are passed through untouched.</li>
+  <li>The <code>modeGroup</code> <code>QActionGroup::triggered</code>
+    lambda in <code>mainwindow.cpp</code> detects
+    <code>actionQ65</code> / <code>actionEcho</code> and sets
+    <code>data_mode_data</code>; otherwise falls back to the v3.0.7
+    behaviour (CW &rarr; CW, else &rarr; USB).</li>
+  <li>New <code>MainWindow::updateRigModeLabel()</code> helper reads
+    <code>data_mode()</code> + <code>q65_echo_rig_mode()</code> and sets
+    the label text and stylesheet. Called from
+    <code>setup_status_bar()</code> and <code>handle_leavingSettings()</code>.</li>
+</ul>
+</div>
+
+<!-- ===== 14. FILE CHANGES ===== -->
+<h2 id="files">14. Complete File Change Summary</h2>
 
 <p>All files modified or added relative to upstream WSJT-X 3.0.2:</p>
 
@@ -704,8 +841,8 @@ cleaner display.</p>
   </tr>
 </table>
 
-<!-- ===== 14. VERSIONS ===== -->
-<h2 id="versions">14. Version History</h2>
+<!-- ===== 15. VERSIONS ===== -->
+<h2 id="versions">15. Version History</h2>
 
 <table>
   <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
@@ -742,10 +879,25 @@ cleaner display.</p>
       modes), automatic radio mode switching (CW/USB via CAT), digital UI
       lockout when CW active, About dialog with IT9CJC credit</td>
   </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.8-devel</span></td>
+    <td>2026-11-01</td>
+    <td>Q65/Echo rig mode selector (Data/PktUSB default, 6 options), silent
+      USB fallback on unsupported Hamlib modes, resolved rig-mode status
+      indicator in the main window (replaces CW-only label)</td>
+  </tr>
+  <tr>
+    <td><span class="version-badge">v3.0.9-devel</span></td>
+    <td>2026-11-01</td>
+    <td>Transverter band profiles (9 bands with hard-coded center
+      frequencies, IF-only user entry, auto-computed offset,
+      mutually-exclusive Enabled); IF status indicator in main window;
+      fixed RX/TX offsets removed</td>
+  </tr>
 </table>
 
-<!-- ===== 15. BUILD ===== -->
-<h2 id="build">15. Building from Source</h2>
+<!-- ===== 16. BUILD ===== -->
+<h2 id="build">16. Building from Source</h2>
 
 <h4>Requirements</h4>
 <ul>

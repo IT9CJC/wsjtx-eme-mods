@@ -166,6 +166,13 @@
 #include <QFont>
 #include <QFontDialog>
 #include <QComboBox>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <QCheckBox>
+#include <QHBoxLayout>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QSignalBlocker>
 #include <QScopedPointer>
 #include <QNetworkInterface>
 #include <QHostInfo>
@@ -222,6 +229,26 @@ namespace
   // disabled
   int const combo_box_item_enabled (32 | 1);
   int const combo_box_item_disabled (0);
+
+  // Fixed transverter band list. Order is the order shown in the
+  // Settings > Transverter tab and in the main window Band menu.
+  // The band center frequency (MHz) is used to compute the offset applied
+  // to the rig frequency: offset_hz = (band_center_hz - if_hz).
+  QStringList const transverter_band_names {
+    "6m", "2m", "70cm", "23cm", "13cm",
+    "9cm", "6cm", "3cm", "1.25cm"
+  };
+  QList<qint64> const transverter_band_centers_hz {
+    qint64 (    50) * 1000000, // 6m    : 50 MHz
+    qint64 (   144) * 1000000, // 2m    : 144 MHz
+    qint64 (   432) * 1000000, // 70cm  : 432 MHz
+    qint64 (  1296) * 1000000, // 23cm  : 1296 MHz
+    qint64 (  2320) * 1000000, // 13cm  : 2320 MHz (EU)
+    qint64 (  3400) * 1000000, // 9cm   : 3400 MHz
+    qint64 (  5760) * 1000000, // 6cm   : 5760 MHz
+    qint64 ( 10368) * 1000000, // 3cm   : 10368 MHz
+    qint64 ( 24048) * 1000000  // 1.25cm: 24048 MHz
+  };
 
 //  QRegExp message_alphabet {"[- A-Za-z0-9+./?]*"};
   QRegularExpression message_alphabet {"[- @A-Za-z0-9+./?#<>;$]*"};
@@ -544,6 +571,8 @@ private:
       (rig_params_.split_mode != TransceiverFactory::split_mode_none);
   }
   void set_cached_mode ();
+  void populate_transverter_table ();
+  void read_transverter_table_into_profiles ();
   bool open_rig (bool force = false);
   //bool set_mode ();
   void close_rig ();
@@ -758,8 +787,8 @@ private:
   StationList next_stations_;
   FrequencyDelta current_offset_;
   FrequencyDelta current_tx_offset_;
-  FrequencyDelta fixed_rx_offset_;
-  FrequencyDelta fixed_tx_offset_;
+  QList<TransverterProfile> transverter_profiles_;
+  int active_transverter_band_;   // -1 = None
   QString ui_language_;
   Transceiver::MODE q65_echo_rig_mode_;
 
@@ -1023,6 +1052,47 @@ bool Configuration::is_active () const {return m_->isVisible ();}
 Configuration::DataMode Configuration::data_mode () const {return m_->data_mode_;}
 Configuration::MODE Configuration::q65_echo_rig_mode () const {return m_->q65_echo_rig_mode_;}
 
+int const Configuration::transverter_band_count = 9;
+
+QString const& Configuration::transverter_band_name (int index)
+{
+  return transverter_band_names.at (index);
+}
+
+QList<Configuration::TransverterProfile>
+Configuration::transverter_profiles () const
+{
+  return m_->transverter_profiles_;
+}
+
+int Configuration::active_transverter_band () const
+{
+  return m_->active_transverter_band_;
+}
+
+Radio::FrequencyDelta Configuration::transverter_rx_offset () const
+{
+  int i = m_->active_transverter_band_;
+  if (i < 0 || i >= m_->transverter_profiles_.size ()) return 0;
+  auto const& p = m_->transverter_profiles_.at (i);
+  if (!p.enabled || p.if_hz <= 0) return 0;
+  return p.band_center_hz - p.if_hz;
+}
+
+Radio::FrequencyDelta Configuration::transverter_tx_offset () const
+{
+  // Same as RX offset: single computed value from band_center - IF.
+  return transverter_rx_offset ();
+}
+
+void Configuration::set_active_transverter_band (int index)
+{
+  if (index < -1 || index >= m_->transverter_profiles_.size ()) index = -1;
+  if (index == m_->active_transverter_band_) return;
+  m_->active_transverter_band_ = index;
+  Q_EMIT active_transverter_band_changed (index);
+}
+
 QAudioDeviceInfo const& Configuration::audio_input_device () const {return m_->audio_input_device_;}
 AudioDevice::Channel Configuration::audio_input_channel () const {return m_->audio_input_channel_;}
 QAudioDeviceInfo const& Configuration::audio_output_device () const {return m_->audio_output_device_;}
@@ -1196,7 +1266,10 @@ void Configuration::set_calibration (CalibrationParams params)
 
 void Configuration::enable_calibration (bool on)
 {
-  auto target_frequency = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_ - m_->fixed_rx_offset_;
+  // Transverter offset: rig_freq = main_freq - offset, so to recover main
+  // from rig we ADD the transverter offset (station offset keeps its own
+  // subtract convention from stock WSJT-X).
+  auto target_frequency = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_ + transverter_rx_offset ();
   m_->frequency_calibration_disabled_ = !on;
   transceiver_frequency (target_frequency);
 }
@@ -1795,6 +1868,7 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   , next_stations_ {&bands_}
   , current_offset_ {0}
   , current_tx_offset_ {0}
+  , active_transverter_band_ {-1}
   , q65_echo_rig_mode_ {Transceiver::DIG_U}
   , frequency_dialog_ {new FrequencyDialog {&regions_, &modes_, this}}
   , station_delete_action_ {tr ("&Delete"), nullptr}
@@ -1836,6 +1910,19 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
   ui_->q65_echo_rig_mode_combo_box->setItemData (3, static_cast<int> (Transceiver::LSB));
   ui_->q65_echo_rig_mode_combo_box->setItemData (4, static_cast<int> (Transceiver::FSK));
   ui_->q65_echo_rig_mode_combo_box->setItemData (5, static_cast<int> (Transceiver::FM));
+
+  // Initialise transverter band profiles with the fixed band list and
+  // their hard-coded band center frequencies. The user-editable fields
+  // (IF, Enabled) are loaded from QSettings in read_settings().
+  for (int i = 0; i < transverter_band_names.size (); ++i)
+    {
+      TransverterProfile p;
+      p.band_name = transverter_band_names.at (i);
+      p.band_center_hz = transverter_band_centers_hz.at (i);
+      p.if_hz = 0;
+      p.enabled = false;
+      transverter_profiles_.append (p);
+    }
 
   {
     // Make sure the default save directory exists
@@ -2545,10 +2632,22 @@ void Configuration::impl::read_settings ()
     if (idx >= 0) ui_->language_combo_box->setCurrentIndex (idx);
   }
 
-  fixed_rx_offset_ = settings_->value ("FixedRxOffset", 0).toLongLong ();
-  fixed_tx_offset_ = settings_->value ("FixedTxOffset", 0).toLongLong ();
-  ui_->fixed_rx_offset_spin_box->setValue (static_cast<int> (fixed_rx_offset_));
-  ui_->fixed_tx_offset_spin_box->setValue (static_cast<int> (fixed_tx_offset_));
+  // Load transverter band profiles from QSettings.
+  settings_->beginGroup ("TransverterProfiles");
+  for (int i = 0; i < transverter_profiles_.size (); ++i)
+    {
+      auto& p = transverter_profiles_[i];
+      settings_->beginGroup (p.band_name);
+      p.if_hz   = settings_->value ("IF",      0).toLongLong ();
+      p.enabled = settings_->value ("Enabled", false).toBool ();
+      settings_->endGroup ();
+    }
+  settings_->endGroup ();
+  active_transverter_band_ = settings_->value ("ActiveTransverterBand", -1).toInt ();
+  if (active_transverter_band_ < -1
+      || active_transverter_band_ >= transverter_profiles_.size ())
+    active_transverter_band_ = -1;
+  populate_transverter_table ();
 
   q65_echo_rig_mode_ = static_cast<Transceiver::MODE> (
       settings_->value ("Q65EchoRigMode", static_cast<int> (Transceiver::DIG_U)).toInt ());
@@ -2996,8 +3095,17 @@ void Configuration::impl::write_settings ()
   settings_->setValue ("pwrBandTuneMemory", pwrBandTuneMemory_);
   settings_->setValue ("Region", QVariant::fromValue (region_));
   settings_->setValue ("UILanguage", ui_language_);
-  settings_->setValue ("FixedRxOffset", static_cast<qlonglong> (fixed_rx_offset_));
-  settings_->setValue ("FixedTxOffset", static_cast<qlonglong> (fixed_tx_offset_));
+  // Save transverter band profiles.
+  settings_->beginGroup ("TransverterProfiles");
+  for (auto const& p : transverter_profiles_)
+    {
+      settings_->beginGroup (p.band_name);
+      settings_->setValue ("IF",      static_cast<qlonglong> (p.if_hz));
+      settings_->setValue ("Enabled", p.enabled);
+      settings_->endGroup ();
+    }
+  settings_->endGroup ();
+  settings_->setValue ("ActiveTransverterBand", active_transverter_band_);
   settings_->setValue ("Q65EchoRigMode", static_cast<int> (q65_echo_rig_mode_));
   settings_->setValue ("AutoGrid", use_dynamic_grid_);
   settings_->setValue ("highlight_DXcall", highlight_DXcall_);
@@ -3634,8 +3742,7 @@ void Configuration::impl::accept ()
       QMessageBox::information (this, tr ("Language"), tr ("Language change requires a restart of WSJT-X to take effect."));
     }
 
-  fixed_rx_offset_ = ui_->fixed_rx_offset_spin_box->value ();
-  fixed_tx_offset_ = ui_->fixed_tx_offset_spin_box->value ();
+  read_transverter_table_into_profiles ();
 
   q65_echo_rig_mode_ = static_cast<Transceiver::MODE> (
       ui_->q65_echo_rig_mode_combo_box->currentData ().toInt ());
@@ -5177,6 +5284,104 @@ bool Configuration::impl::open_rig (bool force)
   return result;
 }
 
+void Configuration::impl::populate_transverter_table ()
+{
+  auto t = ui_->transverter_table_widget;
+  QSignalBlocker blocker {t};
+  t->setRowCount (transverter_profiles_.size ());
+  for (int i = 0; i < transverter_profiles_.size (); ++i)
+    {
+      auto const& p = transverter_profiles_.at (i);
+      QString header = QString ("%1 (%2 MHz)")
+                        .arg (p.band_name)
+                        .arg (p.band_center_hz / 1000000);
+      t->setVerticalHeaderItem (i, new QTableWidgetItem (header));
+
+      auto if_spin = new QDoubleSpinBox;
+      if_spin->setRange (0.0, 50000.0);
+      if_spin->setDecimals (3);
+      if_spin->setSuffix (" MHz");
+      if_spin->setSingleStep (1.0);
+      if_spin->setValue (static_cast<double> (p.if_hz) / 1000000.0);
+      t->setCellWidget (i, 0, if_spin);
+
+      auto offset_item = new QTableWidgetItem;
+      offset_item->setFlags (Qt::ItemIsEnabled); // read-only
+      offset_item->setTextAlignment (Qt::AlignRight | Qt::AlignVCenter);
+      t->setItem (i, 1, offset_item);
+      auto update_offset = [p, offset_item] (double if_mhz) {
+        double center_mhz = static_cast<double> (p.band_center_hz) / 1000000.0;
+        double offset_mhz = center_mhz - if_mhz;
+        offset_item->setText (QString::number (offset_mhz, 'f', 3) + " MHz");
+      };
+      update_offset (if_spin->value ());
+      QObject::connect (if_spin,
+                        QOverload<double>::of (&QDoubleSpinBox::valueChanged),
+                        update_offset);
+
+      auto en = new QCheckBox;
+      en->setChecked (p.enabled);
+      auto container = new QWidget;
+      auto h = new QHBoxLayout (container);
+      h->addWidget (en);
+      h->setAlignment (Qt::AlignCenter);
+      h->setContentsMargins (0, 0, 0, 0);
+      t->setCellWidget (i, 2, container);
+      en->setObjectName ("transverter_enabled_checkbox");
+
+      // Mutually exclusive: ticking one Enabled checkbox unticks every
+      // other row's Enabled checkbox.
+      QObject::connect (en, &QCheckBox::toggled,
+                        [this, i] (bool checked) {
+                          if (!checked) return;
+                          auto t2 = ui_->transverter_table_widget;
+                          for (int j = 0; j < t2->rowCount (); ++j)
+                            {
+                              if (j == i) continue;
+                              if (auto c = t2->cellWidget (j, 2))
+                                {
+                                  auto cb = c->findChild<QCheckBox*> ("transverter_enabled_checkbox");
+                                  if (cb && cb->isChecked ())
+                                    {
+                                      QSignalBlocker b {cb};
+                                      cb->setChecked (false);
+                                    }
+                                }
+                            }
+                        });
+    }
+  t->resizeColumnsToContents ();
+}
+
+void Configuration::impl::read_transverter_table_into_profiles ()
+{
+  auto t = ui_->transverter_table_widget;
+  int rows = qMin (t->rowCount (), transverter_profiles_.size ());
+  int new_active = -1;
+  for (int i = 0; i < rows; ++i)
+    {
+      auto& p = transverter_profiles_[i];
+      if (auto s = qobject_cast<QDoubleSpinBox*> (t->cellWidget (i, 0)))
+        p.if_hz = static_cast<qint64> (s->value () * 1000000.0 + 0.5);
+      if (auto container = t->cellWidget (i, 2))
+        {
+          auto cb = container->findChild<QCheckBox*> ("transverter_enabled_checkbox");
+          if (cb) p.enabled = cb->isChecked ();
+        }
+      // At most one Enabled is permitted (UI enforces exclusivity). If
+      // somehow more than one is checked, keep the first.
+      if (p.enabled && new_active < 0) new_active = i;
+      else if (p.enabled) p.enabled = false;
+    }
+  // Active transverter band is now derived from which single profile is
+  // enabled. Emit change if it moved.
+  if (new_active != active_transverter_band_)
+    {
+      active_transverter_band_ = new_active;
+      Q_EMIT self_->active_transverter_band_changed (new_active);
+    }
+}
+
 void Configuration::impl::set_cached_mode ()
 {
   MODE mode {Transceiver::UNK};
@@ -5204,7 +5409,9 @@ void Configuration::impl::transceiver_frequency (Frequency f)
   // simply picking an offset when the Rx frequency is set and
   // sticking to it we get sane behaviour
   current_offset_ = stations_.offset (f);
-  cached_rig_state_.frequency (apply_calibration (f + current_offset_ + fixed_rx_offset_));
+  // rig_freq = main_freq (f) - transverter_offset. The station offset
+  // keeps its original (+) convention from stock WSJT-X.
+  cached_rig_state_.frequency (apply_calibration (f + current_offset_ - self_->transverter_rx_offset ()));
 
   // qDebug () << "Configuration::impl::transceiver_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;
   LOG_TRACE ("emitting set_transceiver: requested state:" << cached_rig_state_);
@@ -5230,7 +5437,7 @@ void Configuration::impl::transceiver_tx_frequency (Frequency f)
           // apply but by simply picking an offset when the Rx
           // frequency is set and sticking to it we get sane behaviour
           current_tx_offset_ = stations_.offset (f);
-          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ + fixed_tx_offset_));
+          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ - self_->transverter_tx_offset ()));
         }
 
       // qDebug () << "Configuration::impl::transceiver_tx_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;
@@ -5466,12 +5673,12 @@ void Configuration::impl::handle_transceiver_update (TransceiverState const& sta
     {
       TransceiverState reported_state {state};
       // take off calibration & offset
-      reported_state.frequency (remove_calibration (reported_state.frequency ()) - current_offset_ - fixed_rx_offset_);
+      reported_state.frequency (remove_calibration (reported_state.frequency ()) - current_offset_ + self_->transverter_rx_offset ());
 
       if (reported_state.tx_frequency ())
         {
           // take off calibration & offset
-          reported_state.tx_frequency (remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_ - fixed_tx_offset_);
+          reported_state.tx_frequency (remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_ + self_->transverter_tx_offset ());
         }
 
       Q_EMIT self_->transceiver_update (reported_state);

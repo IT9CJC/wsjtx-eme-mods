@@ -105,7 +105,7 @@
   <li><a href="#log">Per-Callsign QSO Log</a></li>
   <li><a href="#cabrillo-export">Cabrillo Export with Log Source Selector</a></li>
   <li><a href="#language">Language Selector</a></li>
-  <li><a href="#fixed-offset">Fixed Frequency Offset</a></li>
+  <li><a href="#transverter">Transverter Band Profiles</a></li>
   <li><a href="#offline">Offline Operation (No Rig)</a></li>
   <li><a href="#mode-menu">CW Mode Menu &amp; Automatic Radio Switching</a></li>
   <li><a href="#q65-echo-mode">Q65 / Echo Rig Mode &amp; Status-bar Indicator</a></li>
@@ -397,27 +397,62 @@ the program to see the new language.</p>
   stored setting is &ldquo;System default.&rdquo;
 </div>
 
-<!-- ===== 5f. FIXED FREQUENCY OFFSET ===== -->
-<h2 id="fixed-offset">5f. Fixed Frequency Offset</h2>
+<!-- ===== 5f. TRANSVERTER BAND PROFILES ===== -->
+<h2 id="transverter">5f. Transverter Band Profiles</h2>
 
-<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;Offset</strong>. The
-<strong>Fixed Frequency Offset</strong> group provides two independent controls:</p>
+<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;Transverter</strong>.
+<span class="tag">NEW in v3.0.9-devel</span>
+A single table manages every microwave transverter you operate. The band list is
+fixed (6m / 2m / 70cm / 23cm / 13cm / 9cm / 6cm / 3cm / 1.25cm). Each row&rsquo;s
+vertical header shows the band center frequency used in the offset calculation:
+50 / 144 / 432 / 1296 / 2320 / 3400 / 5760 / 10368 / 24048 MHz.</p>
 
+<h3>Setting up a band</h3>
+<ol>
+  <li>Enter the transverter&rsquo;s <strong>IF frequency</strong> in the IF
+    column (MHz, 3 decimals).</li>
+  <li>Watch the <strong>Offset (auto)</strong> column update live:
+    <code>offset = band_center &minus; IF</code>.</li>
+  <li>Tick the <strong>Enabled</strong> checkbox on the one band you want to
+    operate. At most one band can be enabled at a time &mdash; ticking a
+    different row automatically unticks the previous one.</li>
+  <li>Click <strong>OK</strong>. The main window status bar updates to show
+    the active <strong>IF</strong>.</li>
+</ol>
+
+<h3>CAT frequency pipeline</h3>
+<p>When a band is enabled, the CAT frequency sent to the rig is translated:</p>
+<pre><code>rig_freq = main_freq &minus; offset
+        = main_freq &minus; (band_center &minus; IF)</code></pre>
+
+<p><strong>Example</strong> &mdash; 3cm (10368 MHz) with IF = 432 MHz:
+offset = 9936 MHz. WSJT-X operating on 10368.100 MHz
+&rarr; rig dial 432.100 MHz. The rig&rsquo;s reported frequency
+(432.100 MHz) is translated back by WSJT-X to 10368.100 MHz, so
+the dial display, Doppler engine, and logging all operate on the
+microwave frequency.</p>
+
+<p>Both RX and TX use the same offset. The calibration slope/intercept
+is applied on top, as before.</p>
+
+<h3>Status indicator</h3>
+<p>A persistent <strong>IF</strong> label appears in the main window status bar
+next to the rig-mode label:</p>
 <ul>
-  <li><strong>RX offset</strong> &mdash; added to the receive frequency sent to the
-    radio, alongside the per-band station offset and calibration correction.</li>
-  <li><strong>TX offset</strong> &mdash; added to the transmit frequency in the same
-    pipeline.</li>
+  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">IF=NONE</strong>
+    &mdash; no transverter active, offset = 0, rig sees the WSJT-X dial directly.</li>
+  <li><strong style="color:#fff; background:#8e44ad; padding:0 .3em;">IF=432.000&nbsp;MHz</strong>
+    &mdash; a band is active; label shows the configured IF for that band.</li>
 </ul>
 
-<p>Both values are in Hz and can range from &minus;100&nbsp;MHz to +100&nbsp;MHz
-(step size: 1000&nbsp;Hz). They are applied before the calibration slope/intercept
-correction:</p>
-
-<pre><code>RIG_freq = calibration(dial_freq + station_offset + fixed_offset)</code></pre>
-
-<p>Typical uses include transverter IF offsets and fixed frequency corrections for
-EME microwave setups where the RX and TX chains have different LO offsets.</p>
+<div class="callout warn">
+  <strong>Fixed RX/TX offsets removed in v3.0.9-devel</strong>
+  The v3.0.6 <em>Offset</em> tab with its separate RX / TX spinboxes is
+  gone. All transverter offsetting now goes through the per-band
+  Transverter table. Existing <code>FixedRxOffset</code> /
+  <code>FixedTxOffset</code> QSettings values from older installs are
+  silently ignored.
+</div>
 
 <!-- ===== 5g. OFFLINE OPERATION ===== -->
 <h2 id="offline">5g. Offline Operation (No Rig)</h2>
@@ -770,7 +805,7 @@ repository. Edit it to match your local dependency paths.</p>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.8-devel &mdash; Built by II9P &mdash; November 2026</p>
+  <p>WSJT-X EME CW Mod v3.0.9-devel &mdash; Built by II9P &mdash; November 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

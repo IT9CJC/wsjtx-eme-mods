@@ -425,51 +425,13 @@
        </item>
        <item>
         <widget class="QGroupBox" name="cw_sked_group">
-         <property name="title"><string>Sked &amp; Doppler</string></property>
+         <property name="title"><string>Doppler</string></property>
          <layout class="QVBoxLayout" name="cw_sked_vlayout">
           <property name="leftMargin"><number>4</number></property>
           <property name="topMargin"><number>2</number></property>
           <property name="rightMargin"><number>4</number></property>
           <property name="bottomMargin"><number>2</number></property>
           <property name="spacing"><number>2</number></property>
-          <item>
-           <layout class="QHBoxLayout" name="cw_sked_row1">
-            <item>
-             <widget class="QLabel" name="lbl_cw_sked">
-              <property name="text"><string>Sked Freq (MHz):</string></property>
-              <property name="font"><font><pointsize>12</pointsize><bold>true</bold></font></property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="sb_cw_sked_mhz">
-              <property name="minimum"><double>0.1</double></property>
-              <property name="maximum"><double>50000.0</double></property>
-              <property name="decimals"><number>6</number></property>
-              <property name="singleStep"><double>0.000100</double></property>
-              <property name="toolTip"><string>Sked frequency in MHz. Full editable, 1 Hz resolution. Mirrors Astro dialog.</string></property>
-              <property name="minimumSize"><size><width>240</width><height>40</height></size></property>
-              <property name="alignment"><set>Qt::AlignCenter</set></property>
-              <property name="readOnly"><bool>false</bool></property>
-              <property name="keyboardTracking"><bool>false</bool></property>
-              <property name="styleSheet"><string notr="true">QDoubleSpinBox {
-  font-family: MS Shell Dlg 2;
-  font-size: 16pt;
-  color: yellow;
-  background-color: black;
-  padding: 2px 6px;
-}</string></property>
-             </widget>
-            </item>
-            <item><widget class="QCheckBox" name="cb_cw_lock_sked"><property name="text"><string>Lock Sked</string></property></widget></item>
-            <item><widget class="QCheckBox" name="cb_cw_doppler"><property name="text"><string>Doppler Tracking</string></property></widget></item>
-            <item>
-             <spacer name="cw_sked_spacer">
-              <property name="orientation"><enum>Qt::Horizontal</enum></property>
-              <property name="sizeHint" stdset="0"><size><width>20</width><height>10</height></size></property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
           <item>
            <layout class="QGridLayout" name="cw_doppler_grid">
             <property name="horizontalSpacing"><number>8</number></property>

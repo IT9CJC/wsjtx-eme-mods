@@ -4623,13 +4623,6 @@ void MainWindow::setupCWPanel ()
   ui->sb_cw_wpm->setValue (m_cwWpm);
   ui->sb_cw_tx_offset->setValue (m_cwTxOffsetHz);
   ui->sb_cw_tx_hold->setValue (m_cwTxHoldMs);
-  // Load the saved sked (global) into the CW panel spinbox so the panel
-  // comes up with the last value instead of the UI designer default.
-  if (m_skedFreq > 0.0) {
-    m_cwPanelSyncing = true;
-    ui->sb_cw_sked_mhz->setValue (m_skedFreq);
-    m_cwPanelSyncing = false;
-  }
   QList<QLineEdit*> macroEdits {
     ui->le_cw_macro1, ui->le_cw_macro2, ui->le_cw_macro3,
     ui->le_cw_macro4, ui->le_cw_macro5, ui->le_cw_macro6};
@@ -4644,9 +4637,6 @@ void MainWindow::setupCWPanel ()
   connect (ui->sb_cw_wpm, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWWpmChanged);
   connect (ui->sb_cw_tx_offset, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWTxOffsetChanged);
   connect (ui->sb_cw_tx_hold, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWTxHoldMsChanged);
-  connect (ui->sb_cw_sked_mhz, QOverload<double>::of (&QDoubleSpinBox::valueChanged), this, &MainWindow::onCWSkedMhzChanged);
-  connect (ui->cb_cw_lock_sked, &QCheckBox::toggled, this, &MainWindow::onCWLockSkedChanged);
-  connect (ui->cb_cw_doppler, &QCheckBox::toggled, this, &MainWindow::onCWDopplerEnableChanged);
   connect (ui->pb_cw_send, &QPushButton::clicked, this, &MainWindow::onCWSendClicked);
   connect (ui->pb_cw_stop, &QPushButton::clicked, this, &MainWindow::onCWStopClicked);
   connect (ui->le_cw_message, &QLineEdit::returnPressed, this, &MainWindow::onCWSendClicked);
@@ -5213,72 +5203,10 @@ double MainWindow::defaultSkedForBand (QString const& band) const
 void MainWindow::loadSkedForBand (QString const& band)
 {
   if (band.isEmpty ()) return;
-  QString const key = QString ("CW/SkedFreq_%1").arg (band);
-  double mhz = m_settings->value (key, defaultSkedForBand (band)).toDouble ();
+  double const mhz = defaultSkedForBand (band);
   if (mhz <= 0.0) return;
-  m_cwPanelSyncing = true;
-  ui->sb_cw_sked_mhz->setValue (mhz);
-  m_cwPanelSyncing = false;
   m_skedFreq = mhz;
-  m_settings->setValue ("SkedFreq", mhz);
   if (m_astroWidget) m_astroWidget->applySkedFreqMHz (mhz);
-}
-
-void MainWindow::onCWSkedMhzChanged (double mhz)
-{
-  if (m_cwPanelSyncing) return;
-  m_skedFreq = mhz;
-  // Persist immediately so the sked survives a restart even if the
-  // user quits via taskkill or crash before write_settings runs.
-  m_settings->setValue ("SkedFreq", m_skedFreq);
-  // Also save per-band so switching band restores the per-band sked.
-  Frequency const sked_hz = qRound64 (1000000.0 * mhz);
-  QString const band = m_config.bands ()->find (sked_hz);
-  if (!band.isEmpty ()) {
-    m_settings->setValue (QString ("CW/SkedFreq_%1").arg (band), m_skedFreq);
-  }
-  if (m_astroWidget) {
-    m_astroWidget->applySkedFreqMHz (mhz);
-  }
-  // Only force the rig to the new sked when a Doppler mode is active.
-  // With No Doppler selected, the rig is the master — WSJT does not
-  // override the operator's VFO.
-  bool const doppler_active = m_astroWidget
-      && m_astroWidget->DopplerMethod () != 0 && m_astroWidget->DopplerMethod () != 10;
-  if (doppler_active && m_config.transceiver_online ()) {
-    Frequency const sked_hz = qRound64 (1000000.0 * mhz);
-    m_astroCorrection = {};
-    m_freqNominal = sked_hz;
-    m_freqTxNominal = sked_hz;
-    m_config.transceiver_frequency (sked_hz);
-  }
-  displayDialFrequency ();
-}
-
-void MainWindow::onCWLockSkedChanged (bool locked)
-{
-  if (m_cwPanelSyncing) return;
-  if (m_astroWidget) {
-    m_astroWidget->setLockSkedFreq (locked);
-    double const mhz = ui->sb_cw_sked_mhz->value ();
-    if (mhz > 0.0) {
-      m_astroWidget->applySkedFreqMHz (mhz);
-    }
-  }
-  // Always persist immediately — don't wait for Astro's lazy save on close
-  m_settings->beginGroup ("Astro");
-  m_settings->setValue ("LockSkedFreq", locked);
-  m_settings->endGroup ();
-}
-
-void MainWindow::onCWDopplerEnableChanged (bool enabled)
-{
-  if (m_cwPanelSyncing) return;
-  if (m_astroWidget) m_astroWidget->setDopplerTracking (enabled);
-  // Always persist immediately
-  m_settings->beginGroup ("Astro");
-  m_settings->setValue ("DopplerTracking", enabled);
-  m_settings->endGroup ();
 }
 
 void MainWindow::onCWDopplerModeChanged ()
@@ -5300,7 +5228,6 @@ void MainWindow::onCWDopplerModeChanged ()
     // the checkbox.
     if (method != 0 && method != 10) {
       m_astroWidget->setDopplerTracking (true);
-      ui->cb_cw_doppler->setChecked (true);
     }
   }
   // Always persist immediately — don't wait for Astro's lazy save on close
@@ -5326,23 +5253,10 @@ void MainWindow::syncCWPanelFromAstro ()
 {
   m_cwPanelSyncing = true;
   int method = 0;
-  bool dopplerOn = false;
-  bool lock = false;
-  double skedMHz = m_skedFreq;
   if (m_astroWidget) {
     method = m_astroWidget->DopplerMethod ();
-    dopplerOn = m_astroWidget->doppler_tracking () || method != 0;
-    // doppler_tracking() returns the AND of checkbox+method, so read the checkbox effect differently
-    dopplerOn = (method != 0);
-    // but we also want the cbDopplerTracking state — not accessible directly; use settings
-    QVariant v = m_settings->value ("Astro/DopplerTracking");
-    if (v.isValid ()) dopplerOn = v.toBool ();
-    lock = m_astroWidget->lockSkedFreq ();
-    skedMHz = m_astroWidget->skedFreqMHz ();
   } else {
-    method    = m_settings->value ("Astro/DopplerMethod", 0).toInt ();
-    dopplerOn = m_settings->value ("Astro/DopplerTracking", false).toBool ();
-    lock      = m_settings->value ("Astro/LockSkedFreq", false).toBool ();
+    method = m_settings->value ("Astro/DopplerMethod", 0).toInt ();
   }
   switch (method) {
     case 1:  ui->rb_cw_full_track->setChecked (true); break;
@@ -5352,9 +5266,6 @@ void MainWindow::syncCWPanelFromAstro ()
     case 5:  ui->rb_cw_call_dx   ->setChecked (true); break;
     default: ui->rb_cw_no_doppler->setChecked (true); break;
   }
-  ui->cb_cw_doppler  ->setChecked (dopplerOn);
-  ui->cb_cw_lock_sked->setChecked (lock);
-  ui->sb_cw_sked_mhz->setValue (skedMHz);
   m_cwPanelSyncing = false;
 }
 

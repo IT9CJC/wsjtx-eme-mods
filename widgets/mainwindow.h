@@ -1029,8 +1029,8 @@ private:
   void onCWStopClicked();
   void onCWEditMacrosClicked();
   void onCWMessageTextChanged(QString const& text);
-  double defaultSkedForBand(QString const& band) const;
-  void loadSkedForBand(QString const& band);
+  double defaultCwRxForBand(QString const& band) const;
+  void loadCwRxForBand(QString const& band);
   void startCWLiveStream();
   void endCWLiveStream();
   void onCWPTTToggled(bool checked);

@@ -5176,7 +5176,10 @@ void MainWindow::onCWTxOffsetChanged (int hz)
 
 // Preferred CW EME sked frequency for each band (MHz). Used when no
 // per-band saved value exists in QSettings.
-double MainWindow::defaultSkedForBand (QString const& band) const
+// Per-band preferred CW RX frequency (MHz). Also used as the sked-side
+// nominal so Astro Doppler calculations use the correct reference until
+// the operator overrides via the Astro sked field.
+double MainWindow::defaultCwRxForBand (QString const& band) const
 {
   if (band == "6m")     return    50.100;
   if (band == "2m")     return   144.100;
@@ -5190,15 +5193,20 @@ double MainWindow::defaultSkedForBand (QString const& band) const
   return 0.0;
 }
 
-// Load the saved sked for the given band (or the preferred default if
-// no saved value exists) and push it to the CW panel + Astro.
-void MainWindow::loadSkedForBand (QString const& band)
+// On entering a CW band, snap the RX dial to that band's preferred freq
+// and push it to Astro so Doppler calculations use the right nominal.
+void MainWindow::loadCwRxForBand (QString const& band)
 {
   if (band.isEmpty ()) return;
-  double const mhz = defaultSkedForBand (band);
+  double const mhz = defaultCwRxForBand (band);
   if (mhz <= 0.0) return;
+  Frequency const freq_hz = qRound64 (1000000.0 * mhz);
+  m_freqNominal = freq_hz;
+  m_freqTxNominal = freq_hz;
   m_skedFreq = mhz;
   if (m_astroWidget) m_astroWidget->applySkedFreqMHz (mhz);
+  if (m_config.transceiver_online ()) setRig ();
+  displayDialFrequency ();
 }
 
 void MainWindow::updateCWModeUI (bool cw_mode)
@@ -12948,21 +12956,21 @@ void MainWindow::on_bandComboBox_activated (int index)
 
 void MainWindow::band_changed (Frequency f)
 {
-  // In CW mode, if the new band differs from the sked's band, auto-load
-  // the per-band saved sked (or preferred default) so sked follows band.
+  // In CW mode, if the new band's preferred RX differs from where we
+  // currently are, snap to the per-band preferred CW RX.
   if (m_config.data_mode () == Configuration::data_mode_CW) {
     QString const new_band = m_config.bands ()->find (f);
-    QString const sked_band = m_skedFreq > 0.0
+    QString const curr_band = m_skedFreq > 0.0
         ? m_config.bands ()->find (qRound64 (1000000.0 * m_skedFreq))
         : QString ();
-    if (!new_band.isEmpty () && new_band != sked_band) {
-      loadSkedForBand (new_band);
+    if (!new_band.isEmpty () && new_band != curr_band) {
+      loadCwRxForBand (new_band);
     }
   }
-  // Sticky sked override: snap to sked ONLY when f is far enough from
-  // sked to suggest a mode-switch default (e.g. 10368.200 Q65 default
-  // vs 10368.100 sked, 100 kHz apart). Small deltas like ±1 kHz come
-  // from manual wheel/click tuning and must be respected.
+  // Sticky sked override: snap to the current nominal (band-preferred RX
+  // in CW, or Astro's sked field in other modes) ONLY when f is far from
+  // it (e.g. 10368.200 Q65 default vs 10368.100 preferred, 100 kHz apart).
+  // Small deltas like +-1 kHz come from manual tuning and must be respected.
   if (m_skedFreq > 0.0) {
     Frequency const sked_hz = qRound64 (1000000.0 * m_skedFreq);
     if (sked_hz > 0 && sked_hz != f) {

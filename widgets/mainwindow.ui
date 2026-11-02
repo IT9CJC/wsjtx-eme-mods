@@ -4468,10 +4468,16 @@ Double-click to reset to the standard 73 message</string>
            <item>
             <widget class="QLabel" name="labDialFreq">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-               <horstretch>0</horstretch>
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+               <horstretch>1</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>260</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="focusPolicy">
               <enum>Qt::WheelFocus</enum>
@@ -4504,10 +4510,16 @@ QLabel[oob=&quot;true&quot;] {
            <item>
             <widget class="QLabel" name="labDialFreqTx">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-               <horstretch>0</horstretch>
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+               <horstretch>1</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>260</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="focusPolicy">
               <enum>Qt::NoFocus</enum>

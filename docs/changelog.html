@@ -88,10 +88,66 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.1.1-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.1.1-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-02</span>
+  </div>
+
+  <p>CW panel simplification + dual RX/TX frequency dial. Main-window shows
+  two side-by-side yellow-on-black dials with small "RX" / "TX" corner
+  tags; TX dial is derived (nominal + TX Doppler correction, or
+  <code>tx_frequency()</code> during split keyed TX) and mirrors RX when
+  Doppler is off. The CW panel loses its sked frequency field, Lock Sked
+  / Doppler Tracking checkboxes, and the 6 Doppler-mode radios &mdash; all
+  of that now lives exclusively in the Astro dialog. Per-band preferred
+  CW RX replaces the "sked preset" concept. New rig-master behavior for
+  the <b>None</b> and <b>Call DX</b> Doppler methods: the operator's VFO is
+  final, WSJT doesn't force the rig, and VFO moves adopt as the new sked
+  (unless <b>Ctl-Lock Sked Freq</b> is checked). The Tune button is removed
+  (Echo mode covers that use case), and Stop now aborts transmission
+  immediately rather than waiting out TX Hold ms.</p>
+
+  <h3>Changes</h3>
+  <ul>
+    <li><b>Dual RX + TX dial display</b> &mdash; two side-by-side yellow-on-black
+    dials replace the single main dial. RX is editable (wheel / click +
+    arrow keys / kHz +-). TX is read-only; adjust via the Astro sked
+    field. Small grey corner tags identify each dial.</li>
+    <li><b>Sked frequency moved to Astro only</b> &mdash; removed
+    <code>sb_cw_sked_mhz</code>, <code>cb_cw_lock_sked</code>,
+    <code>cb_cw_doppler</code>, their handlers, and the per-band sked
+    QSettings persistence (<code>CW/SkedFreq_&lt;band&gt;</code>).</li>
+    <li><b>Doppler mode radios removed from CW panel</b> &mdash; the 6-radio
+    grid is gone. Use the Astro dialog to select Doppler method.</li>
+    <li><b>Per-band preferred CW RX</b> &mdash; renamed
+    <code>defaultSkedForBand</code> to <code>defaultCwRxForBand</code>.
+    Same values (3cm = 10368.100, 23cm = 1296.100, etc.) but now applied
+    as the RX default on entering a CW band, not as a sked preset.</li>
+    <li><b>Rig-master Doppler for None + Call DX</b> &mdash; in Doppler methods 0
+    and 5, WSJT no longer forces the rig frequency. The operator moves
+    the VFO; the new frequency becomes the sked. Honors
+    <b>Ctl-Lock Sked Freq</b> &mdash; when checked, the sked is frozen and the
+    VFO can wander without rewriting it.</li>
+    <li><b>Tune button removed</b> &mdash; Echo mode (and manual TX/RX) covers
+    the antenna-tuning use case; keeps the CW panel cleaner. The dead
+    <code>generateContinuousTone</code> method in <code>CwToneGenerator</code>
+    is also gone.</li>
+    <li><b>Immediate Stop</b> &mdash; the Stop button in the CW panel now
+    aborts transmission on the spot: cancels pending TX-Hold /
+    debounce / Doppler timers, clears live-keyer state, drops PTT,
+    aborts CAT morse, restores CW mode. No more waiting out TX Hold ms.</li>
+    <li><b>Dial widening</b> &mdash; each dial has <code>minimumWidth=260</code>
+    and <code>MinimumExpanding</code> horizontal size policy so centered 16pt
+    digits always have clearance from the corner RX/TX tag.</li>
+  </ul>
+</div>
+
 <!-- ===== v3.1.0-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.1.0-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.1.0-devel</h2>
     <span class="release-date">2026-11-02</span>
   </div>
 

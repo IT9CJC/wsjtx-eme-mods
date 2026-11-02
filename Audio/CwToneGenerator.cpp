@@ -134,44 +134,6 @@ bool CwToneGenerator::generate (QString const& text, int wpm, int toneHz,
   return !samples_.isEmpty ();
 }
 
-bool CwToneGenerator::generateContinuousTone (int toneHz, QAudioFormat const& fmt)
-{
-  samples_.clear ();
-  pos_ = 0;
-  total_micros_ = 0;
-  continuous_ = true;
-  if (fmt.sampleSize () != 16) return false;
-  if (fmt.sampleType () != QAudioFormat::SignedInt) return false;
-  if (toneHz < 300) toneHz = 300;
-  if (toneHz > 2000) toneHz = 2000;
-
-  int const sampleRate = fmt.sampleRate ();
-  double const amplitude = 0.5;             // -6 dBFS
-  // Find smallest buffer that is an integer number of tone periods so the
-  // read-wraps are click-free. For 48 kHz / 700 Hz, 7 periods = 480
-  // samples = 10 ms.
-  int numPeriods = 1;
-  while ((static_cast<qint64> (numPeriods) * sampleRate) % toneHz != 0 && numPeriods < toneHz) {
-    ++numPeriods;
-  }
-  int const nSamples = (numPeriods * sampleRate) / toneHz;
-  double const w = 2.0 * M_PI * toneHz / static_cast<double> (sampleRate);
-  int const nRamp = (sampleRate * 5) / 1000;  // 5 ms fade-in on very first play
-  samples_.reserve (nSamples * 2);
-  for (int i = 0; i < nSamples; ++i) {
-    double env = 1.0;
-    if (i < nRamp) {
-      env = 0.5 - 0.5 * std::cos (M_PI * i / nRamp);
-    }
-    double v = amplitude * env * std::sin (w * i);
-    qint16 s = static_cast<qint16> (std::max (-32768.0, std::min (32767.0, v * 32767.0)));
-    samples_.append (static_cast<char> (s & 0xff));
-    samples_.append (static_cast<char> ((s >> 8) & 0xff));
-  }
-  open (QIODevice::ReadOnly);
-  return !samples_.isEmpty ();
-}
-
 qint64 CwToneGenerator::bytesAvailable () const
 {
   if (continuous_) {

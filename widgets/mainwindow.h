@@ -1028,7 +1028,6 @@ private:
   void onCWSendClicked();
   void onCWStopClicked();
   void onCWEditMacrosClicked();
-  void onCWTuneToggled(bool checked);
   void onCWMessageTextChanged(QString const& text);
   double defaultSkedForBand(QString const& band) const;
   void loadSkedForBand(QString const& band);

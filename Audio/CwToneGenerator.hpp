@@ -22,11 +22,6 @@ public:
   bool generate (QString const& text, int wpm, int toneHz,
                  QAudioFormat const& fmt);
 
-  // Build a short seamlessly-looping buffer of a continuous sine wave for
-  // tune / antenna matching use. Buffer length is an integer number of
-  // periods so wrap-around in readData() is click-free.
-  bool generateContinuousTone (int toneHz, QAudioFormat const& fmt);
-
   // Live streaming mode: start an open-ended stream whose content is
   // appended on the fly via appendTextLive(). readData() returns silence
   // when the pending buffer is empty, keeping the audio pipeline alive

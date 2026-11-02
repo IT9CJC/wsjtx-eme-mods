@@ -392,14 +392,6 @@
             </item>
             <item><widget class="QPushButton" name="pb_cw_send"><property name="text"><string>Send</string></property></widget></item>
             <item><widget class="QPushButton" name="pb_cw_stop"><property name="text"><string>Stop</string></property></widget></item>
-            <item>
-             <widget class="QPushButton" name="pb_cw_tune">
-              <property name="text"><string>Tune</string></property>
-              <property name="checkable"><bool>true</bool></property>
-              <property name="toolTip"><string>Continuous tone for antenna tuning. Switches rig to Data/PktUSB, PTT on, streams steady 700 Hz sine. Click again to stop.</string></property>
-              <property name="styleSheet"><string notr="true">QPushButton:checked { background-color: #ff6666; color: white; }</string></property>
-             </widget>
-            </item>
             <item><widget class="QPushButton" name="pb_cw_edit_macros"><property name="text"><string>Edit Macros...</string></property><property name="toolTip"><string>Open macro editor</string></property></widget></item>
            </layout>
           </item>

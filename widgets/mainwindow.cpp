@@ -4625,7 +4625,6 @@ void MainWindow::setupCWPanel ()
   connect (ui->le_cw_message, &QLineEdit::returnPressed, this, &MainWindow::onCWSendClicked);
   connect (ui->pb_cw_ptt, &QPushButton::toggled, this, &MainWindow::onCWPTTToggled);
   connect (ui->pb_cw_edit_macros, &QPushButton::clicked, this, &MainWindow::onCWEditMacrosClicked);
-  connect (ui->pb_cw_tune, &QPushButton::toggled, this, &MainWindow::onCWTuneToggled);
   connect (ui->le_cw_message, &QLineEdit::textEdited, this, &MainWindow::onCWMessageTextChanged);
 
   for (int i = 0; i < txButtons.size (); ++i) {
@@ -4822,13 +4821,48 @@ void MainWindow::finishCWSoundcard ()
 
 void MainWindow::onCWStopClicked ()
 {
-  setCWStatus (CWStatusInfo, "Stop requested");
-  if (m_cwAudioActive) {
-    // SoundOutput::stop will emit status "Stopped" which triggers finishCWSoundcard
+  setCWStatus (CWStatusInfo, "Stop");
+
+  // Cancel any pending timers that would re-trigger PTT, Doppler, or
+  // deferred cleanup work. Without this, a hard Stop still leaves the rig
+  // keyed for TX Hold ms via the semi-break-in debounce path.
+  if (m_cwLiveIdleTimer && m_cwLiveIdleTimer->isActive ())  m_cwLiveIdleTimer->stop ();
+  if (m_cwPttOffDebounce && m_cwPttOffDebounce->isActive ()) m_cwPttOffDebounce->stop ();
+  if (m_cwDopplerTimer   && m_cwDopplerTimer->isActive ())   m_cwDopplerTimer->stop ();
+
+  // Clear live-keyer state so the next keystroke starts a fresh stream
+  m_cwLiveActive = false;
+  m_cwLiveLastText.clear ();
+
+  // Pre-flip m_cwAudioActive so finishCWSoundcard's Idle-signal entry
+  // early-returns via its own guard — avoids the TX Hold wait + mode flip
+  // the deferred path would otherwise run after our own PTT-off below.
+  bool const was_audio_active = m_cwAudioActive;
+  m_cwAudioActive = false;
+
+  if (was_audio_active) {
     QMetaObject::invokeMethod (m_soundOutput, "stop", Qt::QueuedConnection);
-    return;
   }
+
+  // Immediate PTT off and CAT-keyer abort — covers soundcard CW, CAT-driven
+  // morse, and any external path where WSJT is still holding PTT.
+  m_config.transceiver_ptt (false);
   m_config.transceiver_stop_morse ();
+
+  // Keep the manual TX/RX button visually in sync if it was latched.
+  if (ui->pb_cw_ptt->isChecked ()) ui->pb_cw_ptt->setChecked (false);
+
+  // 50 ms gap so the PTT-off reaches the rig before the mode change,
+  // then restore CW mode and clear the soundcard-CW bypass flag.
+  QTimer::singleShot (50, this, [this] {
+    m_config.set_soundcard_cw_tx_active (false);
+    if (m_cwSavedMode != Transceiver::UNK) {
+      m_config.transceiver_mode (m_cwSavedMode);
+    } else {
+      m_config.transceiver_mode (Transceiver::CW);
+    }
+    setCWStatus (CWStatusOK, "Stopped");
+  });
 }
 
 // Live keyer: typing in the free-text field keys the rig in real time.
@@ -4923,71 +4957,6 @@ void MainWindow::endCWLiveStream ()
   // Also clear the live text so next session starts fresh.
   m_cwLiveLastText.clear ();
   // We DO NOT clear le_cw_message so the user can see what they typed.
-}
-
-void MainWindow::onCWTuneToggled (bool checked)
-{
-  if (checked) {
-    if (m_cwAudioActive) {
-      setCWStatus (CWStatusWarning, "Finish current message before Tune");
-      ui->pb_cw_tune->setChecked (false);
-      return;
-    }
-    if (!m_config.transceiver_online ()) {
-      setCWStatus (CWStatusWarning, "Rig offline — connect in Settings > Radio");
-      ui->pb_cw_tune->setChecked (false);
-      return;
-    }
-    QAudioFormat fmt;
-    fmt.setSampleRate (48000);
-    fmt.setSampleSize (16);
-    fmt.setChannelCount (1);
-    fmt.setCodec ("audio/pcm");
-    fmt.setByteOrder (QAudioFormat::LittleEndian);
-    fmt.setSampleType (QAudioFormat::SignedInt);
-
-    if (m_cwTone) {
-      m_cwTone->deleteLater ();
-      m_cwTone = nullptr;
-    }
-    m_cwTone = new CwToneGenerator;
-    if (!m_cwTone->generateContinuousTone (700, fmt)) {
-      setCWStatus (CWStatusError, "Could not build tune tone");
-      m_cwTone->deleteLater ();
-      m_cwTone = nullptr;
-      ui->pb_cw_tune->setChecked (false);
-      return;
-    }
-    m_cwTone->moveToThread (&m_audioThread);
-
-    m_cwSavedMode = m_rigState.mode ();
-    m_cwCurrentTxMessage = QStringLiteral ("TUNE");
-    m_config.set_soundcard_cw_tx_active (true);
-    // Tune always goes to sked if a sked freq is set; if sked is empty,
-    // leaves the rig at its current VFO freq.
-    if (m_skedFreq > 0.0) {
-      Frequency const sked_hz = qRound64 (1000000.0 * m_skedFreq);
-      m_freqNominal = sked_hz;
-      m_freqTxNominal = sked_hz;
-      m_config.transceiver_frequency (sked_hz);
-    }
-    m_config.transceiver_mode (Transceiver::DIG_U);
-    setCWStatus (CWStatusInfo, "Rig → Data/PktUSB, tuning (continuous tone)");
-    m_cwAudioActive = true;
-
-    QTimer::singleShot (250, this, [this] {
-      m_config.transceiver_ptt (true);
-      QTimer::singleShot (120, this, [this] {
-        Q_EMIT restartCWAudio (m_cwTone);
-      });
-    });
-  } else {
-    // Stop tune
-    if (m_cwAudioActive) {
-      QMetaObject::invokeMethod (m_soundOutput, "stop", Qt::QueuedConnection);
-      // finishCWSoundcard runs via status Idle/Stopped signal
-    }
-  }
 }
 
 void MainWindow::onCWEditMacrosClicked ()

@@ -13359,6 +13359,21 @@ void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const&
       m_cwLastRigPTT = rigPtt;
       onCWRigPTTChanged (rigPtt);
     }
+    // Rig-master Doppler modes (None, Call DX): if the operator moves
+    // the VFO (any freq change while not keyed), adopt the new freq as
+    // the new sked so Astro and future Doppler math use the right ref.
+    if (!rigPtt && m_astroWidget) {
+      int const method = m_astroWidget->DopplerMethod();
+      bool const rig_master = (method == 0 || method == 5);
+      if (rig_master && s.frequency () != old_state.frequency ()
+          && old_state.frequency () != 0) {
+        Frequency const new_freq = s.frequency ();
+        m_freqNominal = new_freq;
+        m_freqTxNominal = new_freq;
+        m_skedFreq = new_freq / 1000000.0;
+        m_astroWidget->applySkedFreqMHz (m_skedFreq);
+      }
+    }
   }
   //transmitDisplay (s.ptt ());
   if (s.ptt () // && !m_rigState.ptt ()
@@ -14741,13 +14756,18 @@ void MainWindow::astroUpdate ()
     m_tEcho=correction.techo;
 
     if (m_transmitting && !m_config.tx_QSY_allowed ()) return;  // No Tx Doppler correction if rig can't do it
-    if (!m_astroWidget->doppler_tracking() or m_astroWidget->DopplerMethod()==0) {
-      // We are not using RF Doppler correction
-      m_fAudioShift=m_fDop;
+    int const method = m_astroWidget->DopplerMethod();
+    // Methods 0 (None) and 5 (Call DX) are rig-master: WSJT must not
+    // force the rig; the operator's VFO is final. Clear the correction
+    // so the TX dial mirrors RX and nothing drifts the display.
+    bool const rig_master = (method == 0 || method == 5);
+    if (!m_astroWidget->doppler_tracking() or rig_master) {
+      m_fAudioShift = m_fDop;
+      m_astroCorrection = {};
       return;
-    } else if (m_astroWidget->DopplerMethod()==10) {  // else if added for enableShift fx
+    } else if (method == 10) {  // else if added for enableShift fx
       // We are not using RF Doppler correction
-      m_fAudioShift=m_fDop;
+      m_fAudioShift = m_fDop;
     }
 
     bool const in_cw_mode = m_config.data_mode () == Configuration::data_mode_CW;

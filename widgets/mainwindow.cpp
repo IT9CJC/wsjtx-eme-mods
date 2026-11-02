@@ -578,6 +578,22 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   createStatusBar();
   add_child_to_event_filter (this);
   setupCWPanel();
+
+  // Keep CQ: digital-mode watchdog that resumes CQ after each QSO with
+  // a configurable cap on unanswered-call minutes. See on_cbKeepCQ_toggled
+  // and the hook in readFromStdout where the final 73 fires.
+  {
+    bool const keep = m_settings->value ("KeepCQEnabled", false).toBool ();
+    int const mins  = m_settings->value ("KeepCQTimeoutMin", 10).toInt ();
+    ui->cbKeepCQ->setChecked (keep);
+    ui->sb_keep_cq_min->setValue (qBound (1, mins, 60));
+    m_keepCQTimer = new QTimer (this);
+    m_keepCQTimer->setSingleShot (true);
+    connect (m_keepCQTimer, &QTimer::timeout, this, &MainWindow::onKeepCQTimeout);
+    connect (ui->cbKeepCQ, &QCheckBox::toggled, this, &MainWindow::on_cbKeepCQ_toggled);
+    connect (ui->sb_keep_cq_min, QOverload<int>::of (&QSpinBox::valueChanged),
+             this, &MainWindow::on_sb_keep_cq_min_valueChanged);
+  }
   ui->dxGridEntry->setValidator (new MaidenheadLocatorValidator {this});
   ui->dxCallEntry->setValidator (new CallsignValidator {this});
   ui->sbTR->values ({5, 10, 15, 30, 60, 120, 300, 900, 1800});
@@ -3939,8 +3955,36 @@ void MainWindow::on_sbTxPercent_valueChanged (int n)
 
 void MainWindow::auto_tx_mode (bool state)
 {
+  // Any auto-off path (user halt, 73 complete, timeout) cancels the Keep
+  // CQ watchdog. The Keep-CQ hook re-arms it after re-engaging auto.
+  if (!state && m_keepCQTimer && m_keepCQTimer->isActive ()) {
+    m_keepCQTimer->stop ();
+  }
   ui->autoButton->setChecked (state);
   on_autoButton_clicked (state);
+}
+
+void MainWindow::on_cbKeepCQ_toggled (bool checked)
+{
+  m_settings->setValue ("KeepCQEnabled", checked);
+  if (!checked && m_keepCQTimer && m_keepCQTimer->isActive ()) {
+    m_keepCQTimer->stop ();
+  }
+}
+
+void MainWindow::on_sb_keep_cq_min_valueChanged (int minutes)
+{
+  m_settings->setValue ("KeepCQTimeoutMin", minutes);
+  // If the timer is currently running, let it finish on the old interval;
+  // next arm picks up the new value. Simpler + no startle for the user.
+}
+
+void MainWindow::onKeepCQTimeout ()
+{
+  auto_tx_mode (false);
+  statusUpdate ();
+  statusBar ()->showMessage (tr ("Keep CQ: %1 min cap reached, Tx stopped")
+                              .arg (ui->sb_keep_cq_min->value ()), 10000);
 }
 
 void MainWindow::keyPressEvent (QKeyEvent * e)
@@ -5232,6 +5276,8 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->outAttenuation->setVisible (!cw_mode);
   ui->cbCQonly->setVisible (!cw_mode);
   ui->cbBypass->setVisible (!cw_mode);
+  ui->cbKeepCQ->setVisible (!cw_mode);
+  ui->sb_keep_cq_min->setVisible (!cw_mode);
   // ui->label (PWR reading) stays visible — shows power during CW TX
   mode_label.setVisible (!cw_mode);
   ui->controls_stack_widget->setVisible (!cw_mode);
@@ -8999,6 +9045,16 @@ void MainWindow::guiUpdate()
             m_ntx=6;
             ui->txrb6->setChecked(true);
             m_QSOProgress = CALLING;
+            // Keep CQ: in digital modes (b implies digital + auto-seq),
+            // re-engage auto so the next period transmits a CQ, and arm
+            // the unanswered-calls watchdog. The timer is stopped if a
+            // reply arrives (REPLYING transition) or the user halts.
+            if (ui->cbKeepCQ->isChecked () && m_keepCQTimer) {
+              auto_tx_mode (true);
+              int const minutes = ui->sb_keep_cq_min->value ();
+              m_keepCQTimer->start (minutes * 60 * 1000);
+              statusBar ()->showMessage (tr ("Keep CQ armed (%1 min)").arg (minutes), 5000);
+            }
           }
         }
       }
@@ -10112,6 +10168,11 @@ void MainWindow::processMessage (DecodedText const& message, Qt::KeyboardModifie
                   m_ntx=2;
                   m_QSOProgress = REPORT;
                   ui->txrb2->setChecked (true);
+                }
+                // Keep CQ: a reply arrived, cancel the unanswered-calls
+                // watchdog — the timer re-arms when the next 73 fires.
+                if (m_keepCQTimer && m_keepCQTimer->isActive ()) {
+                  m_keepCQTimer->stop ();
                 }
               }
           }

@@ -401,6 +401,10 @@ private slots:
   void on_sbSubmode_valueChanged(int n);
   void on_cbSendMsg_toggled(bool b);
   void on_cbShMsgs_toggled(bool b);
+  // Keep CQ (digital modes): keep calling CQ after QSO completion
+  void on_cbKeepCQ_toggled(bool b);
+  void on_sb_keep_cq_min_valueChanged(int minutes);
+  void onKeepCQTimeout();
   void on_cbSWL_toggled(bool b);
   void on_cbTx6_toggled(bool b);
   void on_cbMenus_toggled(bool b);
@@ -595,6 +599,7 @@ private:
   bool m_cwPanelSyncing {false}; // guard against astro<->panel feedback loops
   bool m_cwLastRigPTT {false};   // last known rig PTT state (CW mode PTT edge detection)
   QTimer * m_cwDopplerTimer {nullptr}; // keeps Doppler fresh while rig in TX (CW)
+  QTimer * m_keepCQTimer {nullptr};    // Keep CQ: unanswered-calls watchdog (digital)
   QTimer * m_cwPttOffDebounce {nullptr}; // debounces rig PTT off (semi-break-in jitter)
   qint64 m_cwLastTxDopplerHz {0}; // last applied TX Doppler, for change filter
   qint64 m_cwTxStartMs {0};      // msec when TX was first detected

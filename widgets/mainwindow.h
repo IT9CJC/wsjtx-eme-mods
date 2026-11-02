@@ -589,13 +589,21 @@ private:
   // CW keyer panel state
   int m_cwWpm {25};
   int m_cwTxOffsetHz {0};
+  int m_cwTxHoldMs {1000};      // user-configurable TX hold debounce
   QStringList m_cwMacroText;    // text sent for each of 6 macros
+  QString m_cwCurrentTxMessage; // what we're currently keying (for status display)
   bool m_cwPanelSyncing {false}; // guard against astro<->panel feedback loops
   bool m_cwLastRigPTT {false};   // last known rig PTT state (CW mode PTT edge detection)
   QTimer * m_cwDopplerTimer {nullptr}; // keeps Doppler fresh while rig in TX (CW)
+  QTimer * m_cwPttOffDebounce {nullptr}; // debounces rig PTT off (semi-break-in jitter)
+  qint64 m_cwLastTxDopplerHz {0}; // last applied TX Doppler, for change filter
+  qint64 m_cwTxStartMs {0};      // msec when TX was first detected
   bool m_cwKeyerAvailable {false}; // rig backend supports rig_send_morse
   class CwToneGenerator * m_cwTone {nullptr};
   bool m_cwAudioActive {false};    // soundcard CW currently playing
+  bool m_cwLiveActive {false};     // live-keyer stream in progress
+  QString m_cwLiveLastText;        // snapshot of le_cw_message for diff
+  QTimer * m_cwLiveIdleTimer {nullptr}; // fires after TX Hold ms of no typing
   Transceiver::MODE m_cwSavedMode {Transceiver::UNK}; // for restore after soundcard CW
   double  m_tRemaining;
   double  m_TRperiod;
@@ -1020,9 +1028,16 @@ private:
   void onCWSendClicked();
   void onCWStopClicked();
   void onCWEditMacrosClicked();
+  void onCWTuneToggled(bool checked);
+  void onCWMessageTextChanged(QString const& text);
+  double defaultSkedForBand(QString const& band) const;
+  void loadSkedForBand(QString const& band);
+  void startCWLiveStream();
+  void endCWLiveStream();
   void onCWPTTToggled(bool checked);
   void onCWWpmChanged(int wpm);
   void onCWTxOffsetChanged(int hz);
+  void onCWTxHoldMsChanged(int ms);
   void onCWSkedMhzChanged(double mhz);
   void onCWDopplerModeChanged();
   void onCWLockSkedChanged(bool);

@@ -172,6 +172,10 @@ option (WSJT_BUILD_TESTS "Build test programs." ON)
 option (WSJT_FOX_OTP "Enable Fox OTP Verification Messages." ON)
 option (WSJT_SKIP_BUNDLE_FIXUP "Skip install-time bundle dependency fixup." OFF)
 option (WSJT_SKIP_MAP65 "Skip building MAP65 EME decoder (legacy Fortran; fails on GCC 15)." OFF)
+option (WSJT_SKIP_QMAP "Skip building QMAP wideband Q65 EME receiver." OFF)
+option (WSJT_SKIP_RIGCTL "Skip installing rigctl-wsjtx / rigctld-wsjtx / rigctlcom-wsjtx companions." OFF)
+option (WSJT_SKIP_UDP_TOOLS "Skip udp_daemon, message_aggregator, wsjtx_app_version test helpers." OFF)
+option (WSJT_SKIP_WSPRD "Skip installing wsprd (WSPR decoder)." OFF)
 CMAKE_DEPENDENT_OPTION (WSJT_QDEBUG_IN_RELEASE "Leave Qt debugging statements in Release configuration." OFF
   "NOT is_debug_build" OFF)
 CMAKE_DEPENDENT_OPTION (WSJT_ENABLE_EXPERIMENTAL_FEATURES "Enable features not fully ready for public releases." ON
@@ -1685,7 +1689,9 @@ if (NOT WSJT_SKIP_MAP65)
   find_package (Portaudio REQUIRED)
   add_subdirectory (map65)
 endif ()
-add_subdirectory (qmap)
+if (NOT WSJT_SKIP_QMAP)
+  add_subdirectory (qmap)
+endif ()
 
 # build the main application
 generate_version_info (wsjtx_VERSION_RESOURCES
@@ -1857,20 +1863,31 @@ install (TARGETS wsjtx
 #   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/wsjtx
 #   )
 
-install (TARGETS udp_daemon message_aggregator wsjtx_app_version
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  )
+if (NOT WSJT_SKIP_UDP_TOOLS)
+  install (TARGETS udp_daemon message_aggregator wsjtx_app_version
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    )
+endif ()
 
-install (TARGETS jt9 wsprd fmtave fcal fmeasure
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  )
+if (WSJT_SKIP_WSPRD)
+  install (TARGETS jt9 fmtave fcal fmeasure
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    )
+else ()
+  install (TARGETS jt9 wsprd fmtave fcal fmeasure
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    )
+endif ()
 
-install (TARGETS qmap
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-  )
+if (NOT WSJT_SKIP_QMAP)
+  install (TARGETS qmap
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+    )
+endif ()
 
 if (NOT WSJT_SKIP_MAP65)
   install (TARGETS map65
@@ -1887,26 +1904,28 @@ install (TARGETS ft8code jt65code jt9code jt4code msk144code
   )
 endif(WSJT_BUILD_UTILS)  
 
-install (PROGRAMS
-  ${RIGCTL_EXE}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  #COMPONENT runtime
-  RENAME rigctl-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
-  )
+if (NOT WSJT_SKIP_RIGCTL)
+  install (PROGRAMS
+    ${RIGCTL_EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    #COMPONENT runtime
+    RENAME rigctl-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
+    )
 
-install (PROGRAMS
-  ${RIGCTLD_EXE}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  #COMPONENT runtime
-  RENAME rigctld-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
-  )
+  install (PROGRAMS
+    ${RIGCTLD_EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    #COMPONENT runtime
+    RENAME rigctld-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
+    )
 
-install (PROGRAMS
-  ${RIGCTLCOM_EXE}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  #COMPONENT runtime
-  RENAME rigctlcom-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
-  )
+  install (PROGRAMS
+    ${RIGCTLCOM_EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    #COMPONENT runtime
+    RENAME rigctlcom-wsjtx${CMAKE_EXECUTABLE_SUFFIX}
+    )
+endif ()
 
 install (FILES
   README

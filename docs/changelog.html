@@ -88,10 +88,218 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.1.0-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.1.0-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-02</span>
+  </div>
+
+  <p>Major CW mode overhaul: a dedicated CW panel in the main window
+  with keyer, sked frequency, Doppler mode selection, 6 editable
+  Tx1-Tx6 macros, Tune, and a live keyer (type &rarr; immediate CW
+  transmission). A new soundcard CW tone generator makes WSJT work
+  with rigs that lack a CAT keyer (QRP Labs QMX in particular). Rig
+  PTT edges are polled at 100 ms and trigger immediate Doppler
+  correction. Transverter is now band-aware: enabling it for one band
+  no longer disturbs any other band. Many persistence and quality-of-life
+  improvements.</p>
+
+  <h3>New Features</h3>
+  <ul>
+    <li><strong>CW mode panel</strong> &mdash; Dedicated panel visible
+      only in CW mode, replacing the hidden digital message/decode
+      controls. Contains CW Keyer group (WPM, TX Offset, TX Hold,
+      TX/RX toggle, Free-text live keyer, Send/Stop/Tune/Edit Macros,
+      6 editable Tx1-Tx6 macros, color-coded status label) and Sked
+      &amp; Doppler group (sked spinbox styled like main dial, Lock
+      Sked, Doppler Tracking, 6 Doppler mode radios in 3x2 grid).
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Soundcard CW tone generator</strong> &mdash; New class
+      <code>Audio/CwToneGenerator</code> that generates PCM audio with
+      PARIS timing, 5 ms raised-cosine ramps, full A-Z/0-9/basic-punct
+      Morse table. Used automatically when the rig&rsquo;s Hamlib backend
+      lacks <code>rig_send_morse</code> (reported at startup via a new
+      <code>cw_keyer_available(bool)</code> signal). Rig is temporarily
+      switched to Data/PktUSB so audio routes to the transmitter without
+      mic processing.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Live keyer</strong> &mdash; Typing in the Free-text
+      field starts a streaming audio keyer (QMutex-protected ring
+      buffer); each character is appended to the running stream. After
+      TX Hold ms of no typing, the stream ends.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Tune button</strong> &mdash; Continuous 700 Hz tone for
+      antenna matching. Toggle; red when active. Snaps rig to sked
+      first if a sked freq is set.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>6 editable Tx1-Tx6 macros</strong> &mdash; Inline
+      editable layout mirroring the digital message panel. Default Tx1
+      is <code>CQ CQ CQ DE &lt;MYCALL&gt; ... K</code> using the
+      Settings callsign. Edits persist immediately. Bulk editor dialog
+      via &ldquo;Edit Macros&hellip;&rdquo;.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Rig-driven CW with fast polling</strong> &mdash;
+      <code>PollingTransceiver::set_poll_interval(ms)</code> exposes
+      dynamic polling. In CW mode, polling drops to 100 ms so external
+      paddle PTT edges are detected quickly. On PTT edge,
+      <code>cwDopplerUpdate()</code> is invoked with the right direction
+      and the rig is re-tuned to <code>sked + correction</code>.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Transverter band-aware</strong> &mdash;
+      <code>transverter_rx_offset(f_sky)</code> now takes the frequency
+      as parameter and returns 0 unless <code>f_sky</code> falls inside
+      the enabled band&rsquo;s range. Band edges are hard-coded per band
+      (e.g. 3cm: 10000-10500 MHz). Fixes the bug where enabling 3cm
+      broke 20m and 2m operation. Status bar label distinguishes
+      <strong>IF=28.000 MHz</strong> (purple, active) from
+      <strong>IF=28.000 (idle)</strong> (grey, configured but
+      out-of-band).
+      <span class="tag tag-fix">FIX</span></li>
+    <li><strong>Per-band sked persistence</strong> &mdash; Sked saved
+      per band in <code>CW/SkedFreq_&lt;band&gt;</code>. Band-specific
+      defaults when no saved value exists: 3cm = 10368.100 MHz, 23cm
+      = 1296.100 MHz, etc. On band change in CW mode, the sked for
+      the new band is auto-loaded.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Dial-freeze during CW TX</strong> &mdash; Main window
+      dial display stops reading from <code>m_rigState.frequency()</code>
+      while any CW TX is in progress (<code>m_cwAudioActive</code> or
+      <code>m_cwLastRigPTT</code>). Prevents flickering between RX
+      and TX values.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Mode-selection safety net</strong> &mdash; Startup
+      race could leave the Mode menu with no action checked. One-shot
+      timer at end of constructor checks all 13 mode actions; defaults
+      to FT8 if none is checked.
+      <span class="tag tag-fix">FIX</span></li>
+    <li><strong>Slim-build CMake options</strong> &mdash; New
+      <code>WSJT_SKIP_QMAP</code>, <code>WSJT_SKIP_RIGCTL</code>,
+      <code>WSJT_SKIP_UDP_TOOLS</code>, <code>WSJT_SKIP_WSPRD</code>.
+      Combined with existing options, trims the install from 489 MB
+      to 140 MB (ZIP 33 MB).
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>Rig master vs. Sked master semantics</strong> &mdash;
+      Clean rule: in <em>No Doppler</em> the rig has control of the
+      frequency; in any <em>Doppler mode</em> active, the sked becomes
+      master and <code>m_freqNominal</code> is locked to the sked
+      value against rig-polling drift.
+      <span class="tag tag-new">NEW</span></li>
+    <li><strong>CW status label with capability detection</strong>
+      &mdash; Shows &ldquo;Ready&rdquo; / &ldquo;Sending&hellip;&rdquo; /
+      &ldquo;TX: &lt;msg&gt;&rdquo; / &ldquo;Keyer not supported by this
+      rig&rdquo; / errors with color coding (green / yellow / red).
+      <span class="tag tag-new">NEW</span></li>
+  </ul>
+
+  <h3>UI Simplifications in CW mode</h3>
+  <ul>
+    <li>Hidden: all digital-mode buttons (ft8/ft4/msk144/q65/jt65/echo/
+      hound), Decode/Auto/Monitor/Tune (digital), Stop, Halt Tx, Erase,
+      Clear Avg, PWR slider, digital Tx1-Tx6 panel, decode windows,
+      status-bar mode label, CQ only checkbox, BP (bypass) checkbox.</li>
+    <li>Kept: band buttons, DX Call/Grid, Log QSO, main dial display,
+      Pwr label (shows watts during TX).</li>
+    <li><code>displayWidgets()</code> re-invokes
+      <code>updateCWModeUI(true)</code> at its end so digital-mode
+      visibility logic does not override CW hiding.</li>
+  </ul>
+
+  <h3>Files Modified</h3>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr>
+      <td><code>CMakeLists.txt</code></td>
+      <td>Bumped VERSION to 3.1.0.0; added 4 skip options
+        (QMAP/RIGCTL/UDP_TOOLS/WSPRD); added
+        <code>Audio/CwToneGenerator.cpp</code> to
+        <code>wsjt_qtmm</code> source list</td>
+    </tr>
+    <tr>
+      <td><code>Audio/CwToneGenerator.hpp/.cpp</code></td>
+      <td>New class: PCM Morse code generator (continuous tone + live
+        streaming + static buffer modes), PARIS timing, 5 ms ramps,
+        full punctuation table</td>
+    </tr>
+    <tr>
+      <td><code>Transceiver/Transceiver.hpp</code></td>
+      <td>New slots <code>send_morse(QString)</code>,
+        <code>stop_morse()</code>, <code>set_wpm(int)</code>,
+        <code>set_poll_interval(int)</code>; new signals
+        <code>cw_status(QString, int)</code>,
+        <code>cw_keyer_available(bool)</code></td>
+    </tr>
+    <tr>
+      <td><code>Transceiver/TransceiverBase.hpp/.cpp</code></td>
+      <td>Exception-wrapped virtual <code>do_send_morse</code>,
+        <code>do_stop_morse</code>, <code>do_set_wpm</code>; soft-fail
+        with status emit if backend lacks keyer</td>
+    </tr>
+    <tr>
+      <td><code>Transceiver/HamlibTransceiver.hpp/.cpp</code></td>
+      <td>Concrete implementations calling <code>rig_send_morse</code>,
+        <code>rig_stop_morse</code>,
+        <code>rig_set_level(RIG_LEVEL_KEYSPD)</code>. Capability
+        query at <code>rig_open</code> emits
+        <code>cw_keyer_available</code>. Soft-fail on
+        <code>RIG_ENAVAIL</code> (does not take rig offline)</td>
+    </tr>
+    <tr>
+      <td><code>Transceiver/PollingTransceiver.hpp/.cpp</code></td>
+      <td>Dynamic <code>set_poll_interval(int ms)</code>, clamped
+        [50..5000], restarts timer</td>
+    </tr>
+    <tr>
+      <td><code>Configuration.hpp/.cpp</code></td>
+      <td>CW keyer slots <code>transceiver_send_morse</code>,
+        <code>transceiver_stop_morse</code>,
+        <code>transceiver_set_wpm</code>,
+        <code>transceiver_set_poll_interval</code>; CW TX offset
+        <code>cw_tx_offset_hz()</code>/
+        <code>set_cw_tx_offset_hz()</code>;
+        <code>set_soundcard_cw_tx_active()</code> bypass flag;
+        transverter offsets now take <code>Frequency</code> parameter
+        and gate on band range; forward+feedback paths updated</td>
+    </tr>
+    <tr>
+      <td><code>widgets/astro.hpp/.cpp</code></td>
+      <td>New accessors
+        <code>setDopplerMethod/setDopplerTracking/setLockSkedFreq</code>,
+        <code>applySkedFreqMHz</code>,
+        <code>lockSkedFreq()</code>, <code>skedFreqMHz()</code>; new
+        signal <code>astroStateChanged()</code> for CW panel sync</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.ui</code></td>
+      <td>New <code>cw_panel_widget</code> with keyer + sked groups,
+        6 inline Tx1-Tx6 macros, live keyer field, Tune button, status
+        label; sked spinbox styled yellow-on-black 16pt to match main
+        dial</td>
+    </tr>
+    <tr>
+      <td><code>widgets/mainwindow.hpp/.cpp</code></td>
+      <td><code>setupCWPanel</code>, <code>updateCWModeUI</code>
+        hides more widgets (stopTxButton, outAttenuation, mode_label,
+        cbCQonly, cbBypass); <code>sendCWText</code>/
+        <code>sendCWViaSoundcard</code>/<code>finishCWSoundcard</code>,
+        <code>cwDopplerUpdate</code>, <code>onCWRigPTTChanged</code>,
+        <code>onCWTuneToggled</code>, live keyer handler,
+        <code>defaultSkedForBand</code>, <code>loadSkedForBand</code>;
+        <code>handle_transceiver_update</code> locks
+        <code>m_freqNominal</code> to sked when CW+Doppler;
+        <code>displayDialFrequency</code> freezes during CW TX;
+        <code>astroUpdate</code> gate extended with CW mode;
+        <code>setRig</code> gate extended with CW mode; sticky-sked
+        in <code>band_changed</code> only triggers for
+        &gt;50 kHz deltas; mode-selection safety net</td>
+    </tr>
+  </table>
+</div>
+
 <!-- ===== v3.0.9-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.0.9-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.0.9-devel</h2>
     <span class="release-date">2026-11-01</span>
   </div>
 

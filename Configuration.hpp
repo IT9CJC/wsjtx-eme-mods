@@ -82,8 +82,10 @@ public:
   {
     QString band_name;      // e.g. "3cm"
     qint64 band_center_hz;  // fixed per band (10368 MHz for 3cm, etc.)
+    qint64 band_lo_hz;      // lower edge of band — offset applies only
+    qint64 band_hi_hz;      // upper edge of band   when freq is inside this range
     qint64 if_hz;           // user-entered IF frequency
-    bool enabled;           // visible in the Band menu
+    bool enabled;           // enabled by the user in Settings
   };
   static int const transverter_band_count;
   static QString const& transverter_band_name (int index);
@@ -100,8 +102,12 @@ public:
 
   // Transverter profile API
   QList<TransverterProfile> transverter_profiles () const;
-  Radio::FrequencyDelta transverter_rx_offset () const;
-  Radio::FrequencyDelta transverter_tx_offset () const;
+  // Returns the offset to subtract from the sky frequency `f_sky` before
+  // sending it to the rig, iff the active transverter profile covers `f_sky`.
+  // If no profile is enabled OR the frequency is outside the enabled band,
+  // returns 0 — ensuring other bands are not disturbed.
+  Radio::FrequencyDelta transverter_rx_offset (Radio::Frequency f_sky) const;
+  Radio::FrequencyDelta transverter_tx_offset (Radio::Frequency f_sky) const;
   int active_transverter_band () const;            // -1 = None
   void set_active_transverter_band (int index);    // -1 = None
 

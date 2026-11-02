@@ -249,6 +249,19 @@ namespace
     qint64 ( 10368) * 1000000, // 3cm   : 10368 MHz
     qint64 ( 24048) * 1000000  // 1.25cm: 24048 MHz
   };
+  // Band edges in Hz — the transverter offset is applied ONLY when the
+  // sky frequency falls between the lo/hi edges, so enabling a transverter
+  // for one band does not disturb operation on any other band.
+  QList<qint64> const transverter_band_lo_hz {
+    qint64 (    50) * 1000000, qint64 (   144) * 1000000, qint64 (   420) * 1000000,
+    qint64 (  1240) * 1000000, qint64 (  2300) * 1000000, qint64 (  3300) * 1000000,
+    qint64 (  5650) * 1000000, qint64 ( 10000) * 1000000, qint64 ( 24000) * 1000000
+  };
+  QList<qint64> const transverter_band_hi_hz {
+    qint64 (    54) * 1000000, qint64 (   148) * 1000000, qint64 (   450) * 1000000,
+    qint64 (  1300) * 1000000, qint64 (  2450) * 1000000, qint64 (  3500) * 1000000,
+    qint64 (  5925) * 1000000, qint64 ( 10500) * 1000000, qint64 ( 24250) * 1000000
+  };
 
 //  QRegExp message_alphabet {"[- A-Za-z0-9+./?]*"};
   QRegularExpression message_alphabet {"[- @A-Za-z0-9+./?#<>;$]*"};
@@ -1076,19 +1089,25 @@ int Configuration::active_transverter_band () const
   return m_->active_transverter_band_;
 }
 
-Radio::FrequencyDelta Configuration::transverter_rx_offset () const
+Radio::FrequencyDelta Configuration::transverter_rx_offset (Radio::Frequency f_sky) const
 {
   int i = m_->active_transverter_band_;
   if (i < 0 || i >= m_->transverter_profiles_.size ()) return 0;
   auto const& p = m_->transverter_profiles_.at (i);
   if (!p.enabled || p.if_hz <= 0) return 0;
+  // Apply offset ONLY when the sky frequency lies inside the enabled
+  // transverter's band range. On any other band the offset is 0, so
+  // other bands continue to work normally with no transverter applied.
+  if (static_cast<qint64> (f_sky) < p.band_lo_hz) return 0;
+  if (static_cast<qint64> (f_sky) > p.band_hi_hz) return 0;
   return p.band_center_hz - p.if_hz;
 }
 
-Radio::FrequencyDelta Configuration::transverter_tx_offset () const
+Radio::FrequencyDelta Configuration::transverter_tx_offset (Radio::Frequency f_sky) const
 {
-  // Same as RX offset: single computed value from band_center - IF.
-  return transverter_rx_offset ();
+  // Same as RX offset: single computed value from band_center - IF,
+  // applied only when f_sky is inside the enabled band.
+  return transverter_rx_offset (f_sky);
 }
 
 void Configuration::set_active_transverter_band (int index)
@@ -1294,8 +1313,25 @@ void Configuration::enable_calibration (bool on)
 {
   // Transverter offset: rig_freq = main_freq - offset, so to recover main
   // from rig we ADD the transverter offset (station offset keeps its own
-  // subtract convention from stock WSJT-X).
-  auto target_frequency = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_ + transverter_rx_offset ();
+  // subtract convention from stock WSJT-X). Only applies if the computed
+  // sky frequency lies inside the active transverter's band.
+  auto const rig_freq_adj = m_->remove_calibration (m_->cached_rig_state_.frequency ()) - m_->current_offset_;
+  Radio::FrequencyDelta add_back = 0;
+  {
+    int i = m_->active_transverter_band_;
+    if (i >= 0 && i < m_->transverter_profiles_.size ())
+      {
+        auto const& p = m_->transverter_profiles_.at (i);
+        if (p.enabled && p.if_hz > 0)
+          {
+            qint64 const offset = p.band_center_hz - p.if_hz;
+            qint64 const candidate_sky = static_cast<qint64> (rig_freq_adj) + offset;
+            if (candidate_sky >= p.band_lo_hz && candidate_sky <= p.band_hi_hz)
+              add_back = offset;
+          }
+      }
+  }
+  auto target_frequency = static_cast<Radio::Frequency> (rig_freq_adj + add_back);
   m_->frequency_calibration_disabled_ = !on;
   transceiver_frequency (target_frequency);
 }
@@ -1969,6 +2005,8 @@ Configuration::impl::impl (Configuration * self, QNetworkAccessManager * network
       TransverterProfile p;
       p.band_name = transverter_band_names.at (i);
       p.band_center_hz = transverter_band_centers_hz.at (i);
+      p.band_lo_hz = transverter_band_lo_hz.at (i);
+      p.band_hi_hz = transverter_band_hi_hz.at (i);
       p.if_hz = 0;
       p.enabled = false;
       transverter_profiles_.append (p);
@@ -5454,9 +5492,11 @@ void Configuration::impl::set_cached_mode ()
   // UNK (unknown) where we want to leave the rig mode untouched
   if (soundcard_cw_tx_active_)
     {
-      // Soundcard CW TX in progress: rig has already been pushed to USB.
-      // Do NOT force it back to CW on each subsequent PTT/frequency call.
-      mode = Transceiver::USB;
+      // Soundcard CW TX in progress: rig has been pushed to Data/PktUSB
+      // so USB audio routes cleanly to the transmitter (bypasses mic
+      // processing). Do NOT force it back to CW on each subsequent
+      // PTT/frequency call.
+      mode = Transceiver::DIG_U;
     }
   else
     {
@@ -5484,8 +5524,15 @@ void Configuration::impl::transceiver_frequency (Frequency f)
   // sticking to it we get sane behaviour
   current_offset_ = stations_.offset (f);
   // rig_freq = main_freq (f) - transverter_offset. The station offset
-  // keeps its original (+) convention from stock WSJT-X.
-  cached_rig_state_.frequency (apply_calibration (f + current_offset_ - self_->transverter_rx_offset ()));
+  // keeps its original (+) convention from stock WSJT-X. The transverter
+  // offset only applies when f falls inside the enabled band — other
+  // bands are untouched.
+  Radio::Frequency const final_rig_freq = apply_calibration (f + current_offset_ - self_->transverter_rx_offset (f));
+  qDebug () << "[TRANSVERTER DBG] transceiver_frequency sky=" << f
+            << " station_offset=" << current_offset_
+            << " transverter_rx_offset=" << self_->transverter_rx_offset (f)
+            << " final_rig_freq=" << final_rig_freq;
+  cached_rig_state_.frequency (final_rig_freq);
 
   // qDebug () << "Configuration::impl::transceiver_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;
   LOG_TRACE ("emitting set_transceiver: requested state:" << cached_rig_state_);
@@ -5513,7 +5560,7 @@ void Configuration::impl::transceiver_tx_frequency (Frequency f)
           current_tx_offset_ = stations_.offset (f);
           Radio::FrequencyDelta const cw_shift
             = (data_mode_ == data_mode_CW) ? static_cast<Radio::FrequencyDelta> (cw_tx_offset_hz_) : 0;
-          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ - self_->transverter_tx_offset () + cw_shift));
+          cached_rig_state_.tx_frequency (apply_calibration (f + current_tx_offset_ - self_->transverter_tx_offset (f) + cw_shift));
         }
 
       // qDebug () << "Configuration::impl::transceiver_tx_frequency: n:" << transceiver_command_number_ + 1 << "f:" << f;
@@ -5748,13 +5795,51 @@ void Configuration::impl::handle_transceiver_update (TransceiverState const& sta
   if (sequence_number == transceiver_command_number_)
     {
       TransceiverState reported_state {state};
-      // take off calibration & offset
-      reported_state.frequency (remove_calibration (reported_state.frequency ()) - current_offset_ + self_->transverter_rx_offset ());
+      // Take off calibration & station offset. For the transverter offset,
+      // we check whether the raw rig frequency corresponds to the active
+      // transverter's IF range — if so, add back the offset so the client
+      // sees the sky frequency; otherwise leave the rig freq alone (any
+      // non-transverter band).
+      auto const rx_rig_freq = remove_calibration (reported_state.frequency ()) - current_offset_;
+      Radio::FrequencyDelta rx_add_back = 0;
+      {
+        int i = active_transverter_band_;
+        if (i >= 0 && i < transverter_profiles_.size ())
+          {
+            auto const& p = transverter_profiles_.at (i);
+            if (p.enabled && p.if_hz > 0)
+              {
+                qint64 const offset = p.band_center_hz - p.if_hz;
+                qint64 const candidate_sky = static_cast<qint64> (rx_rig_freq) + offset;
+                if (candidate_sky >= p.band_lo_hz && candidate_sky <= p.band_hi_hz)
+                  rx_add_back = offset;
+              }
+          }
+      }
+      Radio::Frequency const reported_sky = static_cast<Radio::Frequency> (rx_rig_freq + rx_add_back);
+      qDebug () << "[TRANSVERTER DBG] feedback raw_rig=" << reported_state.frequency ()
+                << " after_cal_sta=" << rx_rig_freq
+                << " add_back=" << rx_add_back
+                << " reported_sky=" << reported_sky;
+      reported_state.frequency (reported_sky);
 
       if (reported_state.tx_frequency ())
         {
-          // take off calibration & offset
-          reported_state.tx_frequency (remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_ + self_->transverter_tx_offset ());
+          auto const tx_rig_freq = remove_calibration (reported_state.tx_frequency ()) - current_tx_offset_;
+          Radio::FrequencyDelta tx_add_back = 0;
+          int i = active_transverter_band_;
+          if (i >= 0 && i < transverter_profiles_.size ())
+            {
+              auto const& p = transverter_profiles_.at (i);
+              if (p.enabled && p.if_hz > 0)
+                {
+                  qint64 const offset = p.band_center_hz - p.if_hz;
+                  qint64 const candidate_sky = static_cast<qint64> (tx_rig_freq) + offset;
+                  if (candidate_sky >= p.band_lo_hz && candidate_sky <= p.band_hi_hz)
+                    tx_add_back = offset;
+                }
+            }
+          reported_state.tx_frequency (static_cast<Radio::Frequency> (tx_rig_freq + tx_add_back));
         }
 
       Q_EMIT self_->transceiver_update (reported_state);

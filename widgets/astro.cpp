@@ -492,6 +492,12 @@ void Astro::setLockSkedFreq(bool locked)
 void Astro::applySkedFreqMHz(double freqMHz)
 {
   setSkedFreq (freqMHz);
+  // Also push the value into the big "Sked frequency" label so it stays
+  // in sync with the CW panel even when Lock Sked Freq is active (which
+  // would otherwise prevent rig-polling updates from refreshing it).
+  Frequency const f = static_cast<Frequency> (qRound64 (freqMHz * 1000000.0));
+  ui_->sked_frequency_label->setText (Radio::pretty_frequency_MHz_string (f));
+  ui_->sked_tx_frequency_label->setText (Radio::pretty_frequency_MHz_string (f));
   Q_EMIT skedFreq (freqMHz);
   Q_EMIT astroStateChanged ();
 }

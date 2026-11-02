@@ -110,7 +110,7 @@
 <body>
 
 <h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; v3.0.9-devel &mdash; November 2026</p>
+<p class="subtitle">Complete Modifications Summary &mdash; II9P &mdash; v3.1.0-devel &mdash; November 2026</p>
 
 <p>This document describes all modifications made to
 <a href="https://physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X 3.0.2</a>
@@ -310,6 +310,60 @@ does not provide:</p>
     <td><span class="version-badge">v3.0.9</span></td>
     <td><span class="tag tag-fix">REMOVED</span></td>
     <td>Settings</td>
+  </tr>
+  <tr>
+    <td>CW mode panel in main window (keyer, sked, Doppler, macros)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CW panel</td>
+  </tr>
+  <tr>
+    <td>Soundcard CW tone generator (rigs without CAT keyer, e.g. QMX)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Audio/CwToneGenerator</td>
+  </tr>
+  <tr>
+    <td>Live keyer (type → immediate CW)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CW panel &gt; Free text</td>
+  </tr>
+  <tr>
+    <td>Tune button (continuous CW tone for antenna matching)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CW panel</td>
+  </tr>
+  <tr>
+    <td>6 editable Tx1&ndash;Tx6 CW macros (persisted)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CW panel</td>
+  </tr>
+  <tr>
+    <td>Rig-driven CW with fast polling + PTT-triggered Doppler</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>Transceiver + mainwindow</td>
+  </tr>
+  <tr>
+    <td>Transverter made band-aware (offset only in enabled band's range)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-fix">FIX</span></td>
+    <td>Configuration</td>
+  </tr>
+  <tr>
+    <td>Per-band sked persistence with band-specific defaults</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CW panel &gt; Sked</td>
+  </tr>
+  <tr>
+    <td>Slim build options (skip qmap, rigctl companions, UDP tools, wsprd)</td>
+    <td><span class="version-badge">v3.1.0</span></td>
+    <td><span class="tag tag-new">NEW</span></td>
+    <td>CMakeLists.txt</td>
   </tr>
 </table>
 
@@ -558,10 +612,389 @@ shows:</p>
   It was removed because the Transverter tab&rsquo;s Enabled checkbox is
   simpler and already serves as the band selector.
 </div>
+
+<h3>10.6 Band-aware offset (v3.1.0 fix)</h3>
+
+<p><span class="version-badge">v3.1.0-devel</span> &mdash; In v3.0.9 the
+transverter offset was applied unconditionally to <em>every</em>
+frequency sent to the rig as long as a band was enabled. This caused
+problems the moment the user switched to a different band: enabling
+3cm (offset &minus;10340&nbsp;MHz) would subtract 10340&nbsp;MHz from a
+20m or 2m frequency as well, breaking every other band.</p>
+
+<p>The fix: <code>transverter_rx_offset(f_sky)</code> now takes the sky
+frequency as parameter and returns 0 unless <code>f_sky</code> falls
+inside the enabled transverter&rsquo;s band range
+(<code>band_lo_hz</code>..<code>band_hi_hz</code>, hard-coded per
+band):</p>
+
+<pre><code>Radio::FrequencyDelta Configuration::transverter_rx_offset (
+    Radio::Frequency f_sky) const
+{
+  int i = m_-&gt;active_transverter_band_;
+  if (i &lt; 0) return 0;
+  auto const&amp; p = m_-&gt;transverter_profiles_.at (i);
+  if (!p.enabled || p.if_hz &lt;= 0) return 0;
+  if (f_sky &lt; p.band_lo_hz) return 0;        // out of band
+  if (f_sky &gt; p.band_hi_hz) return 0;        // out of band
+  return p.band_center_hz - p.if_hz;
+}</code></pre>
+
+<p>Band edges:</p>
+<table>
+  <tr><th>Band</th><th>Range (MHz)</th><th>Center (MHz)</th></tr>
+  <tr><td>6m</td><td>50&ndash;54</td><td>50</td></tr>
+  <tr><td>2m</td><td>144&ndash;148</td><td>144</td></tr>
+  <tr><td>70cm</td><td>420&ndash;450</td><td>432</td></tr>
+  <tr><td>23cm</td><td>1240&ndash;1300</td><td>1296</td></tr>
+  <tr><td>13cm</td><td>2300&ndash;2450</td><td>2320</td></tr>
+  <tr><td>9cm</td><td>3300&ndash;3500</td><td>3400</td></tr>
+  <tr><td>6cm</td><td>5650&ndash;5925</td><td>5760</td></tr>
+  <tr><td>3cm</td><td>10000&ndash;10500</td><td>10368</td></tr>
+  <tr><td>1.25cm</td><td>24000&ndash;24250</td><td>24048</td></tr>
+</table>
+
+<p>The feedback path in <code>handle_transceiver_update()</code>
+mirrors this: the raw rig frequency is only treated as an IF (with the
+transverter offset added back) if the <em>candidate sky frequency</em>
+(= rig + offset) would fall inside the enabled band&rsquo;s range.</p>
+
+<p>Status-bar IF label was also updated to reflect this: shows
+<em>purple</em> &ldquo;IF=28.000&nbsp;MHz&rdquo; when active and the dial
+is in-band, <em>grey</em> &ldquo;IF=28.000 (idle)&rdquo; when a transverter
+is configured but the current dial is on another band (so the user is
+visually warned that the offset is dormant).</p>
+
+<h3>10.7 EME CW end-to-end worked example (3cm, OnDxEcho)</h3>
+
+<p>Setup:</p>
+<ul>
+  <li>DX dial = 10368.100&nbsp;MHz, corrects for own echo</li>
+  <li>Operator sked = 10368.100&nbsp;MHz</li>
+  <li>Transverter 3cm, IF = 28&nbsp;MHz &rarr; offset = 10340&nbsp;MHz</li>
+  <li>SelfDop (<code>m_dop00</code>) = +20&nbsp;kHz,
+      DxDop (<code>m_dop</code>) = +15&nbsp;kHz</li>
+</ul>
+
+<p><strong>RX path:</strong></p>
+<pre><code>m_freqNominal      = sked = 10368.100 MHz        (locked by cw_doppler_locked)
+correction.rx      = m_dop = +15 kHz             (OnDxEcho case 4)
+sky passed to CAT  = 10368.100 + 0.015 = 10368.115 MHz
+transverter offset = 10340 MHz                   (3cm, 10368.115 is in [10000, 10500])
+rig_IF             = 10368.115 - 10340 = 28.115 MHz</code></pre>
+
+<p>Rig tunes to 28.115 MHz on IF. Via the transverter LO
+(10340&nbsp;MHz), the antenna sees 10368.115&nbsp;MHz &mdash; exactly
+where DX&rsquo;s signal arrives after its +15&nbsp;kHz path Doppler.
+The signal lands at the operator&rsquo;s audio offset.</p>
+
+<p><strong>TX path:</strong></p>
+<pre><code>correction.tx      = m_dop - m_dop00 = 15 - 20 = -5 kHz   (OnDxEcho case 4)
+sky passed to CAT  = 10368.100 + (-0.005) = 10368.095 MHz
+rig_IF (TX)        = 10368.095 - 10340 = 28.095 MHz</code></pre>
+
+<p>Operator transmits at 28.095&nbsp;MHz IF &rarr; antenna outputs
+10368.095&nbsp;MHz &rarr; signal path adds +15&nbsp;kHz &rarr; arrives
+at DX at 10368.110&nbsp;MHz. DX&rsquo;s rig corrects for his own self-echo
+(<code>+m_dop00_dx = 10&nbsp;kHz</code>, since
+<code>m_dop00_dx = 2&nbsp;v_dx = 2(m_dop &minus; m_dop00/2) = 10&nbsp;kHz</code>)
+so DX sees the signal land on his dial at 10368.100&nbsp;MHz. QSO
+geometry closed. &#10004;</p>
 </div>
 
-<!-- ===== 11. OFFLINE ===== -->
-<h2 id="offline">11. Offline Operation &amp; Rig Failure Handling</h2>
+<!-- ===== 11. CW MODE PANEL (v3.1.0) ===== -->
+<h2 id="cw-panel">11. CW Mode Panel &amp; Rig-Driven Doppler (v3.1.0)</h2>
+
+<div class="section">
+<p><span class="version-badge">v3.1.0-devel</span> introduces a complete
+dedicated panel for CW EME operation that appears when
+<strong>Mode &gt; CW</strong> is selected. The panel bundles keyer
+control, sked frequency, Doppler mode selection, 6 editable macros,
+Tune, and a live-keyer text field into a single compact area. It
+replaces the digital-mode message/decode controls (which are hidden
+in CW).</p>
+
+<h3>11.1 CW Keyer Group (upper half)</h3>
+
+<p><strong>Row 1 &mdash; Base controls:</strong></p>
+<ul>
+  <li><code>WPM</code> (5&ndash;50): keyer speed in words per minute,
+      sent to the rig via <code>rig_set_level(RIG_LEVEL_KEYSPD, val.i=wpm)</code>
+      when the Hamlib backend supports CAT keying.</li>
+  <li><code>TX Offset (Hz)</code> (&plusmn;5000, 100&nbsp;Hz step):
+      additional CW TX offset relative to RX. Applied in
+      <code>Configuration::transceiver_tx_frequency()</code> as
+      <code>rig_tx_freq = sky_tx + cw_offset &minus; transverter_offset</code>.
+      Useful for CW split operation on EME.</li>
+  <li><code>TX Hold (ms)</code> (200&ndash;10000, default 1000):
+      minimum time the rig stays in TX after WSJT or an external paddle
+      drops PTT. Prevents RX/TX chattering during semi-break-in CW.</li>
+  <li><code>TX / RX</code> toggle: manual PTT via
+      <code>rig_set_ptt(RIG_PTT_ON/OFF)</code>. Button turns red when
+      transmitting.</li>
+</ul>
+
+<p><strong>Row 2 &mdash; Free text and actions:</strong></p>
+<ul>
+  <li><strong>Free text QLineEdit:</strong> typing here starts the
+      <em>Live Keyer</em>. On the first typed character, WSJT switches
+      the rig to Data/PktUSB, asserts PTT, starts a continuous audio
+      stream, and appends each subsequent character to the running
+      stream in real time (streaming <code>CwToneGenerator</code> with
+      QMutex-protected buffer). After <code>TX Hold</code> ms of no
+      typing, the stream ends and the rig returns to CW/RX.</li>
+  <li><code>Send</code>: transmit the current free-text contents as a
+      single block.</li>
+  <li><code>Stop</code>: abort the current CW transmission (CAT
+      <code>rig_stop_morse</code> if supported, else stops the
+      soundcard audio stream).</li>
+  <li><code>Tune</code> (toggle): continuous 700&nbsp;Hz tone for
+      antenna matching. Switches rig to Data/PktUSB, asserts PTT, loops
+      a seamless sine-wave buffer. If a sked freq is set, the rig is
+      moved to sked before PTT; if sked is empty, the current VFO is
+      used. Click again to stop.</li>
+  <li><code>Edit Macros&hellip;</code>: opens a modal dialog with all
+      6 macros editable simultaneously (Save/Cancel).</li>
+</ul>
+
+<p><strong>Row 3 &mdash; 6 editable Tx1..Tx6 macros:</strong>
+Each row is <code>[inline text QLineEdit | Tx N button]</code>, mirroring
+the digital-mode message panel layout. Clicking a Tx button transmits
+the current text (reads live from the field, in case the user has
+edited inline). Edits auto-save on <code>editingFinished</code>.
+Default Tx1 is
+<code>CQ CQ CQ DE &lt;MYCALL&gt; &lt;MYCALL&gt; &lt;MYCALL&gt; K</code>
+where <code>&lt;MYCALL&gt;</code> is read from Settings &gt; General.
+Defaults for Tx2..Tx6: <code>R R R</code>, <code>73 TU</code>,
+<code>QRZ?</code>, <code>AGN?</code>, <code>RST 599</code>.</p>
+
+<p><strong>Row 4 &mdash; Status label:</strong>
+<code>CW: &lt;state&gt;</code>, color-coded:</p>
+<ul>
+  <li><em>Light-green (Info):</em> Ready, Sending&hellip;, TX: &lt;msg&gt;, Rig RX</li>
+  <li><em>Dark-green (OK):</em> Sent (soundcard CW), Rig TX &mdash; Doppler applied</li>
+  <li><em>Yellow (Warning):</em> Keyer not supported by this rig</li>
+  <li><em>Red (Error):</em> Hamlib errors, audio format unsupported, etc.</li>
+</ul>
+
+<h3>11.2 Sked &amp; Doppler Group (lower half)</h3>
+
+<p><strong>Sked frequency controls:</strong></p>
+<ul>
+  <li><strong>Sked Freq (MHz):</strong> <code>QDoubleSpinBox</code>,
+      6 decimals (= 1&nbsp;Hz resolution), 240&times;40&nbsp;px.
+      Styled yellow-on-black MS Shell Dlg 2 16pt to mirror the main
+      dial display. <strong>This is the sky-frequency target</strong>
+      (after transverter).</li>
+  <li><code>Lock Sked</code>: freezes Astro&rsquo;s
+      <code>sked_frequency_label</code> against rig-polling updates;
+      also pushes the current CW-panel sked value to Astro when
+      toggled.</li>
+  <li><code>Doppler Tracking</code>: global enable/disable of RF
+      Doppler correction. Mirrored with Astro&rsquo;s own checkbox.</li>
+</ul>
+
+<p><strong>6 Doppler-mode radio buttons</strong>
+(3 columns &times; 2 rows), mirrored two-way with the Astro dialog
+via a new <code>astroStateChanged()</code> signal and reentrancy guard:</p>
+<ul>
+  <li><strong>Full Doppler to DX Grid</strong> (case 1): <code>correction.rx = m_dop</code>.
+      You correct for the full link; DX stays at nominal.</li>
+  <li><strong>Const freq on moon</strong> (case 2): <code>correction.rx = m_dop00 / 2</code>.
+      Both stations correct so signals appear at a constant moon-local frequency.</li>
+  <li><strong>Call DX</strong> (case 5): <code>correction.rx = 0</code>,
+      <code>correction.tx = ibShift &minus; m_dop00</code>. Used to call
+      a DX that is not Doppler-corrected.</li>
+  <li><strong>Const freq on own echoes</strong> (case 3): <code>correction.rx = m_dop00</code>.
+      You hear your own echo on the dial frequency.</li>
+  <li><strong>Const freq on DX echoes</strong> (case 4): <code>correction.rx = m_dop</code>,
+      <code>correction.tx = m_dop &minus; m_dop00</code>. Standard
+      EME CW convention: DX listens on his own echo; you TX so your
+      signal lands on DX&rsquo;s dial.</li>
+  <li><strong>No Doppler</strong> (case 0): <code>correction.rx = 0</code>.
+      The rig is the master &mdash; WSJT does not force any
+      frequency.</li>
+</ul>
+
+<h3>11.3 Rig master vs. Sked master semantics</h3>
+
+<p>Two paradigms govern who owns the rig frequency in CW:</p>
+
+<div class="note">
+  <ul>
+    <li><strong>No Doppler</strong>: <em>Rig is the master.</em> WSJT
+        never pushes a frequency to the rig. If the operator turns the
+        VFO knob, <code>m_freqNominal</code> follows. The sked field is
+        a passive placeholder, not pushed to the rig.</li>
+    <li><strong>Any Doppler mode active</strong>: <em>Sked is the master.</em>
+        <code>m_freqNominal</code> is locked to the sked value;
+        rig-polling cannot overwrite it. On every mode switch or
+        <code>astroUpdate()</code> tick the rig is re-tuned to
+        <code>sked + correction.rx</code>.</li>
+  </ul>
+</div>
+
+<p>The lock is enforced in <code>handle_transceiver_update()</code>:</p>
+<pre><code>bool const cw_doppler_locked =
+    m_config.data_mode () == data_mode_CW
+    &amp;&amp; m_astroWidget-&gt;doppler_tracking ()
+    &amp;&amp; m_astroWidget-&gt;DopplerMethod () != 0
+    &amp;&amp; m_skedFreq &gt; 0.0;
+if (cw_doppler_locked) {
+    m_freqNominal = qRound64 (1000000.0 * m_skedFreq);
+} else {
+    m_freqNominal = s.frequency () - m_astroCorrection.rx;
+}</code></pre>
+
+<h3>11.4 Soundcard CW path (rigs without CAT keyer, e.g. QRP Labs QMX)</h3>
+
+<p>At rig open, <code>HamlibTransceiver</code> inspects
+<code>rig-&gt;caps-&gt;send_morse</code>. If null (no CAT keyer), the
+<code>cw_keyer_available(false)</code> signal fires and mainwindow
+switches to the soundcard CW path. The status label shows
+&ldquo;Ready &mdash; soundcard CW (rig switches to USB for Tx)&rdquo;.</p>
+
+<p><strong>Transmit sequence (Tx1..Tx6 or Send):</strong></p>
+<ol>
+  <li>Build sample buffer with <code>CwToneGenerator::generate(text, wpm, 700Hz, fmt)</code>:
+      48&nbsp;kHz mono 16-bit PCM, PARIS timing
+      (<code>dit = 1200/WPM</code> ms, dah = 3&times;dit, inter-element
+      1&times;dit, inter-char 3&times;dit, inter-word 7&times;dit),
+      5&nbsp;ms raised-cosine ramps on each element to suppress clicks.
+      Morse table includes A&ndash;Z, 0&ndash;9, and
+      <code>.&nbsp;,&nbsp;?&nbsp;/&nbsp;=&nbsp;+&nbsp;-&nbsp;(&nbsp;)&nbsp;@&nbsp;:&nbsp;;&nbsp;'&nbsp;"</code>.</li>
+  <li><code>set_soundcard_cw_tx_active(true)</code> &mdash; sets a
+      bypass flag so <code>Configuration::set_cached_mode()</code>
+      leaves the rig in Data/PktUSB during the TX (otherwise
+      <code>data_mode_CW</code> would re-force RIG_MODE_CW on every
+      subsequent CAT command).</li>
+  <li><code>transceiver_mode(Transceiver::DIG_U)</code> &mdash; rig
+      switches to Data/PktUSB mode so USB audio routes directly to the
+      transmitter without mic processing (plain USB mode would run
+      through compressor/EQ).</li>
+  <li>50&nbsp;ms wait, then <code>transceiver_ptt(true)</code>.
+      Status label turns red &ldquo;Tx (CW)&rdquo;.</li>
+  <li>200&nbsp;ms rig-settle wait, then
+      <code>SoundOutput::restart(toneGen)</code>. The
+      <code>CwToneGenerator</code> is moved to the audio thread and
+      streamed through the same <code>SoundOutput</code> instance
+      WSJT already uses for digital-mode TX, which is bound to the
+      configured <code>audio_output_device</code> (i.e. the QMX USB
+      audio input).</li>
+  <li>Audio stream completes &rarr; <code>SoundOutput</code> emits
+      <em>Idle</em> &rarr; <code>finishCWSoundcard()</code> waits
+      <code>TX Hold</code> ms, then <code>transceiver_ptt(false)</code>,
+      then 120&nbsp;ms wait, then <code>transceiver_mode(CW)</code> and
+      clears the bypass flag.</li>
+</ol>
+
+<h3>11.5 External paddle detection &amp; PTT-triggered Doppler</h3>
+
+<p>In CW mode WSJT uses a fast polling interval
+(<code>PollingTransceiver::set_poll_interval(100)</code> ms) so paddle
+PTT edges are detected within &sim;100&nbsp;ms. Operator sequence:</p>
+
+<ol>
+  <li>Operator closes paddle. Rig keys internally.</li>
+  <li>Hamlib polling returns <code>s.ptt() == true</code>.
+      <code>handle_transceiver_update()</code> detects the edge and
+      calls <code>onCWRigPTTChanged(true)</code>.</li>
+  <li>Status label turns red &ldquo;Tx (CW)&rdquo;.</li>
+  <li><code>cwDopplerUpdate(true)</code> computes TX correction via
+      <code>astroUpdate(bTx=true)</code> and applies to rig &mdash;
+      the rig is now at <code>sked + correction.tx</code>.</li>
+  <li>A 1&nbsp;Hz refresh timer keeps Doppler fresh during long
+      transmissions, re-tuning only when the correction has changed by
+      more than <code>CW_DOPPLER_MIN_DELTA_HZ = 5</code>&nbsp;Hz
+      (prevents visible dial flicker from sub-Hz drift).</li>
+  <li>Operator releases paddle. Hamlib polls PTT=off.
+      <code>onCWRigPTTChanged(false)</code> starts a
+      <code>TX Hold</code> ms debounce timer. If PTT comes back on
+      during the window (semi-break-in gaps), the debounce is
+      cancelled.</li>
+  <li>Debounce fires. <code>cwDopplerUpdate(false)</code> applies the
+      RX correction. Status label returns to green
+      &ldquo;Receiving&rdquo;.</li>
+</ol>
+
+<h3>11.6 Dial-freeze during CW TX</h3>
+
+<p>During any CW TX (soundcard, paddle, Tune), the main-window dial
+display is frozen to <code>m_freqNominal</code> instead of reading
+<code>m_rigState.frequency()</code> from each poll, preventing dial
+flickering between RX and TX frequencies:</p>
+<pre><code>bool const cw_tx_in_progress =
+    m_config.data_mode () == data_mode_CW
+    &amp;&amp; (m_cwAudioActive || m_cwLastRigPTT);
+Frequency dial = cw_tx_in_progress ? m_freqNominal : m_rigState.frequency ();</code></pre>
+
+<h3>11.7 Per-band sked persistence</h3>
+
+<p>Sked frequency is saved per-band in <code>QSettings</code> keys
+<code>CW/SkedFreq_&lt;band&gt;</code>, and the current global sked is
+also saved as <code>SkedFreq</code>. On band change in CW mode, the
+sked for the new band is auto-loaded (or a hard-coded preferred
+default if no saved value exists):</p>
+
+<table>
+  <tr><th>Band</th><th>Default sked (MHz)</th></tr>
+  <tr><td>6m</td><td>50.100</td></tr>
+  <tr><td>2m</td><td>144.100</td></tr>
+  <tr><td>70cm</td><td>432.100</td></tr>
+  <tr><td>23cm</td><td>1296.100</td></tr>
+  <tr><td>13cm</td><td>2320.100</td></tr>
+  <tr><td>9cm</td><td>3400.100</td></tr>
+  <tr><td>6cm</td><td>5760.100</td></tr>
+  <tr><td>3cm</td><td><strong>10368.100</strong></td></tr>
+  <tr><td>1.25cm</td><td>24048.100</td></tr>
+</table>
+
+<h3>11.8 CW-mode UI simplifications</h3>
+
+<p><strong>Hidden in CW mode:</strong> all digital mode buttons
+(ft8/ft4/msk144/q65/jt65/echo/hound), Decode/Auto/Monitor/Tune (digital),
+Stop, Halt Tx (<code>stopTxButton</code>), Erase, Clear Avg, PWR slider
+(<code>outAttenuation</code>), the Tx1&ndash;Tx6 digital message panel
+(<code>controls_stack_widget</code>), decode windows
+(<code>decodes_splitter</code>), status-bar mode indicator
+(<code>mode_label</code>, which otherwise shows &ldquo;Q65-30A&rdquo;
+etc.), the <em>CQ only</em> checkbox (<code>cbCQonly</code>), and the
+<em>BP</em> (bypass filters) checkbox (<code>cbBypass</code>).</p>
+
+<p><strong>Still visible in CW mode:</strong> band buttons across the
+top, DX Call &amp; DX Grid entry, Log QSO, the main dial frequency
+display (yellow-on-black), and the Pwr label (which still shows the
+power reading in watts during TX from Hamlib polling).</p>
+
+<p><code>displayWidgets()</code> was patched to re-invoke
+<code>updateCWModeUI(true)</code> at its end so that digital-mode
+visibility toggles don&rsquo;t override CW hiding.</p>
+
+<h3>11.9 Mode-selection safety net</h3>
+
+<p>On startup, if no Mode action ended up checked (observed as a
+startup race on some configurations), the mode menu would appear with
+<em>nothing</em> selected &mdash; a dangerous state. A one-shot timer
+at the end of the mainwindow constructor checks all 13 mode actions
+and, if none is checked, defaults to FT8 and triggers
+<code>on_actionFT8_triggered()</code>.</p>
+
+<h3>11.10 Persistence summary</h3>
+
+<p>Every CW-related setting is written to <code>QSettings</code>
+immediately when changed (not deferred to app close):</p>
+<ul>
+  <li><code>CW/WPM</code>, <code>CW/TxOffsetHz</code>, <code>CW/TxHoldMs</code></li>
+  <li><code>CW/Macro1Text</code>&hellip;<code>CW/Macro6Text</code></li>
+  <li><code>CW/SkedFreq_&lt;band&gt;</code> (per-band)</li>
+  <li><code>SkedFreq</code> (global, last used)</li>
+  <li><code>Astro/DopplerMethod</code>, <code>Astro/DopplerTracking</code>,
+      <code>Astro/LockSkedFreq</code></li>
+</ul>
+</div>
+
+<!-- ===== 12. OFFLINE ===== -->
+<h2 id="offline">12. Offline Operation &amp; Rig Failure Handling</h2>
 
 <div class="section">
 <p>WSJT-X can now be used productively without a physical radio connected:</p>
@@ -601,7 +1034,7 @@ duplicate popups.</p>
 </div>
 
 <!-- ===== 12. CW MODE MENU ===== -->
-<h2 id="cw-menu">12. CW Mode in Mode Menu</h2>
+<h2 id="cw-menu">13. CW Mode in Mode Menu</h2>
 
 <div class="section">
 <p>CW is now a full entry in the main <strong>Mode</strong> menu, alongside
@@ -659,7 +1092,7 @@ cleaner display.</p>
 </div>
 
 <!-- ===== 13. Q65/ECHO RIG MODE ===== -->
-<h2 id="q65-echo">13. Q65/Echo Rig Mode &amp; Rig-Mode Status Indicator</h2>
+<h2 id="q65-echo">14. Q65/Echo Rig Mode &amp; Rig-Mode Status Indicator</h2>
 
 <div class="section">
 <p><span class="version-badge">v3.0.8-devel</span> adds a user-configurable
@@ -725,7 +1158,7 @@ indicator next to the WSJT-X mode label:</p>
 </div>
 
 <!-- ===== 14. FILE CHANGES ===== -->
-<h2 id="files">14. Complete File Change Summary</h2>
+<h2 id="files">15. Complete File Change Summary</h2>
 
 <p>All files modified or added relative to upstream WSJT-X 3.0.2:</p>
 
@@ -842,7 +1275,7 @@ indicator next to the WSJT-X mode label:</p>
 </table>
 
 <!-- ===== 15. VERSIONS ===== -->
-<h2 id="versions">15. Version History</h2>
+<h2 id="versions">16. Version History</h2>
 
 <table>
   <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
@@ -894,10 +1327,22 @@ indicator next to the WSJT-X mode label:</p>
       mutually-exclusive Enabled); IF status indicator in main window;
       fixed RX/TX offsets removed</td>
   </tr>
+  <tr>
+    <td><span class="version-badge">v3.1.0-devel</span></td>
+    <td>2026-11-02</td>
+    <td>CW mode panel in main window (keyer, sked, Doppler, 6 editable
+      Tx1-Tx6 macros, Live keyer, Tune); soundcard CW tone generator
+      for rigs without CAT keyer (QRP Labs QMX); rig-driven Doppler
+      with fast polling and PTT-triggered correction; transverter made
+      band-aware (offset applies only inside enabled band&rsquo;s range);
+      per-band sked persistence with band-specific defaults; dial-freeze
+      during CW TX; mode-selection safety net at startup; slim build
+      options to skip qmap/rigctl/UDP tools/wsprd</td>
+  </tr>
 </table>
 
 <!-- ===== 16. BUILD ===== -->
-<h2 id="build">16. Building from Source</h2>
+<h2 id="build">17. Building from Source</h2>
 
 <h4>Requirements</h4>
 <ul>
@@ -923,6 +1368,12 @@ cmake -G "MinGW Makefiles" ^
   -DWSJT_SKIP_MANPAGES=ON ^
   -DWSJT_GENERATE_DOCS=OFF ^
   -DWSJT_SKIP_MAP65=ON ^
+  -DWSJT_SKIP_QMAP=ON ^
+  -DWSJT_SKIP_RIGCTL=ON ^
+  -DWSJT_SKIP_UDP_TOOLS=ON ^
+  -DWSJT_SKIP_WSPRD=ON ^
+  -DWSJT_BUILD_UTILS=OFF ^
+  -DWSJT_BUILD_TESTS=OFF ^
   -DWSJT_RIG_NONE_CAN_SPLIT=ON ^
   -DOMNIRIG_TYPE_LIB=C:\Tools\omnirig-extracted\app\OmniRig.exe ^
   -DCMAKE_INSTALL_PREFIX=C:\Tools\wsjtx-install ^
@@ -935,7 +1386,7 @@ cmake --build . --target install</code></pre>
 repository. Edit it to match your local dependency paths.</p>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.7-devel &mdash; Built by II9P &mdash; October 2026</p>
+  <p>WSJT-X EME CW Mod v3.1.0-devel &mdash; Built by II9P &mdash; November 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

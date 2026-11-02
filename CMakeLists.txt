@@ -61,7 +61,7 @@ if (POLICY CMP0075)
 endif ()
 
 project (wsjtx
-  VERSION 3.1.1.0
+  VERSION 3.1.2.0
   LANGUAGES C CXX Fortran
   )
 set (PROJECT_DESCRIPTION "WSJT-X: Digital Modes for Weak Signal Communications in Amateur Radio")

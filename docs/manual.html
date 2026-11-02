@@ -589,6 +589,123 @@ color-coded label with the resolved rig mode:</p>
 <p>This label replaces the CW-only blue label from v3.0.7-devel and gives a
 compact at-a-glance confirmation of what CAT mode WSJT-X is sending to the rig.</p>
 
+<!-- ===== 5j. DUAL RX/TX FREQUENCY DIAL ===== -->
+<h2 id="dual-dial">5j. Dual RX / TX Frequency Dial</h2>
+<p><span class="tag">NEW in v3.1.1-devel</span>
+The single yellow-on-black MHz readout at the top of the main window is now
+<strong>two side-by-side dials</strong> &mdash; one for RX, one for TX &mdash; with small
+grey corner tags identifying each.</p>
+
+<h3>RX dial (left)</h3>
+<ul>
+  <li>Fully editable, exactly like the original dial:
+    <ul>
+      <li>Mouse wheel: Shift = 100 Hz, Ctrl = 10 Hz, Ctrl+Shift = 1 Hz</li>
+      <li>Click + arrow keys for digit stepping</li>
+      <li>Right/left mouse click to step kHz up/down</li>
+    </ul></li>
+  <li>Shows the actual rig RX frequency during normal receive, and the
+    nominal sked frequency during CW TX dial-freeze.</li>
+</ul>
+
+<h3>TX dial (right)</h3>
+<ul>
+  <li><strong>Read-only</strong>. Adjust indirectly via the Astro sked field
+    (Doppler modes) or via the main VFO (rig-master modes, see 5k).</li>
+  <li>Content:
+    <ul>
+      <li>In split + keyed digital TX: shows <code>m_rigState.tx_frequency()</code>.</li>
+      <li>Otherwise: shows <code>nominal + m_astroCorrection.tx</code>.</li>
+    </ul></li>
+  <li>With Doppler off (correction.tx = 0) the TX dial <strong>mirrors</strong> RX.
+    With Doppler on, the two diverge by the applied TX / RX correction, so
+    you can see both legs at a glance.</li>
+</ul>
+
+<!-- ===== 5k. RIG-MASTER VFO ===== -->
+<h2 id="rig-master">5k. Rig-Master VFO in None / Call DX Doppler Modes</h2>
+<p><span class="tag">NEW in v3.1.1-devel</span>
+Previously every Doppler mode was &ldquo;sked-master&rdquo;: WSJT-X retuned the rig
+every poll to <code>sked + correction</code>, so turning the VFO knob did
+nothing &mdash; the next poll reverted it. In the <strong>None (0)</strong> and
+<strong>Call DX (5)</strong> Doppler methods WSJT-X now acts as rig-master:
+the operator&rsquo;s VFO is final.</p>
+
+<h3>Behavior</h3>
+<ul>
+  <li>WSJT-X does <strong>not</strong> force the rig frequency in these modes.</li>
+  <li>When you turn the VFO (while not keyed), the new frequency is adopted
+    as the <strong>new sked</strong>: <code>m_freqNominal</code>,
+    <code>m_freqTxNominal</code>, and the Astro sked field all follow.</li>
+  <li>During CW TX, VFO moves are <strong>not</strong> captured as sked &mdash; prevents
+    Doppler-driven TX frequency jumps from poisoning the sked.</li>
+</ul>
+
+<h3>Interaction with Ctl-Lock Sked Freq</h3>
+<p>If you check <strong>Ctl-Lock Sked Freq</strong> in the Astro dialog, the sked
+is <em>frozen</em>: VFO moves still update the main RX dial (so it stays accurate),
+but the Astro Rx / Tx sked labels and the internal <code>m_skedFreq</code> do
+<strong>not</strong> change. Hold <strong>Ctrl</strong> while moving the VFO to force
+a one-shot sked update even when the lock is on.</p>
+
+<p>Typical use case: during a sked you don&rsquo;t want casual VFO twirling
+(hunting for the DX signal, checking band activity) to overwrite the
+agreed sked frequency. Check Ctl-Lock, hunt freely, then uncheck when
+you&rsquo;re ready to let the VFO drive the sked again.</p>
+
+<!-- ===== 5l. KEEP CQ ===== -->
+<h2 id="keep-cq">5l. Keep CQ (Digital Modes)</h2>
+<p><span class="tag">NEW in v3.1.2-devel</span>
+A new <strong>Keep CQ</strong> checkbox + minutes spinbox below the Sh / Fast /
+Auto Seq row. When checked, instead of stopping Auto Tx after the final
+<em>73</em> of an auto-sequenced QSO, WSJT-X automatically re-engages Auto
+and transmits a fresh CQ. A user-set <strong>timeout cap</strong> (1&ndash;60 min,
+default 10 min) stops the loop if no reply arrives in that window.</p>
+
+<h3>How it works</h3>
+<ol>
+  <li>Pick a digital mode (FT8 / FT4 / Q65 / JT65 / JT9) and check <strong>Auto Seq</strong>.</li>
+  <li>Check <strong>Keep CQ</strong> and set the minutes spinbox.</li>
+  <li>Start a QSO normally. After the final 73:
+    <ul>
+      <li>Auto stays on, Tx6 (CQ) is selected automatically.</li>
+      <li>The next period transmits a CQ.</li>
+      <li>Status bar: &ldquo;Keep CQ armed (N min)&rdquo;.</li>
+    </ul>
+  </li>
+  <li>If someone replies &rarr; auto-sequence picks up normally, the watchdog
+    timer <strong>resets</strong>, the QSO proceeds.</li>
+  <li>If no one replies for N minutes &rarr; auto goes off, status bar shows
+    &ldquo;Keep CQ: N min cap reached, Tx stopped&rdquo;. The checkbox stays checked
+    for the next session.</li>
+</ol>
+
+<h3>Timer resets</h3>
+<p>The watchdog counts only <em>unanswered-call</em> minutes. It stops on:</p>
+<ul>
+  <li>Auto-sequence detecting a reply (<code>REPLYING</code> transition).</li>
+  <li>Any Auto-off (user clicks <strong>Halt Tx</strong>, 73 completes, timeout
+    itself fires).</li>
+</ul>
+<p>The next 73 of the next QSO re-arms it with a fresh N-minute window.</p>
+
+<h3>Scope &amp; persistence</h3>
+<ul>
+  <li><strong>Digital modes only.</strong> The checkbox and spinbox are hidden in CW mode.</li>
+  <li>Requires <strong>Auto Seq</strong> on (same requirement as any auto-sequencing).</li>
+  <li>Both the enabled state and the timeout value are persisted to QSettings
+    (<code>KeepCQEnabled</code>, <code>KeepCQTimeoutMin</code>) so they survive restarts.</li>
+</ul>
+
+<div class="callout">
+  <strong>What this does not do (yet):</strong> there is no
+  &ldquo;call back the last decoded caller we haven&rsquo;t worked yet&rdquo; logic.
+  Keep CQ goes straight back to CQ and relies on WSJT-X&rsquo;s existing
+  <strong>CQ&nbsp;: First / Max dB / Max Dist</strong> dropdown (and Configuration&rsquo;s
+  <em>Force Call 1st</em>) to pick up inbound replies. Explicit candidate
+  targeting may come in a future version.
+</div>
+
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>
 
@@ -805,7 +922,7 @@ repository. Edit it to match your local dependency paths.</p>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.0.9-devel &mdash; Built by II9P &mdash; November 2026</p>
+  <p>WSJT-X EME CW Mod v3.1.2-devel &mdash; Built by II9P &mdash; November 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

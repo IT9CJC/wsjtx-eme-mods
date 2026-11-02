@@ -88,10 +88,39 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.1.2-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.1.2-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-02</span>
+  </div>
+
+  <p>Adds a <strong>Keep CQ</strong> watchdog for digital modes: after an
+  auto-sequenced QSO completes, instead of stopping on the final 73, WSJT
+  re-engages Auto and transmits a fresh CQ. A user-adjustable timeout
+  (1&ndash;60 min, default 10) caps how long the loop runs without a reply.
+  Timer resets each time a new QSO starts.</p>
+
+  <h3>Changes</h3>
+  <ul>
+    <li><b>Keep CQ checkbox + timeout spinbox</b> &mdash; new row below the
+    Sh/Fast/Auto Seq row. Digital modes only (FT8/FT4/Q65/JT65/JT9);
+    hidden in CW. Settings persisted as <code>KeepCQEnabled</code> and
+    <code>KeepCQTimeoutMin</code>.</li>
+    <li><b>Watchdog behavior</b> &mdash; timer arms on each post-73 CQ restart;
+    resets on auto-sequence reply detection (<code>REPLYING</code> transition);
+    cancels on any <code>auto_tx_mode(false)</code> (user halt, 73 complete,
+    timeout). On timeout: calls <code>auto_tx_mode(false)</code>, shows a brief
+    status-bar message; checkbox stays checked for next time.</li>
+    <li><b>User manual updated</b> &mdash; new sections 5j (dual RX/TX dial),
+    5k (rig-master VFO in None/Call DX), 5l (Keep CQ).</li>
+  </ul>
+</div>
+
 <!-- ===== v3.1.1-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.1.1-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.1.1-devel</h2>
     <span class="release-date">2026-11-02</span>
   </div>
 

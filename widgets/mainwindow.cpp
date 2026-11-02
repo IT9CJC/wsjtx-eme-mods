@@ -561,6 +561,20 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
 {
   ui->setupUi(this);
   setUnifiedTitleAndToolBarOnMac (true);
+  // Small corner tags identifying the RX / TX dials. Child QLabels placed
+  // at the top-left of each dial — don't steal focus, don't block clicks.
+  {
+    auto make_tag = [] (QLabel * parent, QString const& text) {
+      auto tag = new QLabel (text, parent);
+      tag->setStyleSheet ("QLabel { background: transparent; color: #a0a0a0; font-size: 7pt; }");
+      tag->setAttribute (Qt::WA_TransparentForMouseEvents, true);
+      tag->move (4, 2);
+      tag->show ();
+      tag->raise ();
+    };
+    make_tag (ui->labDialFreq,   QStringLiteral ("RX"));
+    make_tag (ui->labDialFreqTx, QStringLiteral ("TX"));
+  }
   createStatusBar();
   add_child_to_event_filter (this);
   setupCWPanel();
@@ -4304,6 +4318,19 @@ void MainWindow::displayDialFrequency ()
   update_dynamic_property (ui->labDialFreq, "OOB", !valid);
   ui->labDialFreq->setText (Radio::pretty_frequency_MHz_string (dial_frequency));
   if(m_mode=="MSK144" && !msk144qsy) m_msk144basefreq = dial_frequency;  // MSK144 QSY
+
+  // TX dial = nominal sky freq + TX Doppler correction. With Doppler off
+  // (correction.tx == 0) this mirrors the RX dial exactly. During a split
+  // digital TX the rig may be driving a distinct tx_frequency(); show that
+  // instead so the operator sees the actual TX side.
+  Frequency tx_dial_frequency;
+  if (m_config.is_transceiver_online () && m_rigState.ptt () && m_rigState.split ()) {
+    tx_dial_frequency = m_rigState.tx_frequency ();
+  } else {
+    tx_dial_frequency = m_freqNominal + m_astroCorrection.tx;
+  }
+  update_dynamic_property (ui->labDialFreqTx, "OOB", !valid);
+  ui->labDialFreqTx->setText (Radio::pretty_frequency_MHz_string (tx_dial_frequency));
 
   if (ui->actionBand_Buttons->isChecked()) check_button_color();  // update band buttons when dialling the VFO
 }

@@ -4523,21 +4523,26 @@ Double-click to reset to the standard 73 message</string>
           </widget>
          </item>
          <item row="0" column="4" colspan="2">
-          <widget class="QLabel" name="labDialFreq">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <layout class="QHBoxLayout" name="dialFreqRow">
+           <property name="spacing">
+            <number>4</number>
            </property>
-           <property name="focusPolicy">
-            <enum>Qt::WheelFocus</enum>
-           </property>
-           <property name="toolTip">
-            <string>USB dial frequency</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
+           <item>
+            <widget class="QLabel" name="labDialFreq">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::WheelFocus</enum>
+             </property>
+             <property name="toolTip">
+              <string>RX dial frequency (editable: wheel / click + arrow keys / kHz +- via mouse)</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
   font-family: MS Shell Dlg 2;
   font-size: 16pt;
    color : yellow;
@@ -4546,17 +4551,55 @@ Double-click to reset to the standard 73 message</string>
 QLabel[oob=&quot;true&quot;] {
   background-color: red;
 }</string>
-           </property>
-           <property name="text">
-            <string>14.078 000</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="margin">
-            <number>5</number>
-           </property>
-          </widget>
+             </property>
+             <property name="text">
+              <string>14.078 000</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="margin">
+              <number>5</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labDialFreqTx">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
+             </property>
+             <property name="toolTip">
+              <string>TX dial frequency (read-only; set via Astro sked field)</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+  font-family: MS Shell Dlg 2;
+  font-size: 16pt;
+   color : yellow;
+   background-color : black;
+}
+QLabel[oob=&quot;true&quot;] {
+  background-color: red;
+}</string>
+             </property>
+             <property name="text">
+              <string>14.078 000</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="margin">
+              <number>5</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item row="1" column="3" rowspan="2">
           <layout class="QVBoxLayout" name="verticalLayout_15">

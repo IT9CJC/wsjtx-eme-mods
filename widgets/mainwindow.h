@@ -1037,8 +1037,6 @@ private:
   void onCWWpmChanged(int wpm);
   void onCWTxOffsetChanged(int hz);
   void onCWTxHoldMsChanged(int ms);
-  void onCWDopplerModeChanged();
-  void syncCWPanelFromAstro();
   enum CWStatusKind { CWStatusInfo, CWStatusOK, CWStatusWarning, CWStatusError };
   void setCWStatus(CWStatusKind kind, QString const& text);
   Q_SLOT void onCWStatus(QString const& text, int kind);

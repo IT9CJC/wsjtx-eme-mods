@@ -4657,14 +4657,6 @@ void MainWindow::setupCWPanel ()
     connect (ed, &QLineEdit::returnPressed, this, [this, i] { sendCWMacro (i); });
   }
 
-  // Doppler mode radios
-  connect (ui->rb_cw_full_track, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-  connect (ui->rb_cw_own_echo,   &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-  connect (ui->rb_cw_const_moon, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-  connect (ui->rb_cw_on_dx_echo, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-  connect (ui->rb_cw_call_dx,    &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-  connect (ui->rb_cw_no_doppler, &QRadioButton::clicked, this, &MainWindow::onCWDopplerModeChanged);
-
   // CW status feedback from transceiver
   connect (&m_config, &Configuration::cw_status, this, &MainWindow::onCWStatus);
   connect (&m_config, &Configuration::cw_keyer_available, this, &MainWindow::onCWKeyerAvailable);
@@ -5209,66 +5201,6 @@ void MainWindow::loadSkedForBand (QString const& band)
   if (m_astroWidget) m_astroWidget->applySkedFreqMHz (mhz);
 }
 
-void MainWindow::onCWDopplerModeChanged ()
-{
-  if (m_cwPanelSyncing) return;
-  int method = 0;
-  if      (ui->rb_cw_full_track->isChecked ()) method = 1;
-  else if (ui->rb_cw_own_echo  ->isChecked ()) method = 3;
-  else if (ui->rb_cw_const_moon->isChecked ()) method = 2;
-  else if (ui->rb_cw_on_dx_echo->isChecked ()) method = 4;
-  else if (ui->rb_cw_call_dx   ->isChecked ()) method = 5;
-  else                                         method = 0;
-  if (m_astroWidget) {
-    m_astroWidget->setDopplerMethod (method);
-    // Make sure Astro's "Doppler tracking" checkbox is checked when a
-    // real Doppler method is selected — otherwise doppler_tracking()
-    // returns false and astroUpdate() short-circuits, so the rig never
-    // moves. This can happen after a Tune cycle if anything cleared
-    // the checkbox.
-    if (method != 0 && method != 10) {
-      m_astroWidget->setDopplerTracking (true);
-    }
-  }
-  // Always persist immediately — don't wait for Astro's lazy save on close
-  m_settings->beginGroup ("Astro");
-  m_settings->setValue ("DopplerMethod", method);
-  if (method != 0 && method != 10) m_settings->setValue ("DopplerTracking", true);
-  m_settings->endGroup ();
-  // When switching TO a Doppler mode (not None), force rig to sked so
-  // tracking starts from the correct reference. When switching to None,
-  // the rig keeps control of its VFO — WSJT does not force anything.
-  bool const doppler_active = (method != 0 && method != 10);
-  if (doppler_active && m_skedFreq > 0.0 && m_config.transceiver_online ()) {
-    Frequency const sked_hz = qRound64 (1000000.0 * m_skedFreq);
-    m_freqNominal = sked_hz;
-    m_freqTxNominal = sked_hz;
-    m_astroCorrection = {};
-    m_config.transceiver_frequency (m_freqNominal);
-    displayDialFrequency ();
-  }
-}
-
-void MainWindow::syncCWPanelFromAstro ()
-{
-  m_cwPanelSyncing = true;
-  int method = 0;
-  if (m_astroWidget) {
-    method = m_astroWidget->DopplerMethod ();
-  } else {
-    method = m_settings->value ("Astro/DopplerMethod", 0).toInt ();
-  }
-  switch (method) {
-    case 1:  ui->rb_cw_full_track->setChecked (true); break;
-    case 2:  ui->rb_cw_const_moon->setChecked (true); break;
-    case 3:  ui->rb_cw_own_echo  ->setChecked (true); break;
-    case 4:  ui->rb_cw_on_dx_echo->setChecked (true); break;
-    case 5:  ui->rb_cw_call_dx   ->setChecked (true); break;
-    default: ui->rb_cw_no_doppler->setChecked (true); break;
-  }
-  m_cwPanelSyncing = false;
-}
-
 void MainWindow::updateCWModeUI (bool cw_mode)
 {
   ui->actionCW->setChecked (cw_mode);
@@ -5298,7 +5230,6 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->decodes_splitter->setVisible (!cw_mode);
   ui->cw_panel_widget->setVisible (cw_mode);
   if (cw_mode) {
-    syncCWPanelFromAstro ();
     // Fast polling (100 ms) so we catch external paddle PTT edges quickly
     m_config.transceiver_set_poll_interval (100);
     // Note: do NOT force the rig to sked here. With No Doppler the rig
@@ -5720,7 +5651,6 @@ void MainWindow::on_actionAstronomical_data_toggled (bool checked)
           displayDialFrequency ();
         });
       connect (m_astroWidget.data (), &Astro::skedFreq, this, &MainWindow::skedFreq);
-      connect (m_astroWidget.data (), &Astro::astroStateChanged, this, &MainWindow::syncCWPanelFromAstro);
 
       m_astroWidget->showNormal();
       m_astroWidget->raise ();

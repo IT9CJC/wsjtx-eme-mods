@@ -13368,10 +13368,16 @@ void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const&
       if (rig_master && s.frequency () != old_state.frequency ()
           && old_state.frequency () != 0) {
         Frequency const new_freq = s.frequency ();
+        // Always keep m_freqNominal in sync with the rig so the dial and
+        // future Doppler math use the right reference.
         m_freqNominal = new_freq;
         m_freqTxNominal = new_freq;
-        m_skedFreq = new_freq / 1000000.0;
-        m_astroWidget->applySkedFreqMHz (m_skedFreq);
+        // Honor Ctl-Lock Sked Freq: when checked, the sked is frozen and
+        // VFO moves do NOT overwrite it. Uncheck to let the sked follow.
+        if (!m_astroWidget->lockSkedFreq ()) {
+          m_skedFreq = new_freq / 1000000.0;
+          m_astroWidget->applySkedFreqMHz (m_skedFreq);
+        }
       }
     }
   }

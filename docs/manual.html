@@ -706,6 +706,97 @@ default 10 min) stops the loop if no reply arrives in that window.</p>
   targeting may come in a future version.
 </div>
 
+<!-- ===== 5m. CAT vs SOUNDCARD CW ===== -->
+<h2 id="cat-vs-soundcard">5m. CAT keyer vs soundcard tone (CW mode)</h2>
+<p><span class="tag">NEW in v3.1.3-devel</span>
+A <strong>CAT keyer</strong> checkbox was added to the CW keyer row.
+It overrides WSJT&rsquo;s Hamlib auto-detection of CW keyer support so the
+operator picks which path WSJT uses to key CW:</p>
+
+<ul>
+  <li><strong>Checked (default)</strong> &mdash; CW is sent as a Hamlib
+  <code>SEND_MORSE</code> CAT command. The rig does the actual keying;
+  WPM is sent as <code>RIG_LEVEL_KEYSPD</code>. Dry; the rig stays in
+  its CW mode throughout.</li>
+  <li><strong>Unchecked</strong> &mdash; WSJT generates a 700 Hz tone through
+  the soundcard and keys the rig via PTT. The rig temporarily switches to
+  <strong>Data/PktUSB</strong> for the TX duration (the normal soundcard CW path).</li>
+</ul>
+
+<p>Use the <strong>unchecked / soundcard</strong> setting when the rig
+backend&rsquo;s SEND_MORSE support is unreliable &mdash; e.g. the Icom
+IC-905 under current Hamlib builds. The soundcard path works on any rig
+that can be put into Data/PktUSB and keyed via PTT.</p>
+
+<h3>Visibility rules</h3>
+<ul>
+  <li><strong>Soundcard mode</strong>: the main-window <strong>PWR</strong>
+  attenuation slider becomes visible so the audio output level can be
+  trimmed.</li>
+  <li><strong>CAT keyer mode</strong>: the PWR slider is hidden
+  (the audio path isn&rsquo;t used).</li>
+</ul>
+
+<h3>Live keyer (type-to-send)</h3>
+<p>Typing in the free-text field streams CW immediately in
+<strong>soundcard mode</strong> only. CAT keyer sends full strings via
+one <code>SEND_MORSE</code> call per message, so the live-stream model
+has no equivalent. In CAT mode, press <strong>Send</strong> to transmit
+what&rsquo;s in the free-text field.</p>
+
+<p>Persisted as <code>CW/UseCATKeyer</code> QSettings.</p>
+
+<!-- ===== 5n. BAND DROPDOWN FILTER ===== -->
+<h2 id="band-dropdown-filter">5n. Band dropdown filter: VHF features flag only</h2>
+<p><span class="tag">NEW in v3.1.3-devel</span>
+The band combobox at the top left of the main window shows the list of
+preferred frequencies. In this version the content of that list is
+driven <strong>solely</strong> by the Configuration setting
+<strong>Enable VHF and submode features</strong> (Settings &rarr; General),
+not by the current decoder mode:</p>
+
+<ul>
+  <li><strong>Unchecked</strong> &rarr; every entry in the Frequencies
+  table is shown (HF + VHF + UHF + microwave).</li>
+  <li><strong>Checked</strong> &rarr; only entries at or above 50 MHz
+  are shown.</li>
+</ul>
+
+<p>Before v3.1.3 the list also depended on the current decoder mode
+(FT8/Q65/Echo/&hellip;), which could leave the band dropdown showing
+only VHF entries after switching to CW from a VHF mode. The new
+<code>set_vhf_only_filter(bool)</code> API in <code>FrequencyList</code>
+applies the frequency-range cut at the model level, independent of the
+existing region / mode / time filter.</p>
+
+<!-- ===== 5o. DROPDOWN PICK AS SKED ===== -->
+<h2 id="dropdown-pick-sked">5o. Dropdown pick always sets the sked</h2>
+<p><span class="tag">NEW in v3.1.3-devel</span>
+Picking a frequency from the band combobox dropdown always wins:</p>
+
+<ul>
+  <li>It is pushed to the rig immediately.</li>
+  <li>It is adopted as the new sked frequency
+  (<code>m_skedFreq</code> + Astro Rx:/Tx: labels), <strong>regardless of
+  the current Doppler method</strong>.</li>
+  <li>The Doppler engine recalculates its correction around the new
+  sked on the next astroUpdate tick.</li>
+</ul>
+
+<p>Previously the &ldquo;sticky sked&rdquo; override (a 50 kHz guard against
+mode-default QSYs) could snap the operator&rsquo;s pick back to the old
+sked. The sticky now only applies when <code>m_bandEdited</code> is
+false &mdash; code-initiated QSYs still get the sticky protection, but
+operator-driven picks pass through.</p>
+
+<h3>Rig VFO rule</h3>
+<p>The rig&rsquo;s VFO changes the sked <strong>only when the Astro
+Doppler method is None</strong>. In every other Doppler method
+(Full/CFOM/Own Echo/On DX Echo/Call DX) WSJT drives the rig and VFO
+moves are ignored (and typically reverted on the next astroUpdate).
+Call DX, which was previously treated as rig-master, is now correctly
+sked-master.</p>
+
 <!-- ===== 6. OPERATING PROCEDURE ===== -->
 <h2 id="procedure">6. EME CW Operating Procedure</h2>
 
@@ -922,7 +1013,7 @@ repository. Edit it to match your local dependency paths.</p>
 </table>
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.1.2-devel &mdash; Built by II9P &mdash; November 2026</p>
+  <p>WSJT-X EME CW Mod v3.1.3-devel &mdash; Built by II9P &mdash; November 2026</p>
   <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
   <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
 </footer>

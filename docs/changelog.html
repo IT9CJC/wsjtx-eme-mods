@@ -88,10 +88,97 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.1.3-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.1.3-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-03</span>
+  </div>
+
+  <p>Follow-up release focused on CW-mode usability and operator-intent
+  consistency: a CAT-vs-soundcard CW keyer toggle for rigs where
+  Hamlib SEND_MORSE is unreliable, the band dropdown filter now
+  depends only on <strong>Enable VHF and submode features</strong>,
+  dropdown picks are always honored as the new sked in every Doppler
+  method, and the VFO adopts as sked only in Doppler=None. Plus three
+  real bugs fixed: a two-click mode-switch out of CW, an infinite
+  recursion that crashed WSJT when QSYing by band button, and the
+  main-window layout clipping the band-combobox in CW mode.</p>
+
+  <h3>New / changed</h3>
+  <ul>
+    <li><b>CW keyer: CAT vs soundcard checkbox.</b> New &ldquo;CAT keyer&rdquo;
+    checkbox in the CW panel keyer row (default checked). Checked =
+    Hamlib SEND_MORSE CAT command (rig keys itself); unchecked =
+    soundcard 700 Hz tone through Data/PktUSB. Operator preference
+    overrides Hamlib auto-detection &mdash; use for rigs like the
+    Icom IC-905 where SEND_MORSE support can be flaky. Live keyer
+    (type-to-send) only works in soundcard mode. Persisted as
+    <code>CW/UseCATKeyer</code>.</li>
+    <li><b>PWR slider / TX cursor restored in soundcard CW.</b> When the
+    CAT keyer checkbox is unchecked (soundcard CW mode active), the
+    <code>outAttenuation</code> slider becomes visible so the audio
+    output level can be adjusted. Hidden again in CAT-keyer mode.</li>
+    <li><b>Band dropdown filter driven only by VHF features flag.</b>
+    Previously the filter also depended on the current decoder mode,
+    so switching from Q65 (a VHF mode) to CW could leave the dropdown
+    showing only VHF+ entries. Now:
+      <ul>
+        <li>VHF features OFF &rarr; every HF / VHF / UHF / microwave entry shown.</li>
+        <li>VHF features ON  &rarr; entries at or above 50 MHz only.</li>
+      </ul>
+    New frequency-range filter in <code>FrequencyList</code>:
+    <code>set_vhf_only_filter(bool)</code>. Applied at startup,
+    in <code>switch_mode</code>, and when the Settings dialog closes.</li>
+    <li><b>Dropdown pick always sets the sked.</b> Operator-chosen band
+    frequency is now adopted as the new sked (<code>m_skedFreq</code>
+    + Astro&rsquo;s sked field) regardless of mode and regardless of
+    Doppler method. The Doppler engine recalculates correction around
+    the new sked on the next astroUpdate. The sticky-sked snap-back
+    in <code>band_changed</code> is now skipped when
+    <code>m_bandEdited</code> is true, so dropdown picks never get
+    overridden.</li>
+    <li><b>Rig VFO &rarr; sked only in Doppler=None.</b> Previously the
+    rig-master VFO-adoption also fired in Call DX (method 5), but that
+    IS a Doppler mode where WSJT drives the rig. Call DX removed from
+    the rig-master set in both <code>astroUpdate</code> and
+    <code>handle_transceiver_update</code>.</li>
+    <li><b>CW layout: dial + band combo visible and centered.</b>
+    gridLayout_5 column 6 stretch (reserved for the hidden
+    <code>controls_stack_widget</code>) is zeroed in CW so the dual-
+    dial expands to fill the row rather than being jammed to the left.
+    BandComboBox gets <code>minimumWidth=120</code> so the band name
+    (&ldquo;80m&rdquo;) always renders.</li>
+  </ul>
+
+  <h3>Bug fixes</h3>
+  <ul>
+    <li><b>Fixed two-click mode switch out of CW.</b> Previously
+    switching from CW to any digital mode required two clicks:
+    <code>updateCWModeUI</code> was reasserting
+    <code>actionCW-&gt;setChecked</code> on every call, and when
+    <code>on_actionQ65_triggered</code> called
+    <code>setup_status_bar</code> before our
+    <code>QActionGroup::triggered</code> lambda flipped
+    <code>data_mode</code>, the still-true <code>cw_mode</code> re-checked
+    actionCW via group exclusivity, un-checking Q65. Fix: remove that
+    reassert; move the one legitimate case (startup CW restoration) to
+    the existing safety-net lambda.</li>
+    <li><b>Fixed infinite band_changed loop that crashed WSJT on band-
+    button QSY.</b> <code>Astro::applySkedFreqMHz</code> was emitting
+    <code>skedFreq</code>, which routed back to
+    <code>MainWindow::skedFreq</code>, set <code>m_bandEdited=true</code>,
+    called <code>band_changed</code>, which called
+    <code>applySkedFreqMHz</code> again &mdash; ping-pong until stack
+    exhaustion. The emit now only fires from the explicit
+    <strong>Set&nbsp;kHz</strong> button in Astro.</li>
+  </ul>
+</div>
+
 <!-- ===== v3.1.2-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.1.2-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.1.2-devel</h2>
     <span class="release-date">2026-11-02</span>
   </div>
 

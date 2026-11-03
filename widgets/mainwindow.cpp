@@ -5338,13 +5338,32 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->controls_stack_widget->setVisible (!cw_mode);
   ui->decodes_splitter->setVisible (!cw_mode);
   ui->cw_panel_widget->setVisible (cw_mode);
-  // gridLayout_5 reserves 5/7 of the width for controls_stack_widget
-  // (column 6, stretch 5). When controls_stack_widget is hidden in CW
-  // mode, that column is empty but keeps its stretch, pushing the dial
-  // + bandComboBox to the left. Zero out col 6's stretch in CW so the
-  // dial + bandComboBox expand to fill the window, then restore it on
-  // return to digital mode.
-  ui->gridLayout_5->setColumnStretch (6, cw_mode ? 0 : 5);
+  // Centering strategy for the bandComboBox + dual-dial row in CW mode:
+  // the default gridLayout_5 column stretches are "0,0,0,0,1,1,5,0", so
+  // digital mode gives the controls_stack_widget (col 6) 5/7 of the
+  // horizontal slack and the dial (cols 4,5) gets 2/7. In CW we hide
+  // the stack, so leaving those stretches jams the row to the left.
+  // CW stretches "2,2,0,0,0,0,0,4" put symmetric padding on cols 0-1
+  // (left) and col 7 (right) and let the bandComboBox + dial sit at
+  // their natural (minimumWidth) sizes in the middle. Guarantee the
+  // bandComboBox is wide enough to actually show band names like "80m".
+  if (cw_mode) {
+    ui->gridLayout_5->setColumnStretch (0, 2);
+    ui->gridLayout_5->setColumnStretch (1, 2);
+    ui->gridLayout_5->setColumnStretch (4, 0);
+    ui->gridLayout_5->setColumnStretch (5, 0);
+    ui->gridLayout_5->setColumnStretch (6, 0);
+    ui->gridLayout_5->setColumnStretch (7, 4);
+    ui->bandComboBox->setMinimumWidth (120);
+  } else {
+    ui->gridLayout_5->setColumnStretch (0, 0);
+    ui->gridLayout_5->setColumnStretch (1, 0);
+    ui->gridLayout_5->setColumnStretch (4, 1);
+    ui->gridLayout_5->setColumnStretch (5, 1);
+    ui->gridLayout_5->setColumnStretch (6, 5);
+    ui->gridLayout_5->setColumnStretch (7, 0);
+    ui->bandComboBox->setMinimumWidth (0);
+  }
   if (cw_mode) {
     // Fast polling (100 ms) so we catch external paddle PTT edges quickly
     m_config.transceiver_set_poll_interval (100);

@@ -4331,6 +4331,18 @@ void MainWindow::displayDialFrequency ()
 
   // lookup band
   auto const& band_name = m_config.bands ()->find (dial_frequency);
+  // Diagnostic: in CW mode, log what we are about to set the combo
+  // lineedit to. Lets us see whether the "m" the user reports is from
+  // this call or from a later setter clobbering the text.
+  if (m_config.data_mode () == Configuration::data_mode_CW
+      && m_lastBand != band_name) {
+    statusBar ()->showMessage (
+        tr ("displayDialFrequency: dial=%1 Hz, band=\"%2\", lineedit will be set to \"%3\"")
+            .arg (dial_frequency)
+            .arg (band_name)
+            .arg (band_name.size () ? band_name : m_config.bands ()->oob ()),
+        30000);
+  }
   if (m_lastBand != band_name or m_freqNominalPeriod != m_freqNominal)
     {
       // only change this when necessary as we get called a lot and it

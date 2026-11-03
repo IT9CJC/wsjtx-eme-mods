@@ -604,6 +604,7 @@ private:
   qint64 m_cwLastTxDopplerHz {0}; // last applied TX Doppler, for change filter
   qint64 m_cwTxStartMs {0};      // msec when TX was first detected
   bool m_cwKeyerAvailable {false}; // rig backend supports rig_send_morse
+  bool m_cwUseCATKeyer {true};     // user preference: CAT keyer vs soundcard CW
   class CwToneGenerator * m_cwTone {nullptr};
   bool m_cwAudioActive {false};    // soundcard CW currently playing
   bool m_cwLiveActive {false};     // live-keyer stream in progress
@@ -1040,6 +1041,7 @@ private:
   void endCWLiveStream();
   void onCWPTTToggled(bool checked);
   void onCWWpmChanged(int wpm);
+  void onCWUseCATKeyerToggled(bool checked);
   void onCWTxOffsetChanged(int hz);
   void onCWTxHoldMsChanged(int ms);
   enum CWStatusKind { CWStatusInfo, CWStatusOK, CWStatusWarning, CWStatusError };

@@ -4673,6 +4673,7 @@ void MainWindow::setupCWPanel ()
   ui->sb_cw_wpm->setValue (m_cwWpm);
   ui->sb_cw_tx_offset->setValue (m_cwTxOffsetHz);
   ui->sb_cw_tx_hold->setValue (m_cwTxHoldMs);
+  ui->cb_cw_use_cat->setChecked (m_cwUseCATKeyer);
   QList<QLineEdit*> macroEdits {
     ui->le_cw_macro1, ui->le_cw_macro2, ui->le_cw_macro3,
     ui->le_cw_macro4, ui->le_cw_macro5, ui->le_cw_macro6};
@@ -4687,6 +4688,7 @@ void MainWindow::setupCWPanel ()
   connect (ui->sb_cw_wpm, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWWpmChanged);
   connect (ui->sb_cw_tx_offset, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWTxOffsetChanged);
   connect (ui->sb_cw_tx_hold, QOverload<int>::of (&QSpinBox::valueChanged), this, &MainWindow::onCWTxHoldMsChanged);
+  connect (ui->cb_cw_use_cat, &QCheckBox::toggled, this, &MainWindow::onCWUseCATKeyerToggled);
   connect (ui->pb_cw_send, &QPushButton::clicked, this, &MainWindow::onCWSendClicked);
   connect (ui->pb_cw_stop, &QPushButton::clicked, this, &MainWindow::onCWStopClicked);
   connect (ui->le_cw_message, &QLineEdit::returnPressed, this, &MainWindow::onCWSendClicked);
@@ -4717,10 +4719,13 @@ void MainWindow::setupCWPanel ()
 void MainWindow::onCWKeyerAvailable (bool avail)
 {
   m_cwKeyerAvailable = avail;
+  // Only announce the auto-detect result at startup; the user's checkbox
+  // (m_cwUseCATKeyer) is what actually drives sendCWText now.
   setCWStatus (CWStatusInfo,
-               avail
-               ? QString ("Ready — CAT keyer available")
-               : QString ("Ready — soundcard CW (rig switches to USB for Tx)"));
+               m_cwUseCATKeyer
+               ? (avail ? QString ("Ready — CAT keyer (auto-detected)")
+                        : QString ("Ready — CAT keyer forced (rig did not advertise support)"))
+               : QString ("Ready — soundcard CW (rig switches to Data/PktUSB for Tx)"));
 }
 
 void MainWindow::loadCWSettings ()
@@ -4729,6 +4734,7 @@ void MainWindow::loadCWSettings ()
   m_cwWpm = m_settings->value ("WPM", 25).toInt ();
   m_cwTxOffsetHz = m_settings->value ("TxOffsetHz", 0).toInt ();
   m_cwTxHoldMs = m_settings->value ("TxHoldMs", 1000).toInt ();
+  m_cwUseCATKeyer = m_settings->value ("UseCATKeyer", true).toBool ();
   for (int i = 0; i < 6; ++i) {
     QString const defTxt = m_cwMacroText.value (i);
     m_cwMacroText[i] = m_settings->value (QString ("Macro%1Text").arg (i + 1), defTxt).toString ();
@@ -4742,6 +4748,7 @@ void MainWindow::saveCWSettings ()
   m_settings->setValue ("WPM", m_cwWpm);
   m_settings->setValue ("TxOffsetHz", m_cwTxOffsetHz);
   m_settings->setValue ("TxHoldMs", m_cwTxHoldMs);
+  m_settings->setValue ("UseCATKeyer", m_cwUseCATKeyer);
   for (int i = 0; i < 6; ++i) {
     m_settings->setValue (QString ("Macro%1Text").arg (i + 1), m_cwMacroText[i]);
   }
@@ -4779,12 +4786,26 @@ void MainWindow::sendCWText (QString const& text)
 {
   m_cwCurrentTxMessage = text;
   setCWStatus (CWStatusInfo, QString ("Sending: %1").arg (text));
-  if (m_cwKeyerAvailable) {
+  // User preference wins over Hamlib auto-detection. If the user picked
+  // CAT keyer but the rig backend doesn't actually expose rig_send_morse
+  // we still issue the CAT calls - Hamlib logs the failure and the user
+  // can switch to soundcard via the checkbox.
+  if (m_cwUseCATKeyer) {
     m_config.transceiver_set_wpm (m_cwWpm);
     m_config.transceiver_send_morse (text);
   } else {
     sendCWViaSoundcard (text);
   }
+}
+
+void MainWindow::onCWUseCATKeyerToggled (bool checked)
+{
+  m_cwUseCATKeyer = checked;
+  saveCWSettings ();
+  setCWStatus (CWStatusInfo,
+               checked
+               ? "CAT keyer mode (rig keys via SEND_MORSE)"
+               : "Soundcard CW mode (700 Hz tone via Data/PktUSB)");
 }
 
 void MainWindow::sendCWViaSoundcard (QString const& text)
@@ -4931,6 +4952,13 @@ void MainWindow::onCWStopClicked ()
 void MainWindow::onCWMessageTextChanged (QString const& text)
 {
   if (m_config.data_mode () != Configuration::data_mode_CW) return;
+  // Live keyer is a soundcard-only feature - the character-by-character
+  // audio stream has no equivalent in Hamlib SEND_MORSE (which keys full
+  // strings). In CAT mode, the operator must press Send to transmit.
+  if (m_cwUseCATKeyer) {
+    m_cwLiveLastText = text;  // keep snapshot so Send sees current text
+    return;
+  }
   // Compute what was ADDED (user typed at the end). Only handle appends;
   // ignore backspaces/mid-insertions (would require re-planning the queue).
   QString added;

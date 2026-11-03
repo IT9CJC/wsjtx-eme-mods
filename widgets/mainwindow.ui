@@ -367,6 +367,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="cb_cw_use_cat">
+              <property name="text"><string>CAT keyer</string></property>
+              <property name="toolTip"><string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Checked (default): CW is sent as a Hamlib SEND_MORSE CAT command - the rig keys itself. WPM is sent as RIG_LEVEL_KEYSPD.&lt;/p&gt;&lt;p&gt;Unchecked: WSJT generates a 700 Hz CW tone through the soundcard and keys the rig via PTT (rig temporarily switches to Data/PktUSB). Live keyer (type-to-send) only works in soundcard mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string></property>
+              <property name="checked"><bool>true</bool></property>
+             </widget>
+            </item>
+            <item>
              <spacer name="cw_row1_spacer">
               <property name="orientation"><enum>Qt::Horizontal</enum></property>
               <property name="sizeHint" stdset="0"><size><width>20</width><height>10</height></size></property>

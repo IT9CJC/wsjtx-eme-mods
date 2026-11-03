@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSJT-X EME CW Mod &mdash; User Manual</title>
+<title>WSJT-X EME CW Mod &mdash; User Guide (v3.1.4-devel)</title>
 <style>
   :root {
     --bg: #fdfdfd;
@@ -16,21 +16,24 @@
     --warn-border: #f39c12;
     --note-bg: #eaf2f8;
     --note-border: #2980b9;
+    --mod-bg: #eafaf1;
+    --mod-border: #27ae60;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--fg);
     background: var(--bg);
-    line-height: 1.65;
-    max-width: 900px;
+    line-height: 1.6;
+    max-width: 960px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
   }
-  h1 { font-size: 1.9rem; color: var(--accent); margin-bottom: .3rem; }
-  h2 { font-size: 1.45rem; color: var(--accent); margin-top: 2.5rem; border-bottom: 2px solid var(--accent-light); padding-bottom: .25rem; }
-  h3 { font-size: 1.15rem; margin-top: 1.5rem; }
-  p, li { margin-top: .6rem; }
+  h1 { font-size: 2rem; color: var(--accent); margin-bottom: .2rem; }
+  h2 { font-size: 1.5rem; color: var(--accent); margin-top: 2.5rem; border-bottom: 2px solid var(--accent-light); padding-bottom: .25rem; }
+  h3 { font-size: 1.2rem; margin-top: 1.6rem; color: #333; }
+  h4 { font-size: 1.05rem; margin-top: 1.2rem; color: #333; }
+  p, li { margin-top: .55rem; }
   ul, ol { padding-left: 1.5rem; }
   code {
     font-family: Consolas, "Courier New", monospace;
@@ -50,18 +53,28 @@
     line-height: 1.5;
   }
   pre code { background: none; padding: 0; }
+  kbd {
+    background: #eee;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    padding: 0 .35em;
+    font-family: Consolas, monospace;
+    font-size: .9em;
+  }
   table {
     border-collapse: collapse;
     width: 100%;
     margin-top: .8rem;
+    font-size: .94em;
   }
   th, td {
     border: 1px solid var(--border);
-    padding: .45rem .7rem;
+    padding: .4rem .65rem;
     text-align: left;
+    vertical-align: top;
   }
   th { background: var(--accent-light); font-weight: 600; }
-  .subtitle { color: #555; font-size: 1rem; margin-bottom: 1.5rem; }
+  .subtitle { color: #555; font-size: 1rem; margin-bottom: 1.2rem; }
   .callout {
     border-left: 4px solid var(--note-border);
     background: var(--note-bg);
@@ -73,949 +86,2214 @@
     border-left-color: var(--warn-border);
     background: var(--warn-bg);
   }
+  .callout.mod {
+    border-left-color: var(--mod-border);
+    background: var(--mod-bg);
+  }
   .callout strong { display: block; margin-bottom: .2rem; }
   .toc { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1rem 1.5rem; margin-top: 1.5rem; }
-  .toc ol { padding-left: 1.2rem; }
-  .toc li { margin-top: .3rem; }
+  .toc ol { padding-left: 1.3rem; }
+  .toc li { margin-top: .25rem; }
   .toc a { text-decoration: none; color: var(--accent); }
   .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; padding-left: 1rem; font-size: .92em; }
   a { color: var(--accent); }
-  .tag { display: inline-block; background: var(--accent); color: #fff; padding: .1em .5em; border-radius: 3px; font-size: .8em; vertical-align: middle; }
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: #888; font-size: .85rem; }
+  .tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: .05em .45em;
+    border-radius: 3px;
+    font-size: .75em;
+    vertical-align: middle;
+    margin-left: .25em;
+  }
+  .tag.mod { background: var(--mod-border); }
+  .tag.new { background: #c0392b; }
+  .label-cw { color: #fff; background: #0000cc; padding: 0 .3em; font-weight: 600; }
+  .label-data { color: #fff; background: #006400; padding: 0 .3em; font-weight: 600; }
+  .label-usb { color: #000; background: #cccccc; padding: 0 .3em; font-weight: 600; }
+  .label-if { color: #fff; background: #8e44ad; padding: 0 .3em; font-weight: 600; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: #777; font-size: .85rem; }
   @media (max-width: 600px) {
     body { padding: 1rem; }
     h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
   }
 </style>
 </head>
 <body>
 
-<h1>WSJT-X EME CW Mod</h1>
-<p class="subtitle">User Manual &mdash; Version 3.0.7-devel &mdash; II9P</p>
+<h1>WSJT-X EME CW Mod &mdash; User Guide</h1>
+<p class="subtitle">Version 3.1.4-devel &middot; II9P &middot; November 2026</p>
+
+<div class="callout mod">
+<strong>About this guide</strong>
+This is the user guide for the <strong>WSJT-X EME CW Mod</strong>, a fork of upstream
+WSJT-X by Joe Taylor (K1JT) et al., extended by Marcello Criscione (IT9CJC / II9P) for
+EME CW operation on microwave bands. The structure follows the upstream WSJT-X 3.0.1 User
+Guide; sections that cover mod-specific additions are marked
+<span class="tag mod">MOD</span>, and new features inside standard chapters are flagged
+inline. Where behavior differs from upstream, both the stock and modded behavior are
+described.
+</div>
 
 <nav class="toc">
 <strong>Contents</strong>
 <ol>
-  <li><a href="#overview">Overview</a></li>
+  <li><a href="#introduction">Introduction</a>
+    <ul>
+      <li><a href="#new-in-eme-cw-mod">New in this mod</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#documentation-conventions">Documentation conventions</a></li>
+      <li><a href="#ui-languages">User interface in other languages</a></li>
+      <li><a href="#license-intro">License</a></li>
+    </ul>
+  </li>
+  <li><a href="#modes">Modes</a></li>
+  <li><a href="#system-requirements">System requirements</a></li>
   <li><a href="#installation">Installation</a></li>
-  <li><a href="#cw-mode">CW Mode Setup</a></li>
-  <li><a href="#doppler">Doppler Tracking</a></li>
-  <li><a href="#txshift">TX Shift</a></li>
-  <li><a href="#wheel">Fine Frequency Control (Mouse Wheel)</a></li>
-  <li><a href="#log">Per-Callsign QSO Log</a></li>
-  <li><a href="#cabrillo-export">Cabrillo Export with Log Source Selector</a></li>
-  <li><a href="#language">Language Selector</a></li>
-  <li><a href="#transverter">Transverter Band Profiles</a></li>
-  <li><a href="#offline">Offline Operation (No Rig)</a></li>
-  <li><a href="#mode-menu">CW Mode Menu &amp; Automatic Radio Switching</a></li>
-  <li><a href="#q65-echo-mode">Q65 / Echo Rig Mode &amp; Status-bar Indicator</a></li>
-  <li><a href="#procedure">EME CW Operating Procedure</a></li>
-  <li><a href="#cat">CAT / Hamlib Configuration</a></li>
-  <li><a href="#resolution">Frequency Resolution</a></li>
-  <li><a href="#troubleshooting">Troubleshooting</a></li>
-  <li><a href="#build">Building from Source</a></li>
+  <li><a href="#menus">Menus</a></li>
+  <li><a href="#settings">Settings</a>
+    <ul>
+      <li><a href="#settings-general">General</a></li>
+      <li><a href="#settings-radio">Radio</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#settings-audio">Audio</a></li>
+      <li><a href="#settings-tx-macros">Tx Macros</a></li>
+      <li><a href="#settings-reporting">Reporting</a></li>
+      <li><a href="#settings-frequencies">Frequencies</a></li>
+      <li><a href="#settings-colors">Colors</a></li>
+      <li><a href="#settings-advanced">Advanced</a></li>
+      <li><a href="#settings-alerts">Audible Alerts</a></li>
+      <li><a href="#settings-filters">Filters</a></li>
+      <li><a href="#settings-transverter">Transverter</a> <span class="tag mod">MOD</span></li>
+    </ul>
+  </li>
+  <li><a href="#keyboard-mouse">Keyboard and mouse commands</a></li>
+  <li><a href="#transceiver-setup">Transceiver setup</a></li>
+  <li><a href="#tutorial">Basic operating tutorial</a></li>
+  <li><a href="#making-qsos">Making QSOs</a></li>
+  <li><a href="#logging">Logging</a></li>
+  <li><a href="#vhf-features">VHF+ features</a>
+    <ul>
+      <li><a href="#vhf-setup">VHF setup</a></li>
+      <li><a href="#cw-mode">CW mode</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#cw-panel">CW panel &amp; macros</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#doppler-tracking">Doppler tracking (6 modes)</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#dual-dial">Dual RX/TX dial</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#sked-frequency">Sked frequency</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#transverter-use">Transverter band profiles</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#cat-vs-soundcard">CAT keyer vs soundcard CW</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#paddle-ptt">External paddle PTT &amp; dial freeze</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#tx-shift">TX Shift (&plusmn;200 MHz)</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#keep-cq">Keep CQ</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#q65-echo-rig-mode">Q65 / Echo rig mode</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#per-callsign-log">Per-callsign QSO log</a> <span class="tag mod">MOD</span></li>
+      <li><a href="#jt4">JT4</a></li>
+      <li><a href="#jt65">JT65</a></li>
+      <li><a href="#q65">Q65</a></li>
+      <li><a href="#msk144">MSK144</a></li>
+      <li><a href="#echo-mode">Echo mode</a></li>
+      <li><a href="#tips-eme">Tips for EME</a></li>
+    </ul>
+  </li>
+  <li><a href="#wspr">WSPR mode</a></li>
+  <li><a href="#on-screen-controls">On-screen controls</a></li>
+  <li><a href="#decoder-notes">Decoder notes</a></li>
+  <li><a href="#measurement-tools">Measurement tools</a></li>
+  <li><a href="#cooperating-programs">Cooperating programs</a></li>
+  <li><a href="#platform-dependencies">Platform dependencies</a></li>
+  <li><a href="#faq">Frequently asked questions</a></li>
+  <li><a href="#protocol-specs">Protocol specifications</a></li>
+  <li><a href="#astronomical-data">Astronomical data</a></li>
+  <li><a href="#utilities">Utility programs</a></li>
+  <li><a href="#support">Support</a></li>
+  <li><a href="#invariants">EME CW Mod &mdash; operator-visible design rules</a> <span class="tag mod">MOD</span></li>
+  <li><a href="#release-history">EME CW Mod &mdash; release history</a> <span class="tag mod">MOD</span></li>
+  <li><a href="#acknowledgements">Acknowledgements</a></li>
+  <li><a href="#license">License</a></li>
 </ol>
 </nav>
 
-<!-- ===== 1. OVERVIEW ===== -->
-<h2 id="overview">1. Overview</h2>
+<!-- ============================================================ -->
+<!-- CHAPTER 1: INTRODUCTION                                      -->
+<!-- ============================================================ -->
+<h2 id="introduction">1. Introduction</h2>
 
-<p>This is a modified build of <strong>WSJT-X 3.0.2</strong> with two additions for
-<strong>EME (Earth-Moon-Earth) CW operation</strong>:</p>
+<p>WSJT-X is an open-source program designed for amateur radio communication using
+very weak signals. It was started by Joe Taylor (K1JT) in 2001; Bill Somerville (G4WJS),
+Steve Franke (K9AN), Nico Palermo (IV3NWV), Uwe Risse (DG2YCB), Brian Moran (N9ADG), John
+Nelson (G4KLA), Charlie Suckling (DL3WDG), Roger Rehr (W3SZ), and Terrell Deppe (KJ5HST)
+are the other principal contributors.</p>
 
-<ol>
-  <li><strong>CW rig mode via CAT</strong> &mdash; a new "CW" radio button in Settings&nbsp;&gt;&nbsp;Radio
-    that commands the transceiver into CW mode through Hamlib, while keeping
-    full Doppler tracking active on both RX and TX.</li>
-  <li><strong>Extended TX&nbsp;Shift to &plusmn;200&nbsp;MHz</strong> &mdash; the TX&nbsp;Shift
-    control in the Astronomical Data window now accepts values from
-    &minus;200 to +200&nbsp;MHz (stock limit is &plusmn;30&nbsp;MHz).</li>
-</ol>
+<p>WSJT-X provides flexible rig control for most modern amateur transceivers and
+special aids such as automatic Doppler tracking for EME (Earth-Moon-Earth) QSOs and
+lunar-echo testing. The program analyzes received passbands up to 5 kHz wide and runs on
+Windows, macOS, and Linux.</p>
 
-<h3>Why is this needed?</h3>
-<p>Stock WSJT-X supports Doppler-tracked digital modes (JT65, Q65, etc.) for EME,
-but has no provision for setting the rig to CW mode via CAT while Doppler tracking
-remains active. EME CW operators must compensate for the continuously changing
-Doppler shift on the Earth-Moon-Earth path (up to &plusmn;several kHz at
-microwave frequencies). This mod lets WSJT-X handle that automatically while the
-operator works CW.</p>
+<p><strong>This fork (the EME CW Mod)</strong> extends WSJT-X with features needed
+for EME CW on microwave bands &mdash; CAT-driven CW mode, dual RX/TX dial, independent sked
+frequency with six Doppler modes, soundcard-generated CW for rigs without reliable
+<code>SEND_MORSE</code>, band-aware transverter profiles, extended TX Shift to
+&plusmn;200 MHz, per-callsign logbook, and more. Features added by the mod are tagged
+<span class="tag mod">MOD</span> throughout this guide.</p>
 
-<p>The extended TX&nbsp;Shift range is useful on microwave bands where the TX and RX
-frequencies may be separated by far more than 30&nbsp;MHz due to transverter
-offsets or deliberate frequency splits.</p>
+<h3 id="new-in-eme-cw-mod">1.1 New in the EME CW Mod (summary)</h3>
 
-<h3>What is <em>not</em> changed</h3>
+<p>Headline additions versus stock WSJT-X 3.0.x:</p>
 <ul>
-  <li>All existing WSJT-X digital modes and features work exactly as before.</li>
-  <li>The Doppler correction engine is unchanged &mdash; CW mode simply reuses the
-    existing infrastructure.</li>
-  <li>Hamlib rig control is unchanged &mdash; the <code>Transceiver::CW</code>
-    enum value already existed and maps to <code>RIG_MODE_CW</code>.</li>
+  <li><strong>CW mode as a first-class mode.</strong> A <code>CW</code> entry in the Mode menu
+    hides the digital-mode UI, shows a dedicated CW panel, keys the rig via CAT
+    <code>SEND_MORSE</code> or soundcard tone, and tracks Doppler continuously.</li>
+  <li><strong>Six Doppler modes</strong>: Full, Constant frequency on Moon (CFOM), Call DX, Own
+    Echoes, On DX Echoes, and None. Together with an independent Sked frequency and a
+    Lock-Sked option.</li>
+  <li><strong>Dual RX / TX dial</strong> at the top of the main window.</li>
+  <li><strong>Transverter band profiles</strong> for 9 fixed microwave bands with a single
+    "Enabled" row driving the CAT offset.</li>
+  <li><strong>CAT keyer / soundcard CW toggle</strong> &mdash; essential for rigs (e.g. Icom
+    IC-905) with unreliable Hamlib <code>SEND_MORSE</code>.</li>
+  <li><strong>Q65 / Echo rig-mode selector</strong> (Data/PktUSB default, 6 options) with silent
+    Hamlib fallback to USB on rigs that do not advertise the chosen mode.</li>
+  <li><strong>Keep CQ</strong> for digital modes &mdash; auto-rearms CQ after each QSO's final 73,
+    capped by a 1&ndash;60 minute watchdog.</li>
+  <li><strong>Extended TX Shift</strong> to &plusmn;200 MHz (stock limit &plusmn;30 MHz).</li>
+  <li><strong>Per-callsign ADIF logbook</strong> (<code>wsjtx_log_&lt;call&gt;.adi</code>) with
+    log-source selector on Cabrillo export.</li>
+  <li><strong>Mouse-wheel fine tuning</strong>: Shift = 100 Hz, Ctrl = 10 Hz, Ctrl+Shift = 1 Hz.</li>
+  <li><strong>Band dropdown filter</strong> driven solely by <em>Enable VHF features</em>, not
+    by decoder mode.</li>
+  <li><strong>Band dropdown pick always sets the sked</strong> in every Doppler method.</li>
+  <li><strong>UI language selector</strong> (System default / English).</li>
+  <li><strong>Offline operation</strong> (Doppler tracking with "None" rig; Split with "None"
+    rig via <code>WSJT_RIG_NONE_CAN_SPLIT</code>).</li>
 </ul>
 
-<!-- ===== 2. INSTALLATION ===== -->
-<h2 id="installation">2. Installation</h2>
+<p>Full release-by-release details are in the <a href="#release-history">release history
+appendix</a>.</p>
 
+<h3 id="documentation-conventions">1.2 Documentation conventions</h3>
+
+<p>This guide uses the following conventions:</p>
+<ul>
+  <li>Names of windows, menus, and on-screen controls appear in <strong>boldface</strong>.</li>
+  <li>File names and typed text appear in <code>monospace</code>.</li>
+  <li>Keyboard keys appear as <kbd>F2</kbd>, <kbd>Ctrl</kbd>, etc.</li>
+</ul>
+<p>Callouts are used for emphasis:</p>
+<div class="callout"><strong>Tip</strong>Useful tips or clarifications.</div>
+<div class="callout warn"><strong>Warning</strong>Behavior or settings that can cause harm if
+ignored.</div>
+<div class="callout mod"><strong>Mod note</strong>Describes behavior specific to this fork.</div>
+
+<h3 id="ui-languages">1.3 User interface in other languages</h3>
+<p>Stock WSJT-X supports many UI languages via Qt translation files. A translated UI appears
+automatically when the operating system is set to a supported language. The mod adds an
+explicit <strong>Language</strong> selector in <em>Settings &gt; General</em> with two choices:
+<strong>System default</strong> (stock behavior) and <strong>English</strong> (force English regardless of
+OS locale). A change takes effect after restarting WSJT-X. The <code>--language</code> command-line
+option still works and overrides the stored setting.</p>
+
+<h3 id="license-intro">1.4 License</h3>
+<p>WSJT-X is distributed under the GNU General Public License v3 (GPLv3). The mod is a
+derivative work and inherits the same license. See the <a href="#license">License</a>
+section at the end of this guide.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 2: MODES                                             -->
+<!-- ============================================================ -->
+<h2 id="modes">2. Modes</h2>
+
+<p>WSJT-X offers eleven protocols plus the CW extension added by the mod:</p>
+
+<table>
+<tr><th>Mode</th><th>Purpose</th><th>T/R (s)</th><th>BW (Hz)</th><th>Threshold S/N (dB, 2500 Hz)</th></tr>
+<tr><td>FT8</td><td>Fast weak-signal QSOs</td><td>15</td><td>50</td><td>-21</td></tr>
+<tr><td>FT4</td><td>HF/6m contesting</td><td>7.5</td><td>83</td><td>-17.5</td></tr>
+<tr><td>FST4</td><td>LF/MF weak signal (15 s &hellip; 1800 s)</td><td>15&ndash;1800</td><td>&lt;1&ndash;67</td><td>-20 &hellip; -43</td></tr>
+<tr><td>JT4</td><td>EME on microwaves (6 submodes)</td><td>60</td><td>17&ndash;949</td><td>-23 &hellip; -17</td></tr>
+<tr><td>JT9</td><td>HF/LF (also fast submodes)</td><td>60 or 5&ndash;30</td><td>15&ndash;1800</td><td>-26 &hellip; -20</td></tr>
+<tr><td>JT65</td><td>EME on VHF+ (3 submodes)</td><td>60</td><td>177&ndash;702</td><td>-25</td></tr>
+<tr><td>Q65</td><td>Scatter, TEP, EME (5 submodes &times; 5 periods)</td><td>15&ndash;300</td><td>19&ndash;1733</td><td>-22 &hellip; -34</td></tr>
+<tr><td>MSK144</td><td>Meteor scatter</td><td>15</td><td>2400</td><td>&mdash;</td></tr>
+<tr><td>WSPR</td><td>Propagation beacon</td><td>120</td><td>6</td><td>-31</td></tr>
+<tr><td>FST4W</td><td>LF/MF beacon (120 s &hellip; 1800 s)</td><td>120&ndash;1800</td><td>&lt;1&ndash;6</td><td>-32 &hellip; -45</td></tr>
+<tr><td>Echo</td><td>Own lunar echo detection</td><td>6</td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td><strong>CW</strong> <span class="tag mod">MOD</span></td><td>EME CW on microwaves with Doppler tracking</td><td>operator-timed</td><td>SSB filter</td><td>&mdash;</td></tr>
+</table>
+
+<p>Slow modes use timed sequences of alternating transmission and reception (typically
+one minute for JT4/JT9/JT65, 15 s for FT8). Fast modes (MSK144, fast JT9 submodes) transmit
+message frames repeatedly throughout each Tx cycle to exploit brief scatter openings.</p>
+
+<p>See the <a href="#protocol-specs">Protocol specifications</a> chapter for
+FEC codes, modulation types, keying rates, and sync energy ratios.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 3: SYSTEM REQUIREMENTS                               -->
+<!-- ============================================================ -->
+<h2 id="system-requirements">3. System requirements</h2>
+
+<ul>
+  <li>SSB transceiver and antenna.</li>
+  <li>Computer running Windows 7 or later, macOS 10.15 or later, or Linux.</li>
+  <li>1.5 GHz or faster CPU; 200 MB RAM minimum. Faster is better, especially for the
+    FT8 multithreaded decoder.</li>
+  <li>Monitor with at least 1024&times;780 resolution.</li>
+  <li>Computer-to-radio interface: serial / USB CAT, or VOX for T/R switching.</li>
+  <li>Audio devices sampling at 48000 Hz, 16-bit.</li>
+  <li>Computer clock synchronized to UTC within &plusmn;1 second (and <em>monotonically
+    increasing</em>, no backward steps).</li>
+</ul>
+
+<div class="callout warn">
+<strong>Clock discipline</strong>
+WSJT-X requires the PC clock to tick smoothly forward &mdash; no SNTP step corrections.
+On Windows, Meinberg NTP Client or a properly configured W32Time service is suitable.
+Do not use tools that make periodic jumps.
+</div>
+
+<div class="callout mod">
+<strong>Mod additions</strong>
+The EME CW mod has the same system requirements, with these notes:
+<ul>
+  <li>Soundcard CW generation uses an extra 48 kHz / 16-bit output stream; any
+    normal sound device is fine.</li>
+  <li>External paddle PTT detection uses a 100 ms polling interval on the CAT port in
+    CW mode &mdash; verify the rig can be polled that often without lockups.</li>
+  <li>For 1 Hz Doppler resolution on 10 GHz the rig must accept 1 Hz CAT frequency
+    commands.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 4: INSTALLATION                                      -->
+<!-- ============================================================ -->
+<h2 id="installation">4. Installation</h2>
+
+<h3>4.1 Windows (EME CW Mod build)</h3>
 <ol>
   <li>Download <code>wsjtx-eme-mods-win64.zip</code> from the
-    <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases/tag/v3.0.2-eme-cw">GitHub Releases page</a>.</li>
-  <li>Extract the ZIP to any location (e.g. <code>C:\wsjtx-eme</code>).</li>
+    <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">GitHub Releases page</a>.</li>
+  <li>Extract to any location (e.g. <code>C:\wsjtx-eme</code>). The install is self-contained &mdash;
+    all required DLLs (Qt 5.15, Hamlib 4.7.2, Boost 1.74, FFTW 3.3.5, MinGW runtime) are
+    bundled in <code>bin\</code>.</li>
   <li>Run <code>bin\wsjtx.exe</code>.</li>
 </ol>
 
-<div class="callout">
-  <strong>Note</strong>
-  All required DLLs (Qt, Hamlib, Boost, FFTW, MinGW runtime) are bundled in the
-  <code>bin\</code> directory. No separate runtime installation is needed.
-</div>
-
 <div class="callout warn">
-  <strong>Side-by-side with stock WSJT-X</strong>
-  This build uses the same configuration directory as stock WSJT-X
-  (<code>%LOCALAPPDATA%\WSJT-X</code>). If you want to keep both, back up your
-  settings before first launch, or use the <code>--rig-name</code> command-line
-  option to create a separate configuration instance:
-  <pre><code>wsjtx.exe --rig-name=EME-CW</code></pre>
+<strong>Side-by-side with stock WSJT-X</strong>
+This build reads and writes the same configuration directory as stock WSJT-X
+(<code>%LOCALAPPDATA%\WSJT-X</code>). To keep both installations isolated, launch the mod
+with <code>--rig-name=EME-CW</code> &mdash; WSJT-X will store its settings and logs under
+<code>%LOCALAPPDATA%\WSJT-X - EME-CW</code>. See <a href="#platform-dependencies">Platform
+dependencies</a> for the full list of path overrides.
 </div>
 
-<!-- ===== 3. CW MODE ===== -->
-<h2 id="cw-mode">3. CW Mode Setup</h2>
+<h3>4.2 Upstream Windows installer</h3>
+<p>If you want vanilla WSJT-X, install from <a href="https://wsjt.sourceforge.io/">wsjt.sourceforge.io</a>.
+Install into its own directory (e.g. <code>C:\WSJTX</code>), not under
+<code>C:\Program Files</code>. Log files live in
+<code>%LocalAppData%\WSJT-X\</code>.</p>
 
+<p>Stock WSJT-X requires OpenSSL for the LoTW database fetch. If you see an
+<em>SSL/TLS support not installed</em> error, install the Light Win64 OpenSSL package
+from <a href="https://slproweb.com/products/Win32OpenSSL.html">slproweb.com</a> and the
+Microsoft VC++ 2013 x64 redistributable. The mod build bundles OpenSSL and does not
+require this step.</p>
+
+<h3>4.3 Linux</h3>
+<p>Upstream provides <code>.AppImage</code>, <code>.deb</code>, and <code>.rpm</code> packages. On
+Debian/Ubuntu:</p>
+<pre><code>sudo dpkg -i wsjtx_3.0.1_amd64.deb
+sudo apt install libgfortran5 libqt5widgets5 libqt5network5 libqt5printsupport5 \
+                 libqt5multimedia5-plugins libqt5serialport5 libqt5sql5-sqlite \
+                 libfftw3-single3 libgomp1 libboost-all-dev libusb-1.0-0 libportaudio2</code></pre>
+<p>The mod has no Linux release ZIP; build from source (see
+<a href="#release-history">release history</a> for toolchain details).</p>
+
+<h3>4.4 macOS</h3>
+<p>Upstream provides <code>.dmg</code> packages for Apple Silicon and Intel. Use
+<em>Audio MIDI Setup</em> to force 48 kHz / 16-bit stereo. For USB-CODEC rigs that
+glitch after a few transmissions at 48 kHz, try 44.1 kHz. The mod has no macOS release
+ZIP; build from source.</p>
+
+<h3>4.5 Audio configuration (all platforms)</h3>
+<p>WSJT-X expects the sound card to sample at 48000 Hz. On Windows, open the
+<em>Sound</em> control panel &rarr; <em>Recording</em> and <em>Playback</em> &rarr;
+<em>Properties</em> &rarr; <em>Advanced</em>, and select <strong>16 bit, 48000 Hz (DVD Quality)</strong>.
+Disable all audio "enhancement" features.</p>
+
+<h3>4.6 Uninstall</h3>
+<p>Mod build: delete the extracted folder and (optionally) the
+<code>%LOCALAPPDATA%\WSJT-X - EME-CW</code> settings directory. Upstream build: use Windows
+<em>Apps &amp; features</em> on Windows, <code>sudo dpkg -P wsjtx</code> on Debian,
+<code>sudo rpm -e wsjtx</code> on RedHat, or drag <code>WSJT-X.app</code> to Trash on macOS.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 5: MENUS                                             -->
+<!-- ============================================================ -->
+<h2 id="menus">5. Menus</h2>
+
+<p>Menus at the top of the main window provide configuration, viewing, filtering, mode,
+decode, saving, and tools commands. Keyboard shortcuts appear at the right edge of each
+menu item.</p>
+
+<h3>5.1 File menu</h3>
+<ul>
+  <li><strong>Open</strong> / <strong>Open next in directory</strong> &mdash; replay a saved <code>.wav</code> file.</li>
+  <li><strong>Open log directory</strong> &mdash; opens the folder containing
+    <code>wsjtx.log</code>, <code>wsjtx_log*.adi</code>, <code>ALL.TXT</code>, and the Ignore List.</li>
+  <li><strong>Erase wsjtx.log</strong> &mdash; resets the Wait-and-Pounce "worked before" index.
+    Does <em>not</em> touch the ADIF log.</li>
+  <li><strong>Erase Ignore List</strong> &mdash; empty the per-call mute list.</li>
+  <li><strong>Export Cabrillo log...</strong> &mdash; with the mod, a <strong>Log source</strong>
+    combo at the top of the export dialog lets you export from the internal contest log or
+    from any <code>wsjtx_log*.adi</code> file in the log directory.
+    <span class="tag mod">MOD</span></li>
+  <li><strong>Settings</strong> (<kbd>F2</kbd>) &mdash; opens the Settings dialog
+    (<a href="#settings">chapter 6</a>). On macOS this is <em>Preferences</em> under
+    the WSJT-X menu (<kbd>Cmd+,</kbd>).</li>
+  <li><strong>Exit</strong> &mdash; quit, saving all persisted settings.</li>
+</ul>
+
+<h3>5.2 Configurations menu</h3>
+<p>Multiple named configurations (default, FT8, Echo, EME-CW, &hellip;) can be cloned,
+renamed, and switched. Each configuration stores its own copy of every setting. Select a
+configuration from the command line with:</p>
+<pre><code>wsjtx --config EME-CW
+wsjtx -c Echo</code></pre>
+
+<h3>5.3 View menu</h3>
+<ul>
+  <li><strong>Astronomical data</strong> &mdash; opens the Doppler / Moon-tracking window
+    (<a href="#astronomical-data">chapter 22</a>).</li>
+  <li><strong>Active stations</strong> &mdash; recent-decodes list; optionally fed by QMAP in
+    90 kHz wideband EME mode.</li>
+  <li><strong>SWL mode</strong> &mdash; strips buttons and controls, leaving the decodes list
+    and status bar (useful when running multiple instances).</li>
+  <li><strong>Message creator / QSY monitor / Enable message popups</strong> &mdash; the HF/VHF/EME
+    canned-message system.</li>
+  <li><strong>Band buttons</strong> and <strong>VHF / UHF buttons</strong> &mdash; optional per-band
+    QSY buttons. In FT8 mode, right-clicking an HF band button jumps to the DXpedition
+    frequency.</li>
+  <li><strong>Dark style</strong> &mdash; dark theme for all windows.</li>
+</ul>
+
+<h3>5.4 Filters menu</h3>
+<p>Toggles for hiding or ignoring stations by continent, worked-before status, Ignore
+List, Blacklist/Whitelist, etc. The <strong>BP</strong> checkbox on the main window bypasses
+all filters temporarily. Categories are defined on <em>Settings &gt; Filters</em>
+(<a href="#settings-filters">section 6.10</a>).</p>
+
+<h3>5.5 Mode menu</h3>
+<p>Selects the current operating mode as an exclusive choice. Entries:
+FT4, FT8, FST4, FST4W, JT4, JT9, JT65, MSK144, Q65, WSPR, Echo &mdash; plus
+<strong>CW</strong> below the digital-mode separator. <span class="tag mod">MOD</span></p>
+
+<div class="callout mod">
+<strong>CW in the Mode menu</strong>
+Picking <strong>CW</strong> hides all digital-mode controls, shows the dedicated CW panel on the
+right, and sends <code>Transceiver::CW</code> to the radio via Hamlib. Picking any digital
+mode exits CW: digital controls return, and WSJT-X sends <code>Transceiver::USB</code> (or
+the configured Q65/Echo rig mode) to the radio. Mode-menu picks use the
+<code>QActionGroup::triggered</code> signal so internal mode changes do not re-fire rig
+commands. See <a href="#cw-mode">section 12.2</a> for the full CW panel.
+</div>
+
+<h3>5.6 Decode menu</h3>
+<p>Selects decode depth (Fast / Normal / Deep) and in FT8 mode the number of parallel
+decoder threads. Also hosts <strong>Full-duplex mode</strong> and the mouse-click-on-waterfall
+guard for Q65 VHF features.</p>
+
+<h3>5.7 Save menu</h3>
+<p>Controls <code>.wav</code> file saving (per Rx sequence, or only decoded sequences),
+<code>ALL.TXT</code> rotation (monthly / yearly / off), and <em>Diagnostic mode</em>
+(extra logging for troubleshooting). Saved audio files can be scheduled for auto-deletion
+after 30 days.</p>
+
+<h3>5.8 Tools menu</h3>
+<p>Hosts <em>Execute frequency calibration cycle</em>, <em>Solve for calibration parameters</em>,
+<em>Measure reference spectrum</em>, <em>Measure phase response</em>, and
+<em>Equalization tools</em>. See <a href="#measurement-tools">chapter 16</a>.</p>
+
+<h3>5.9 Help menu</h3>
+<p>Local copy of this user guide, keyboard-shortcut table, mouse-command table, release
+notes, and <em>About WSJT-X</em>. The mod's About dialog shows the line
+<em>"Revised and modified by IT9CJC Marcello Criscione for EME and CW Microwaves use"</em>.
+<span class="tag mod">MOD</span></p>
+
+
+
+<!-- ============================================================ -->
+<!-- CHAPTER 6: SETTINGS                                          -->
+<!-- ============================================================ -->
+<h2 id="settings">6. Settings</h2>
+
+<p>Open <strong>Settings</strong> from the File menu or press <kbd>F2</kbd>
+(<kbd>Cmd+,</kbd> on macOS, where it is called <em>Preferences</em>). The following tabs
+are available.</p>
+
+<h3 id="settings-general">6.1 General</h3>
+
+<p>Enter your <strong>callsign</strong>, <strong>grid locator</strong> (6-character preferred), and
+<strong>IARU Region</strong> (1 = EU/AF/ME/N Asia, 2 = Americas, 3 = S Asia/Pacific).</p>
+
+<p>Important options:</p>
+<ul>
+  <li><strong>Enable VHF/UHF/Microwave features</strong> &mdash; disables wideband JT65 multi-decode
+    and switches on VHF submodes, shorthand messages, EME delay, and the VHF-only band
+    dropdown filter (<a href="#band-dropdown">below</a>). Turn <em>off</em> for normal
+    HF operation. <span class="tag mod">MOD: with the mod, this flag <em>alone</em> drives the
+    band dropdown content (see section 12.6).</span></li>
+  <li><strong>Decode after EME delay</strong> &mdash; account for lunar round-trip delay before
+    decoding.</li>
+  <li><strong>Allow Tx frequency changes while transmitting</strong> &mdash; required for smooth
+    Doppler tracking on microwave bands. Rigs known to support this: IC-735, IC-756 Pro
+    II, IC-910-H, IC-9700, FT-847, TS-590S/SG, TS-2000 (rev 9+), Flex 1500/5000, HPSDR,
+    Anan-10/100, KX3. <strong>IC-905</strong> is confirmed working. <span class="tag mod">MOD-tested</span></li>
+  <li><strong>Double-click on call sets Tx enable</strong> &mdash; auto-start TX when selecting a
+    station.</li>
+  <li><strong>MSK144 / Q65: Tx until 73 is received</strong> &mdash; repeat 73 up to 10 times for
+    marginal paths.</li>
+  <li><strong>Enable Wait features</strong> &mdash; gates Wait and Reply / Wait and Call / Wait and
+    Pounce.</li>
+  <li><strong>Alternate F1-F6 bindings</strong> &mdash; function keys send Tx1-Tx6 directly;
+    strongly recommended for contest-style FT4 / FT8.</li>
+  <li><strong>Single decode</strong> &mdash; narrow decode window to F Tol, important in weak-signal
+    EME where a 2nd signal distracts the Fano decoder.</li>
+  <li><strong>Show DXCC, grid, and worked-before status</strong> &mdash; drives Decode highlighting
+    and audio alerts.</li>
+  <li><strong>Monitor returns to last used frequency</strong> &mdash; re-tunes the rig when Monitor
+    is re-enabled after a band change.</li>
+  <li><strong>Alternate Erase button behavior</strong> &mdash; left-click clears left, right-click
+    clears right.</li>
+  <li><strong>Language</strong> <span class="tag mod">MOD</span> &mdash; combo with <em>System
+    default</em> / <em>English</em>. Overrides OS locale for the UI. Restart required. The
+    <code>--language</code> command-line option takes priority over the stored setting
+    when <em>System default</em> is selected.</li>
+</ul>
+
+<h3 id="settings-radio">6.2 Radio</h3>
+
+<p><strong>Rig</strong>: select your radio from the Hamlib dropdown, or <em>None</em> for no CAT
+control. For software proxies (DX Lab Commander, FLRig, Ham Radio Deluxe, Hamlib NET
+rigctl, OmniRig Rig 1/2) select the proxy name and enter its network address if not local.</p>
+
+<p><strong>CAT control</strong>: set Serial Port, Baud rate, Data bits, Stop bits, Handshake.
+For USB-CAT radios, pick the virtual COM port created by the USB driver (not <em>USB</em>,
+which is for special USB devices like some SDR kits). Click <strong>Test CAT</strong> &mdash; the
+button turns green on success.</p>
+
+<p><strong>PTT Method</strong>: <em>CAT</em>, <em>DTR</em>, <em>RTS</em>, or <em>VOX</em>. For DTR/RTS,
+pick the serial port (may be the same as CAT). Click <strong>Test PTT</strong> &mdash; the button
+turns red while keying.</p>
+
+<p><strong>Transmit Audio Source</strong>: <em>Rear/Data</em> or <em>Front/Mic</em> (rigs that expose
+this choice).</p>
+
+<p><strong>Mode</strong> group box: this is the CAT mode WSJT-X will push to the rig when
+starting a non-CW digital session.</p>
+
+<table>
+<tr><th>Button</th><th>CAT mode sent</th><th>Use case</th></tr>
+<tr><td>None</td><td>(no mode change)</td><td>Leave rig as-is &mdash; needed in CW-key-via-Tune
+EME operation (see <a href="#tips-eme">tips for EME</a>)</td></tr>
+<tr><td>USB</td><td>USB</td><td>Standard SSB digital modes</td></tr>
+<tr><td>Data/Pkt</td><td>DIG-U / PKT-USB</td><td>FSK/AFSK digital modes on rear-panel line in</td></tr>
+<tr><td><strong>CW</strong> <span class="tag mod">MOD</span></td><td>CW</td><td>EME CW with CAT-driven mode switching and
+Doppler tracking</td></tr>
+</table>
+
+<p><strong>Split Operation</strong>: <em>Rig</em>, <em>Fake It</em>, or <em>None</em>. Required for TX
+Doppler correction. <em>Fake It</em> synthesizes split by retuning the single VFO just before
+each TX period. The green "S" indicator in the status bar confirms split is active.</p>
+
+<div class="callout mod">
+<strong>Split with "None" rig</strong>
+Stock WSJT-X disables Split when Rig = None. The mod ships with the CMake option
+<code>WSJT_RIG_NONE_CAN_SPLIT=ON</code> so that Doppler-tracking math (and the dual-dial
+display) work even with no physical radio. Useful for dry-running EME calculations
+before connecting a rig.
+</div>
+
+<h4>Q65 / Echo rig mode <span class="tag mod">MOD (v3.0.8-devel)</span></h4>
+
+<p>A new <strong>Q65 / Echo rig mode</strong> group box below <em>Mode</em>. When the Mode menu is
+set to <strong>Q65</strong> or <strong>Echo</strong>, WSJT-X sends this CAT mode instead of the
+hard-coded <code>Transceiver::DIG_U</code>. Options:</p>
+<table>
+<tr><th>Dropdown value</th><th>Hamlib mode</th></tr>
+<tr><td>Data/PktUSB (default)</td><td><code>RIG_MODE_PKTUSB</code></td></tr>
+<tr><td>Data/PktLSB</td><td><code>RIG_MODE_PKTLSB</code></td></tr>
+<tr><td>USB</td><td><code>RIG_MODE_USB</code></td></tr>
+<tr><td>LSB</td><td><code>RIG_MODE_LSB</code></td></tr>
+<tr><td>RTTY</td><td><code>RIG_MODE_RTTY</code> (FSK)</td></tr>
+<tr><td>FM</td><td><code>RIG_MODE_FM</code></td></tr>
+</table>
+
+<div class="callout mod">
+<strong>Silent fallback to USB</strong>
+If the connected rig does not advertise the chosen mode in its Hamlib
+<code>rig-&gt;state.mode_list</code> capability bitmask, <code>HamlibTransceiver::map_mode()</code>
+silently substitutes <code>RIG_MODE_USB</code> at the CAT layer. The user-configured
+dropdown value is preserved, so reconnecting a capable rig restores the preferred mode.
+USB, CW, and CWR are never substituted.
+</div>
+
+<h3 id="settings-audio">6.3 Audio</h3>
+<p>Select <strong>Input</strong> and <strong>Output</strong> devices (Mono usually suffices). Both must
+sample at 48 kHz / 16-bit. If the output device is also the system default, mute all
+system sounds to prevent them going over the air.</p>
+
+<p><strong>Save directory</strong>: where <code>.wav</code> recordings land. <strong>AzEl directory</strong>:
+where <code>azel.dat</code> is written (updated 1 Hz when the Astronomical Data window is
+open, for external moon-tracking programs).</p>
+
+<p><strong>Remember power settings by band</strong>: when checked for Tune or TX, the PWR slider
+remembers its position per band.</p>
+
+<h3 id="settings-tx-macros">6.4 Tx Macros</h3>
+<p>Type a message (up to 13 chars incl. spaces) in the entry field, click <strong>Add</strong>.
+Drag-and-drop to reorder. The <code>$DXCALL</code> or <code>$DX</code> token at the start is
+substituted with the current DX Call on transmit. Macros are accessed from the main
+window's Tx5 dropdown.</p>
+
+<h3 id="settings-reporting">6.5 Reporting</h3>
+<ul>
+  <li><strong>Prompt me to log QSO</strong> &mdash; raises the Log dialog after sending 73.</li>
+  <li><strong>Log automatically</strong> &mdash; skip the dialog (not valid in contest modes).</li>
+  <li><strong>Op Call</strong> &mdash; secondary operator callsign for multi-op stations.</li>
+  <li><strong>Enable PSK Reporter Spotting</strong> &mdash; upload decodes to PSK Reporter.</li>
+  <li><strong>UDP Server</strong>: address, port, and <em>Accept UDP requests</em> for JTAlert /
+    Grid Tracker / N1MM+ / Writelog.</li>
+</ul>
+
+<h3 id="settings-frequencies">6.6 Frequencies</h3>
+<p>The <strong>Working Frequencies</strong> table lists per-mode, per-band default frequencies.
+Right-click to Insert / Delete / Reset. Double-click an entry to edit it. Mark entries
+<em>Preferred</em> to make them the default for the band button.</p>
+
+<p><strong>Frequency calibration</strong>: enter <em>Intercept A</em> (Hz) and <em>Slope B</em> (ppm)
+from a calibration run (see <a href="#measurement-tools">chapter 16</a>). The rig
+frequency is corrected as <code>dial_error = A + B&middot;f</code>.</p>
+
+<p><strong>Station Information</strong>: per-band Antenna Description and offset. For stock WSJT-X
+the offset is a simple fixed <code>rig &rarr; sky</code> number. In the mod the station-info
+offset is <strong>superseded</strong> by the per-band Transverter profile (see
+<a href="#settings-transverter">section 6.11</a> and <a href="#transverter-use">section
+12.7</a>), and the old separate <em>Offset</em> tab (v3.0.6) has been removed.</p>
+
+<h3 id="settings-colors">6.7 Colors</h3>
+<p>Configure decode-highlighting by priority: My Call, DX Call in message, DX Grid in
+message, Transmitted message, New DXCC / state / grid / call per band, LoTW user,
+Ignore List, custom callsigns/grids. Drag rows to reorder; right-click to set FG/BG.
+<strong>Only grid Fields sought</strong>: 2-char Field (for Fields-worked awards) vs 4-char Square.
+<strong>LoTW user validation</strong>: <em>Fetch Now</em> downloads <code>lotw-user-activity.csv</code>
+from ARRL and highlights stations known to upload to LoTW within the configured window.
+CALL3.TXT files for terrestrial and EME use can be downloaded here too.</p>
+
+<h3 id="settings-advanced">6.8 Advanced</h3>
+<p>JT65 Deep Search parameters: <em>Random erasure patterns</em> (6-7 is a good default),
+<em>Aggressive decoding level</em>, <em>Two-pass decoding</em>. Miscellaneous: <em>Degrade S/N
+of .wav file</em>, <em>Receiver bandwidth</em>, <em>Tx delay</em> (bump above 0.2 s if the rig needs
+longer to settle after PTT), <em>&times;2 / &times;4 Tone spacing</em> for LF transmitters.</p>
+
+<p><strong>Special Operating Activity</strong>: NA VHF / EU VHF / ARRL Field Day / FT Roundup /
+WW Digi / ARRL International Digital Contest / FT8 DXpedition Fox / SuperFox / Hound.</p>
+
+<h3 id="settings-alerts">6.9 Audible Alerts</h3>
+<p>Plays sounds on decodes matching selected categories. Requires at least two output
+devices (one for Tx audio, another for alerts). Alerts always route to the system Default
+device. The BP checkbox on the main window bypasses Ignore List muting of alerts.
+<em>Right-click the Band Hopping button</em> plays a test sound so you can confirm the alert
+output device is not the radio.</p>
+
+<h3 id="settings-filters">6.10 Filters</h3>
+<p>Up to four Hide-territory categories, plus Blacklist / Whitelist / Always Pass lists
+(callsigns, call fragments, keywords, grids). Toggles live on the main
+<em>Filters</em> menu. Filters apply to transmitting-station calls, and optionally only to
+Wait-and-Pounce. Status bar turns cyan <em>Receiving, Filters on</em> when any active filter
+is hiding decodes.</p>
+
+<h3 id="settings-transverter">6.11 Transverter <span class="tag mod">MOD (v3.0.9-devel)</span></h3>
+
+<p>Settings &gt; <strong>Transverter</strong> is a new tab (renamed from the v3.0.6 <em>Offset</em>
+tab). A 9-row <code>QTableWidget</code> with fixed bands and fixed band centers:</p>
+
+<table>
+<tr><th>Band</th><th>Center (MHz)</th><th>IF (MHz, editable)</th><th>Offset (MHz, read-only)</th><th>Enabled</th></tr>
+<tr><td>6m</td><td>50</td><td>editable</td><td>center &minus; IF</td><td>exclusive</td></tr>
+<tr><td>2m</td><td>144</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>70cm</td><td>432</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>23cm</td><td>1296</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>13cm</td><td>2320</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>9cm</td><td>3400</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>6cm</td><td>5760</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>3cm</td><td>10368</td><td>editable</td><td>&hellip;</td><td></td></tr>
+<tr><td>1.25cm</td><td>24048</td><td>editable</td><td>&hellip;</td><td></td></tr>
+</table>
+
+<p><strong>How to use</strong>:</p>
 <ol>
-  <li>Open <strong>File &gt; Settings</strong> (or press <kbd>F2</kbd>).</li>
-  <li>Go to the <strong>Radio</strong> tab.</li>
-  <li>In the <strong>Mode</strong> group box, select the <strong>CW</strong>
-    radio button.</li>
+  <li>Enter the transverter's <strong>IF frequency</strong> (MHz, 3 decimals) in the row's IF
+    column. Offset updates live.</li>
+  <li>Tick <strong>Enabled</strong> on the one band you intend to operate. Enabling a row
+    automatically un-ticks the previous one (mutually exclusive, enforced at the UI level
+    and again on read-back).</li>
+  <li>Click <strong>OK</strong>. The main window status bar shows the active IF label.</li>
 </ol>
 
-<p>The four available mode options are:</p>
-
-<table>
-  <tr><th>Button</th><th>CAT Mode Sent</th><th>Use Case</th></tr>
-  <tr><td>None</td><td>(no mode change)</td><td>Leave rig mode as-is</td></tr>
-  <tr><td>USB</td><td>USB</td><td>SSB digital modes</td></tr>
-  <tr><td>Data/Pkt</td><td>DIG-U (DATA-USB)</td><td>FSK/AFSK digital modes</td></tr>
-  <tr><td><strong>CW</strong> <span class="tag">NEW</span></td><td>CW</td><td>EME CW with Doppler tracking</td></tr>
-</table>
-
-<p>When <strong>CW</strong> is selected, WSJT-X sends <code>RIG_MODE_CW</code>
-to the transceiver via Hamlib every time it updates the frequency (which happens
-continuously during Doppler tracking). The rig stays in CW mode, and frequency
-corrections are applied via CAT.</p>
-
-<h3>CW mode status indicator</h3>
-<p>When CW mode is active, a <strong style="color: #ffffff; background-color: #0000cc; padding: 0 .3em;">CW</strong>
-label appears in the main window status bar (next to the digital mode label).
-This provides a quick visual confirmation that the rig is being commanded to
-CW mode via CAT. The label is hidden when any other mode is selected.
-<span class="tag">NEW</span></p>
-
-<!-- ===== 4. DOPPLER TRACKING ===== -->
-<h2 id="doppler">4. Doppler Tracking</h2>
-
-<h3>Opening the Astronomical Data window</h3>
-<p>Go to <strong>View &gt; Astronomical Data</strong> to open the Doppler
-tracking window. This window shows Moon position, Doppler shift, path loss,
-and provides the tracking controls.</p>
-
-<h3>Grids</h3>
-<p>Enter your own Maidenhead grid in Settings&nbsp;&gt;&nbsp;General and the
-DX station's grid in the Astronomical Data window. WSJT-X uses both grids to
-compute the precise Doppler shift on the Earth-Moon-Earth path.</p>
-
-<h3>Doppler tracking methods</h3>
-<p>The <strong>Doppler tracking</strong> dropdown selects how frequency
-corrections are applied:</p>
-
-<table>
-  <tr><th>Method</th><th>Description</th><th>Typical Use</th></tr>
-  <tr><td>Full Doppler to DX Grid</td><td>Corrects RX and TX for full round-trip Doppler to the DX station's grid</td><td>When DX does <em>not</em> correct</td></tr>
-  <tr><td>Constant frequency on Moon</td><td>Signal arrives at the Moon at the nominal frequency</td><td>Self-echo, beacons</td></tr>
-  <tr><td>Own Echo</td><td>Corrects for your own echo return Doppler</td><td>Echo testing</td></tr>
-  <tr><td>Both stations correct</td><td>Each station corrects half the Doppler</td><td>Both stations running tracking software</td></tr>
-  <tr><td>On DX Echo</td><td>Corrects so DX hears their own echo on frequency</td><td>Cooperative EME</td></tr>
-</table>
-
-<div class="callout">
-  <strong>Split mode required</strong>
-  Doppler tracking applies separate RX and TX frequency corrections. Your rig
-  must be in <strong>split mode</strong> (VFO A for RX, VFO B for TX) for TX
-  corrections to take effect. Enable split in Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;<em>Split Operation</em>.
-</div>
-
-<h3>How corrections are applied</h3>
-<p>WSJT-X computes two independent correction values (in Hz):</p>
-<ul>
-  <li><strong>RX correction</strong> &mdash; added to the nominal RX frequency:
-    <code>f_rx = f_nominal + correction.rx</code></li>
-  <li><strong>TX correction</strong> &mdash; added to the nominal TX frequency:
-    <code>f_tx = f_nominal + correction.tx</code></li>
-</ul>
-<p>These corrections are sent to the rig via CAT at each update cycle
-(typically every second). The corrections are <em>independent of rig
-mode</em> &mdash; they work identically whether the rig is in USB, Data, or CW.</p>
-
-<!-- ===== 5. TX SHIFT ===== -->
-<h2 id="txshift">5. TX Shift</h2>
-
-<p>The <strong>Tx Shift</strong> spinbox in the Astronomical Data window applies
-a fixed frequency offset to the TX frequency, on top of any Doppler correction.</p>
-
-<table>
-  <tr><th>Parameter</th><th>Value</th></tr>
-  <tr><td>Range</td><td>&minus;200 to +200 MHz <span class="tag">EXTENDED</span></td></tr>
-  <tr><td>Step size</td><td>1 MHz</td></tr>
-  <tr><td>Internal unit</td><td>Hz (value &times; 1,000,000)</td></tr>
-  <tr><td>Enable checkbox</td><td>"Enable Shift" must be checked</td></tr>
-</table>
-
-<p>The TX Shift is useful when:</p>
-<ul>
-  <li>Your TX and RX frequencies are offset by a transverter LO difference.</li>
-  <li>You are working cross-band or with a large deliberate frequency split.</li>
-  <li>You need to compensate for equipment-specific frequency offsets on
-    microwave bands.</li>
-</ul>
-
-<div class="callout">
-  <strong>Shifted frequency display</strong>
-  When "Enable Shift" is checked, the Sked TX frequency label in the Astronomical
-  Data window shows the actual shifted TX frequency (RX + Shift) in
-  <strong style="color: blue;">blue text</strong>, so you can verify the applied
-  offset at a glance. When shift is disabled, the label returns to its normal color.
-</div>
-
-<div class="callout warn">
-  <strong>Original limit was &plusmn;30 MHz</strong>
-  Stock WSJT-X limits the TX Shift to &plusmn;30 MHz. This mod extends it to
-  &plusmn;200 MHz for microwave EME use. The underlying Doppler correction
-  engine handles the full range without modification.
-</div>
-
-<!-- ===== 5b. FINE FREQUENCY WHEEL ===== -->
-<h2 id="wheel">5b. Fine Frequency Control (Mouse Wheel)</h2>
-
-<p>The dial frequency display in the main window supports mouse wheel tuning
-with modifier keys for sub-kHz resolution: <span class="tag">NEW</span></p>
-
-<table>
-  <tr><th>Modifier</th><th>Step Size</th><th>Use Case</th></tr>
-  <tr><td>(none)</td><td>1 kHz</td><td>Band scanning, coarse tuning</td></tr>
-  <tr><td>Shift</td><td>100 Hz</td><td>Fine tuning within a band segment</td></tr>
-  <tr><td>Ctrl</td><td>10 Hz</td><td>Precise frequency setting</td></tr>
-  <tr><td>Ctrl + Shift</td><td>1 Hz</td><td>Exact frequency match</td></tr>
-</table>
-
-<p>To use: click on the dial frequency display to give it focus, then scroll
-the mouse wheel. Hold the modifier key(s) while scrolling for finer steps.</p>
-
-<div class="callout">
-  <strong>Tip for EME CW</strong>
-  The 1&nbsp;Hz and 10&nbsp;Hz steps are particularly useful for setting the
-  exact nominal frequency before enabling Doppler tracking, ensuring your
-  signal lands precisely where expected on the Moon bounce path.
-</div>
-
-<!-- ===== 5c. PER-CALLSIGN LOG ===== -->
-<h2 id="log">5c. Per-Callsign QSO Log</h2>
-
-<p>The QSO log file is now named after your callsign from
-Settings&nbsp;&gt;&nbsp;General&nbsp;&gt;&nbsp;Station Details:
-<span class="tag">NEW</span></p>
-
-<table>
-  <tr><th>Callsign</th><th>Log File</th></tr>
-  <tr><td>II9P</td><td><code>wsjtx_log_II9P.adi</code></td></tr>
-  <tr><td>IT9CJC</td><td><code>wsjtx_log_IT9CJC.adi</code></td></tr>
-  <tr><td>(empty)</td><td><code>wsjtx_log.adi</code> (fallback)</td></tr>
-</table>
-
-<p>When you change the callsign in Settings, the program automatically switches
-to the corresponding log file. If a log with that name already exists, new QSOs
-are appended to it. If it does not exist, a new file is created on the first
-logged QSO.</p>
-
-<div class="callout">
-  <strong>Multi-station operation</strong>
-  This feature is useful when operating under different callsigns (e.g. a personal
-  call and a club call). Each callsign maintains its own "worked before" database,
-  so DXCC/grid/call highlighting is accurate per station.
-</div>
-
-<!-- ===== 5d. CABRILLO EXPORT ===== -->
-<h2 id="cabrillo-export">5d. Cabrillo Export with Log Source Selector</h2>
-
-<p>The <strong>File&nbsp;&gt;&nbsp;Export Cabrillo log&nbsp;...</strong> dialog now
-includes a <strong>Log source</strong> combo box at the top. It lists:</p>
-
-<ul>
-  <li><strong>(Contest log)</strong> &mdash; the original internal SQLite contest log
-    (default, preserving existing behavior).</li>
-  <li>All <code>wsjtx_log*.adi</code> files found in the WSJT-X data directory
-    (e.g. <code>wsjtx_log_II9P.adi</code>, <code>wsjtx_log.adi</code>).</li>
-</ul>
-
-<p>When an ADI log file is selected, the dialog parses its ADIF records and writes
-them as Cabrillo 3.0 QSO lines. The exchange fields are auto-detected:</p>
-
-<table>
-  <tr><th>Priority</th><th>Exchange Sent</th><th>Exchange Received</th></tr>
-  <tr><td>1 (highest)</td><td><code>STX_STRING</code></td><td><code>SRX_STRING</code></td></tr>
-  <tr><td>2</td><td><code>STX</code></td><td><code>SRX</code></td></tr>
-  <tr><td>3 (fallback)</td><td><code>RST_SENT</code></td><td><code>RST_RCVD</code></td></tr>
-</table>
-
-<p>Fill in the contest metadata fields (Contest, Callsign, Category, etc.) as usual,
-then click <strong>Save</strong> to write the <code>.cbr</code> file.</p>
-
-<div class="callout">
-  <strong>Tip</strong>
-  The combo box automatically pre-selects the ADI file matching your current callsign
-  in Settings.
-</div>
-
-<!-- ===== 5e. LANGUAGE SELECTOR ===== -->
-<h2 id="language">5e. Language Selector</h2>
-
-<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;General</strong>. The
-<strong>Language</strong> combo box lets you choose between:</p>
-
-<ul>
-  <li><strong>System default</strong> &mdash; uses the operating system locale
-    (original WSJT-X behavior).</li>
-  <li><strong>English</strong> &mdash; forces the UI to English regardless of OS
-    locale.</li>
-</ul>
-
-<p>After changing the language, click OK. A message will remind you that the change
-requires a <strong>restart</strong> of WSJT-X to take effect. Close and relaunch
-the program to see the new language.</p>
-
-<div class="callout">
-  <strong>Note</strong>
-  The <code>-l</code> command-line flag still works and takes priority if the
-  stored setting is &ldquo;System default.&rdquo;
-</div>
-
-<!-- ===== 5f. TRANSVERTER BAND PROFILES ===== -->
-<h2 id="transverter">5f. Transverter Band Profiles</h2>
-
-<p>Open <strong>File&nbsp;&gt;&nbsp;Settings&nbsp;&gt;&nbsp;Transverter</strong>.
-<span class="tag">NEW in v3.0.9-devel</span>
-A single table manages every microwave transverter you operate. The band list is
-fixed (6m / 2m / 70cm / 23cm / 13cm / 9cm / 6cm / 3cm / 1.25cm). Each row&rsquo;s
-vertical header shows the band center frequency used in the offset calculation:
-50 / 144 / 432 / 1296 / 2320 / 3400 / 5760 / 10368 / 24048 MHz.</p>
-
-<h3>Setting up a band</h3>
-<ol>
-  <li>Enter the transverter&rsquo;s <strong>IF frequency</strong> in the IF
-    column (MHz, 3 decimals).</li>
-  <li>Watch the <strong>Offset (auto)</strong> column update live:
-    <code>offset = band_center &minus; IF</code>.</li>
-  <li>Tick the <strong>Enabled</strong> checkbox on the one band you want to
-    operate. At most one band can be enabled at a time &mdash; ticking a
-    different row automatically unticks the previous one.</li>
-  <li>Click <strong>OK</strong>. The main window status bar updates to show
-    the active <strong>IF</strong>.</li>
-</ol>
-
-<h3>CAT frequency pipeline</h3>
-<p>When a band is enabled, the CAT frequency sent to the rig is translated:</p>
+<p><strong>CAT frequency pipeline</strong>: when a band is enabled,</p>
 <pre><code>rig_freq = main_freq &minus; offset
-        = main_freq &minus; (band_center &minus; IF)</code></pre>
+offset   = band_center &minus; IF</code></pre>
+<p>Both RX and TX use the same offset. Example &mdash; 3 cm (10368 MHz) with IF = 432 MHz
+&rarr; offset = 9936 MHz. Dial 10368.100 MHz &rarr; rig gets 432.100 MHz; the rig's
+reported 432.100 MHz is translated back to 10368.100 for display, Doppler math, and
+logging.</p>
 
-<p><strong>Example</strong> &mdash; 3cm (10368 MHz) with IF = 432 MHz:
-offset = 9936 MHz. WSJT-X operating on 10368.100 MHz
-&rarr; rig dial 432.100 MHz. The rig&rsquo;s reported frequency
-(432.100 MHz) is translated back by WSJT-X to 10368.100 MHz, so
-the dial display, Doppler engine, and logging all operate on the
-microwave frequency.</p>
-
-<p>Both RX and TX use the same offset. The calibration slope/intercept
-is applied on top, as before.</p>
-
-<h3>Status indicator</h3>
-<p>A persistent <strong>IF</strong> label appears in the main window status bar
-next to the rig-mode label:</p>
-<ul>
-  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">IF=NONE</strong>
-    &mdash; no transverter active, offset = 0, rig sees the WSJT-X dial directly.</li>
-  <li><strong style="color:#fff; background:#8e44ad; padding:0 .3em;">IF=432.000&nbsp;MHz</strong>
-    &mdash; a band is active; label shows the configured IF for that band.</li>
-</ul>
-
-<div class="callout warn">
-  <strong>Fixed RX/TX offsets removed in v3.0.9-devel</strong>
-  The v3.0.6 <em>Offset</em> tab with its separate RX / TX spinboxes is
-  gone. All transverter offsetting now goes through the per-band
-  Transverter table. Existing <code>FixedRxOffset</code> /
-  <code>FixedTxOffset</code> QSettings values from older installs are
-  silently ignored.
+<div class="callout mod">
+<strong>Sign flipped from v3.0.6</strong>
+The v3.0.6 fixed RX/TX offsets were applied with <code>+</code>; the per-band profile uses
+<code>&minus;</code>. The Rx feedback path adds the offset back symmetrically.
+<code>FixedRxOffset</code> and <code>FixedTxOffset</code> QSettings keys from v3.0.6 are silently
+ignored on upgrade.
 </div>
 
-<!-- ===== 5g. OFFLINE OPERATION ===== -->
-<h2 id="offline">5g. Offline Operation (No Rig)</h2>
-
-<p>WSJT-X can now be used without a physical radio connected:</p>
-
+<p><strong>Status indicator</strong>: a persistent IF label appears in the status bar next to the
+rig-mode label:</p>
 <ul>
-  <li><strong>Band frequency display</strong> &mdash; When no rig is connected,
-    switching bands shows the correct default frequency for the selected band
-    instead of a stale value.</li>
-  <li><strong>Split with &ldquo;None&rdquo; rig</strong> &mdash; Split operation
-    is available even when rig is set to &ldquo;None&rdquo; in
-    Settings&nbsp;&gt;&nbsp;Radio. This enables Doppler tracking calculations.</li>
-  <li><strong>Doppler tracking</strong> &mdash; Doppler corrections are computed
-    and displayed in the Astronomical Data window regardless of rig connection
-    status. Select a Doppler method and enable tracking as usual.</li>
-  <li><strong>Rig failure handling</strong> &mdash; If a selected rig is
-    unavailable, the error dialog appears once and the program continues
-    normally. No repeated popups.</li>
+  <li><span class="label-usb">IF=NONE</span> &mdash; no transverter active, rig sees the WSJT-X
+    dial directly.</li>
+  <li><span class="label-if">IF=432.000 MHz</span> &mdash; a band is active; label shows the
+    configured IF.</li>
 </ul>
 
-<!-- ===== 5h. CW MODE MENU ===== -->
-<h2 id="mode-menu">5h. CW Mode Menu &amp; Automatic Radio Switching</h2>
+<!-- ============================================================ -->
+<!-- CHAPTER 7: KEYBOARD & MOUSE                                  -->
+<!-- ============================================================ -->
+<h2 id="keyboard-mouse">7. Keyboard and mouse commands</h2>
 
-<p>CW is now available as a top-level mode in the main window <strong>Mode</strong>
-menu, alongside the digital modes (FT4, FT8, JT65, Q65, etc.).
-<span class="tag">NEW</span></p>
+<p>See <em>Help &gt; Keyboard shortcuts</em> (<kbd>F3</kbd>) and
+<em>Help &gt; Special mouse commands</em> (<kbd>F5</kbd>) for the canonical in-app lists. Key
+shortcuts and mouse actions for everyday operation:</p>
 
-<h3>Selecting CW mode</h3>
+<h3>7.1 Keyboard shortcuts (common)</h3>
+<table>
+<tr><th>Key</th><th>Action</th></tr>
+<tr><td><kbd>F2</kbd></td><td>Open Settings</td></tr>
+<tr><td><kbd>F3</kbd></td><td>Show keyboard shortcut list</td></tr>
+<tr><td><kbd>F4</kbd></td><td>Clear DX Call / DX Grid / Report / Tx messages</td></tr>
+<tr><td><kbd>F5</kbd></td><td>Show mouse command list</td></tr>
+<tr><td><kbd>F6</kbd></td><td>Open next <code>.wav</code> file in the save directory</td></tr>
+<tr><td><kbd>F11</kbd> / <kbd>F12</kbd></td><td>Move Rx frequency down / up (1 Hz)</td></tr>
+<tr><td><kbd>Shift+F11</kbd> / <kbd>Shift+F12</kbd></td><td>Move Tx frequency down / up (60 Hz for FT8, 90 Hz for FT4)</td></tr>
+<tr><td><kbd>Ctrl+Shift+F11</kbd> / <kbd>Ctrl+Shift+F12</kbd></td><td>Move both frequencies</td></tr>
+<tr><td><kbd>Alt+1</kbd> &hellip; <kbd>Alt+6</kbd></td><td>Select Next Tx message 1&ndash;6</td></tr>
+<tr><td><kbd>Ctrl+1</kbd> &hellip; <kbd>Ctrl+6</kbd></td><td>Transmit Tx message 1&ndash;6 now</td></tr>
+<tr><td><kbd>F1</kbd> &hellip; <kbd>F6</kbd> (if <em>Alternate F1&ndash;F6</em> checked)</td><td>Send Tx1&ndash;Tx6 directly</td></tr>
+<tr><td><kbd>Enter</kbd> (in Tx5 or free text)</td><td>Store that macro</td></tr>
+<tr><td><kbd>Esc</kbd></td><td>Clear Rx-frequency double-click Tx-enable arming</td></tr>
+</table>
+
+<h3>7.2 Special mouse commands</h3>
+<table>
+<tr><th>Action</th><th>Result</th></tr>
+<tr><td>Double-click decoded message</td><td>Set DX Call + DX Grid + Rx freq; generate messages; pick odd/even</td></tr>
+<tr><td>Shift + double-click</td><td>Same but move Tx freq only</td></tr>
+<tr><td>Ctrl + double-click</td><td>Same + move both Rx and Tx</td></tr>
+<tr><td>Click on waterfall</td><td>Move Rx freq</td></tr>
+<tr><td>Shift + click on waterfall</td><td>Move Tx freq</td></tr>
+<tr><td>Ctrl + click on waterfall</td><td>Move both</td></tr>
+<tr><td>Double-click on waterfall</td><td>Move Rx freq + decode a small range around the pick</td></tr>
+<tr><td>Right-click Lookup / Add / Ignore buttons</td><td>Search qrz.com / hamqth.com / qrzcq.com</td></tr>
+<tr><td>Right-click Band Hopping (WSPR)</td><td>Play alert-sound test (also used in Audio Alerts setup)</td></tr>
+</table>
+
+<h3>7.3 Mouse wheel on dial frequency <span class="tag mod">MOD</span></h3>
+<p>Hover the mouse over the yellow-on-black dial frequency indicator and scroll the wheel:</p>
+<table>
+<tr><th>Modifier</th><th>Step</th><th>Use</th></tr>
+<tr><td>(none)</td><td>1 kHz</td><td>Band scanning</td></tr>
+<tr><td>Shift</td><td>100 Hz</td><td>Fine tuning within a band segment</td></tr>
+<tr><td>Ctrl</td><td>10 Hz</td><td>Precise frequency setting</td></tr>
+<tr><td>Ctrl + Shift</td><td>1 Hz</td><td>Exact frequency match (essential for EME sked)</td></tr>
+</table>
+<p>Button clicks on the dial step the frequency by 1 kHz up/down as before.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 8: TRANSCEIVER SETUP                                 -->
+<!-- ============================================================ -->
+<h2 id="transceiver-setup">8. Transceiver setup</h2>
+
+<p>First-time setup after installing WSJT-X and configuring the Radio tab:</p>
+
 <ol>
-  <li>Open the <strong>Mode</strong> menu from the main window menu bar.</li>
-  <li>Select <strong>CW</strong> (below the digital modes, after the separator).</li>
+  <li><strong>Receiver noise level.</strong> Click <strong>Monitor</strong>. Set rig gain and PC
+    audio-mixer so the background noise bar at the lower left reads around <strong>30 dB</strong>
+    with no signals. Turn <em>AGC off</em> or reduce RF gain to minimize AGC action.</li>
+  <li><strong>Bandwidth.</strong> Set the rig to USB (or USB-Data) and open the IF filter to the
+    maximum, up to 5 kHz. If only a 2.7 kHz SSB filter is available, use that; the active
+    FT8 band is still visible.</li>
+  <li><strong>TX audio level.</strong> Click <strong>Tune</strong>. The rig should transmit a steady
+    tone. Watching the rig's power meter, pull the <strong>Pwr</strong> slider (at the right edge
+    of the main window) down until RF output drops <em>just slightly</em> from maximum. Stop
+    tune with Tune again or <strong>Halt Tx</strong>.</li>
+  <li><strong>Monitor the tone</strong> via the rig's monitor function. It should be clean, with
+    no clicks, dropouts, or glitches &mdash; even while the PC does other work (browsing,
+    email). Clicks almost always mean audio clipping, buffer underruns, or interference
+    from another process (anti-virus scans, Windows audio enhancements).</li>
 </ol>
 
-<p>When CW is selected:</p>
-<ul>
-  <li>All digital-mode UI controls are <strong>hidden</strong> &mdash; decode and
-    TX buttons, mode-row buttons, and the waterfall splitter.</li>
-  <li>The <strong style="color:#fff; background:#0000cc; padding:0 .3em;">CW</strong>
-    status label appears in the main window status bar.</li>
-  <li>WSJT-X sends <code>Transceiver::CW</code> to the radio via Hamlib
-    (equivalent to <code>RIG_MODE_CW</code>).</li>
-</ul>
-
-<p>Selecting any digital mode exits CW:</p>
-<ul>
-  <li>Digital-mode controls are restored.</li>
-  <li>The CW label is hidden.</li>
-  <li>WSJT-X sends <code>Transceiver::USB</code> to the radio to return it to
-    SSB operation.</li>
-</ul>
-
-<div class="callout">
-  <strong>Automatic radio mode switching</strong>
-  The Mode menu drives the radio directly: picking CW switches the rig to CW
-  mode via CAT, picking any digital mode switches it back to USB. No manual
-  rig-mode change required between CW and digital sessions.
+<div class="callout mod">
+<strong>For EME CW specifically</strong>
+When CW is selected from the Mode menu, the normal Tune button is replaced by the CW
+panel's own Tune (700 Hz CW tone) and a separate <strong>Stop</strong> button. The soundcard-CW
+path drops the rig into Data/PktUSB for TX, so you cannot use the TX tone to set the
+CW-mode drive level. Set your CW drive on the rig itself (CW power control, side-tone,
+keyer speed) &mdash; WSJT-X only handles timing and Doppler, not CW audio shaping.
 </div>
 
-<div class="callout warn">
-  <strong>Relation to Settings &gt; Radio &gt; Mode</strong>
-  The <em>Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode</em> radio buttons
-  (<a href="#cw-mode">section 3</a>) still work &mdash; they set the baseline
-  rig mode used while running digital modes. The <strong>Mode menu</strong> is
-  the fast path for live switching during a session: flip between CW and
-  digital modes without reopening Settings.
-</div>
+<!-- ============================================================ -->
+<!-- CHAPTER 9: BASIC OPERATING TUTORIAL                          -->
+<!-- ============================================================ -->
+<h2 id="tutorial">9. Basic operating tutorial</h2>
 
-<!-- ===== 5i. Q65 / ECHO RIG MODE ===== -->
-<h2 id="q65-echo-mode">5i. Q65 / Echo Rig Mode &amp; Status-bar Indicator</h2>
+<p>The fastest way to get comfortable with WSJT-X is to replay a sample <code>.wav</code>
+file. <em>Help &gt; Download samples&hellip;</em> fetches a set of audio clips; for the
+tutorial you need the FT8 files at minimum.</p>
 
-<p>Q65 and Echo now use a user-configurable rig mode (default
-<code>Data/PktUSB</code>), and the resolved rig mode is shown in a persistent
-color-coded label in the main window status bar.
-<span class="tag">NEW in v3.0.8-devel</span></p>
+<h3>9.1 Wide Graph settings</h3>
+<p>The Wide Graph window shows the frequency spectrum of received audio. Recommended
+starting point:</p>
+<ul>
+  <li>Start = 100 Hz</li>
+  <li>Bins/Pixel = 5</li>
+  <li>N Avg = 2</li>
+  <li>Palette = Fldigi (or your preferred)</li>
+  <li>Flatten checked (compensates for passband slope)</li>
+  <li>Spec = 50 % (vertical split between waterfall and line plot)</li>
+  <li>Gain / Zero sliders at midscale</li>
+</ul>
+<p>Resize the Wide Graph so the top frequency is about 3300 Hz.</p>
 
-<h3>Why</h3>
-<p>Many rigs expose a dedicated <em>Data</em> or <em>Pkt</em> mode that bypasses
-microphone-path audio processing (compressors, equalisers, DSP shaping) and
-accepts audio on a rear-panel line input. For weak-signal digital modes such as
-Q65 and Echo, <em>Data</em> mode usually gives a cleaner transmit signal and
-avoids radios reporting the wrong CAT mode when the operator is on microwaves
-through a transverter. This mod lets WSJT-X command the correct rig mode via
-CAT whenever Q65 or Echo is active.</p>
-
-<h3>Selecting the Q65 / Echo rig mode</h3>
+<h3>9.2 FT8 replay</h3>
 <ol>
-  <li>Open <strong>File &gt; Settings</strong> (<kbd>F2</kbd>).</li>
-  <li>On the <strong>Radio</strong> tab, locate the <strong>Q65 / Echo Rig Mode</strong>
-    group box (below the <em>Mode</em> group).</li>
-  <li>Pick one of:
-    <ul>
-      <li><code>Data/PktUSB</code> &mdash; default; maps to <code>RIG_MODE_PKTUSB</code>.</li>
-      <li><code>Data/PktLSB</code> &mdash; <code>RIG_MODE_PKTLSB</code>.</li>
-      <li><code>USB</code> &mdash; plain USB (SSB).</li>
-      <li><code>LSB</code> &mdash; plain LSB (SSB).</li>
-      <li><code>RTTY</code> &mdash; <code>RIG_MODE_RTTY</code> (FSK).</li>
-      <li><code>FM</code> &mdash; <code>RIG_MODE_FM</code>.</li>
-    </ul>
-  </li>
-  <li>Click <strong>OK</strong>. The status-bar label updates immediately.</li>
+  <li><strong>Stop</strong>, then <em>Mode &gt; FT8</em>, <em>Decode &gt; Deep</em>. Double-click
+    <strong>Erase</strong>.</li>
+  <li><em>File &gt; Open</em> &rarr; navigate to <code>save/samples/FT8/210703_133430.wav</code>.</li>
+  <li>Observe the left pane (Band Activity) fill with decodes and the right pane (Rx Frequency)
+    with messages at the current Rx frequency or addressed to your My Call.</li>
 </ol>
 
-<p>When <strong>Q65</strong> or <strong>Echo</strong> is picked from the Mode
-menu, WSJT-X sends the configured rig mode via CAT. Other digital modes still
-send <code>USB</code>, and CW still sends <code>CW</code>.</p>
+<p>Try the following to learn the UI:</p>
+<ul>
+  <li>Double-click a green CQ line &mdash; DX Call and DX Grid auto-fill, Rx marker jumps,
+    messages generate, Tx-even picked appropriately.</li>
+  <li>Hold Shift while double-clicking a decoded line &mdash; moves Tx frequency only.</li>
+  <li>Hold Ctrl while double-clicking &mdash; moves both Rx and Tx.</li>
+  <li>Click on the waterfall for Rx move; Shift+click for Tx; Ctrl+click for both.</li>
+  <li>Check <strong>Hold Tx Freq</strong> if you want Tx to stay put when you switch QSO
+    targets.</li>
+</ul>
 
-<div class="callout">
-  <strong>Silent fallback to USB</strong>
-  If the connected rig does not advertise the selected mode in its Hamlib
-  capability bitmask (<code>rig-&gt;state.mode_list</code>) &mdash; for example,
-  a rig with no PKTUSB when the operator chose <code>Data/PktUSB</code> &mdash;
-  the mod substitutes <code>USB</code> silently at the Hamlib layer. The
-  user-configured dropdown value is preserved, so reconnecting a capable rig
-  restores the preferred mode automatically.
+<h3>9.3 FT4, FST4, FST4W</h3>
+<p>FT4 is 3.5 dB less sensitive than FT8 and 1.6&times; wider, but twice as fast; it is
+designed for contesting. Use Wide Graph Bins/Pixel = 5, Start = 100 Hz, N Avg = 1. The
+<strong>Best S+P</strong> button picks the best-new-multiplier CQ from the decodes list and
+replies to it &mdash; configure what "best" means in Settings &gt; Colors.</p>
+
+<p>FST4 covers 15-second through 1800-second periods for LF/MF. F Low / F High bracket the
+decoder window (visible as green angle brackets on the Wide Graph). NB (noise blanker)
+can be set 0 % &hellip; 20 %, or &minus;1% / &minus;2% to loop over multiple values near the
+Rx frequency.</p>
+
+<p>FST4W is WSPR-like, 120 s to 1800 s. A round-robin option (1/3, 2/3, 3/3) coordinates
+three stations so they take turns transmitting.</p>
+
+<h3>9.4 Starting the EME CW session <span class="tag mod">MOD</span></h3>
+
+<p>For an operator-oriented tutorial, see <a href="#cw-mode">section 12.2</a>. Summary:</p>
+<ol>
+  <li>Set Settings &gt; Radio to your rig and PTT. Mode = CW (or None if you prefer manual
+    rig-mode control).</li>
+  <li>Configure the Transverter tab (<a href="#settings-transverter">section 6.11</a>)
+    with your IF and tick Enabled on the band you will operate.</li>
+  <li>Set the Mode menu to <strong>CW</strong>.</li>
+  <li>Open <em>View &gt; Astronomical Data</em>, enter the DX grid, pick a Doppler mode
+    (typically <em>Constant frequency on Moon</em> for microwave EME CW).</li>
+  <li>In the CW panel: set WPM, pick CAT-keyer vs soundcard (checkbox), set the Sked
+    frequency, check <strong>Doppler tracking</strong>.</li>
+  <li>Enable TX and work the DX.</li>
+</ol>
+
+
+
+<!-- ============================================================ -->
+<!-- CHAPTER 10: MAKING QSOs                                      -->
+<!-- ============================================================ -->
+<h2 id="making-qsos">10. Making QSOs</h2>
+
+<h3>10.1 Standard exchange</h3>
+<p>A minimally valid WSJT-X QSO exchanges callsigns, a signal report, and acknowledgments:</p>
+<pre><code>CQ K1ABC FN42                       # K1ABC calls CQ
+                K1ABC G0XYZ IO91    # G0XYZ answers
+G0XYZ K1ABC -19                     # K1ABC sends report
+                K1ABC G0XYZ R-22    # G0XYZ sends R + report
+G0XYZ K1ABC RRR                     # K1ABC sends RRR (or RR73)
+                K1ABC G0XYZ 73      # G0XYZ sends 73</code></pre>
+
+<p>Signal reports are S/N in dB referenced to a 2500 Hz bandwidth. JT65 reports are
+constrained to &minus;30&hellip;&minus;1; JT9 and the 77-bit modes support &minus;50&hellip;+49.
+Double-clicking Tx1 toggles starting with Tx2 instead; double-clicking Tx4 toggles RRR vs
+RR73.</p>
+
+<h3>10.2 Free-text messages</h3>
+<p>Up to 13 characters, including spaces. Avoid <code>/</code> (parsed as compound-call
+separator).</p>
+
+<h3>10.3 Auto-Sequencing</h3>
+<p>Check <strong>Auto Seq</strong> to let WSJT-X pick the next Tx message based on what it just
+decoded. CQ-reply mode selectable: <em>First</em>, <em>Max dB</em>, <em>Min dB</em>,
+<em>Max Dist</em>. The <em>Call 1st</em> checkbox forces reply to the first responder; the CQ
+dropdown handles longer-term selection strategy. Auto Seq auto-disables Enable Tx at the
+end of each QSO &mdash; WSJT-X will not run back-to-back fully automated QSOs.</p>
+
+<h3>10.4 Wait features</h3>
+<ul>
+  <li><strong>Wait and Reply</strong> &mdash; continue a QSO when the called station resumes.
+    DX Call field + Enable Tx turn yellow.</li>
+  <li><strong>Wait and Call</strong> &mdash; click the DX Call label (turns red) to try up to three
+    times automatically when the station reappears with CQ / RR73 / RRR / 73.</li>
+  <li><strong>Wait and Pounce</strong> &mdash; clear DX Call, pick a CQ type, right-click
+    <strong>Enable Tx</strong> (turns orange). WSJT-X will auto-reply to CQs matching the
+    selection and the active Filters.</li>
+</ul>
+
+<h3>10.5 Contest messages</h3>
+<p>FT4 / FT8 / MSK144 support dedicated contest message formats for NA VHF, EU VHF,
+ARRL Field Day, FT Roundup, WW Digi, and ARRL International Digital Contest. Activate the
+appropriate activity on Settings &gt; Advanced. Contest mode disables Filters by default
+so you do not miss stations.</p>
+
+<h3>10.6 Nonstandard callsigns</h3>
+<p>77-bit modes (FST4, FT4, FT8, MSK144, Q65) support compound calls like
+<code>PJ4/K1ABC</code> or <code>YW18FIFA</code> via hash-code shortcuts in angle brackets. 72-bit
+modes (JT4, JT9, JT65) handle them as Type 1 or Type 2 compound calls depending on whether
+the prefix/suffix is in the short list. See the upstream User Guide for full details and
+examples.</p>
+
+<h3>10.7 Pre-QSO checklist</h3>
+<ul>
+  <li>Callsign and grid locator set.</li>
+  <li>PTT and CAT control tested (Test CAT / Test PTT green and functional).</li>
+  <li>PC clock within &plusmn;1 s of UTC.</li>
+  <li>Audio devices at 48 kHz / 16-bit.</li>
+  <li>Rig on USB, filters wide (up to 5 kHz).</li>
+  <li>For EME: <em>Enable VHF features</em> on, <em>Decode after EME delay</em> on, Split
+    operation set.</li>
+  <li>For CW EME <span class="tag mod">MOD</span>: CAT-keyer vs soundcard decided (CW panel
+    checkbox); Sked frequency set; Doppler mode picked; Astro dialog open.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 11: LOGGING                                          -->
+<!-- ============================================================ -->
+<h2 id="logging">11. Logging</h2>
+
+<p>Completed QSOs are saved to:</p>
+<ul>
+  <li><code>wsjtx.log</code> &mdash; comma-separated text, used for "worked today" filtering.
+    Does not survive across the mod's per-callsign switching, so clear it from <em>File
+    &gt; Erase wsjtx.log</em> when changing identity.</li>
+  <li><code>wsjtx_log.adi</code> (stock) or <code>wsjtx_log_&lt;MYCALL&gt;.adi</code>
+    <span class="tag mod">MOD</span> &mdash; ADIF format, used for Decode Highlighting
+    worked-before status.</li>
+  <li>Internal contest log (SQLite) &mdash; used for Cabrillo export.</li>
+</ul>
+
+<p>Click <strong>Log QSO</strong> to raise the Log dialog, or check <em>Prompt me to log QSO</em> in
+Settings &gt; Reporting to have it pop up after sending 73. <strong>Log automatically</strong>
+skips the dialog. The Start date/time is captured from Tx2/Tx3; End date/time at dialog
+open. <em>Satellite</em> Prop Mode activates the satellite-name field.</p>
+
+<h3 id="per-callsign-log">11.1 Per-callsign log <span class="tag mod">MOD (v3.0.4-devel)</span></h3>
+
+<p>When the callsign in Settings &gt; General is non-empty, the ADIF log file name becomes
+<code>wsjtx_log_&lt;CALLSIGN&gt;.adi</code>. Changing the callsign in Settings switches to the
+matching file on the fly; if the file exists, new QSOs append; if it does not, it is
+created on the first log. Empty-callsign fallback is <code>wsjtx_log.adi</code>.</p>
+
+<p>Each callsign maintains its own worked-before index, so DXCC / grid / call highlighting
+is accurate per station.</p>
+
+<h3 id="cabrillo-export-mod">11.2 Cabrillo export with log-source selector <span class="tag mod">MOD (v3.0.5-devel)</span></h3>
+
+<p><em>File &gt; Export Cabrillo log&hellip;</em> now has a <strong>Log source</strong> combo at the
+top:</p>
+<ul>
+  <li><em>(Contest log)</em> &mdash; the original internal SQLite contest log (default, same
+    as stock).</li>
+  <li>Any <code>wsjtx_log*.adi</code> file in the log directory
+    (e.g. <code>wsjtx_log_II9P.adi</code>).</li>
+</ul>
+
+<p>When an ADI file is selected, the dialog parses its ADIF records and writes them as
+Cabrillo 3.0 QSO lines. Exchange field auto-detection:</p>
+<table>
+<tr><th>Priority</th><th>Sent</th><th>Received</th></tr>
+<tr><td>1</td><td><code>STX_STRING</code></td><td><code>SRX_STRING</code></td></tr>
+<tr><td>2</td><td><code>STX</code></td><td><code>SRX</code></td></tr>
+<tr><td>3 (fallback)</td><td><code>RST_SENT</code></td><td><code>RST_RCVD</code></td></tr>
+</table>
+
+<p>The combo pre-selects the ADI file matching the current My Call.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 12: VHF+ FEATURES                                    -->
+<!-- ============================================================ -->
+<h2 id="vhf-features">12. VHF+ features</h2>
+
+<p>The microwave side of WSJT-X is where the mod has the most impact. This chapter
+covers everything from standard upstream VHF setup through to EME CW specifics.</p>
+
+<h3 id="vhf-setup">12.1 VHF setup</h3>
+
+<ol>
+  <li>Settings &gt; General &rarr; check <strong>Enable VHF and submode features</strong>.</li>
+  <li>For EME: check <strong>Decode after EME delay</strong>.</li>
+  <li>If the radio accepts frequency commands while transmitting, check <strong>Allow Tx
+    frequency changes while transmitting</strong>. This enables smooth continuous Doppler
+    correction. Rigs confirmed-OK with the mod: IC-9700, IC-905, FT-847, TS-590SG, Flex
+    5000, KX3.</li>
+  <li>Settings &gt; Radio &rarr; <em>Split Operation</em> = <strong>Rig</strong> or <strong>Fake It</strong>.
+    Confirm the "S" indicator appears in the status bar. Doppler correction will <em>not</em>
+    apply to TX without Split.</li>
+  <li>Configure the Transverter tab (<a href="#settings-transverter">section 6.11</a>)
+    with your IF and band.</li>
+  <li>On the main window lower-right, select <strong>Tab 1</strong> (traditional message entry).</li>
+  <li>Open <em>View &gt; Astronomical Data</em>.</li>
+</ol>
+
+<h3 id="cw-mode">12.2 CW mode <span class="tag mod">MOD (v3.0.7-devel &amp; v3.1.0-devel)</span></h3>
+
+<p><strong>CW mode</strong> is a first-class WSJT-X mode added by this fork. Select it from the
+<em>Mode</em> menu (below the digital-mode separator) or restore it at startup from saved
+QSettings.</p>
+
+<p>When CW mode is active:</p>
+<ul>
+  <li>The right-hand panel switches from the digital message area to the <strong>CW panel</strong>
+    (<a href="#cw-panel">section 12.3</a>).</li>
+  <li>Digital-mode controls are hidden: decode buttons, mode buttons, auto/monitor/tune,
+    stop, halt, erase, clear avg, PWR slider (in CAT keyer mode), digital Tx1&ndash;Tx6,
+    decode windows, status-bar mode label, CQ-only + BP checkboxes.</li>
+  <li>Kept visible: band buttons, DX Call / Grid, Log QSO, main dial, PWR label (watts
+    during TX).</li>
+  <li>A <span class="label-cw">CW</span> indicator appears in the status bar.</li>
+  <li>WSJT-X sends <code>Transceiver::CW</code> (= <code>RIG_MODE_CW</code>) to the radio via
+    Hamlib. If CAT-keyer mode is selected (default), CW is sent via
+    <code>Hamlib SEND_MORSE</code>; if unchecked, WSJT-X temporarily switches the rig to
+    Data/PktUSB for soundcard-generated CW tone (see <a href="#cat-vs-soundcard">section
+    12.8</a>).</li>
+</ul>
+
+<p>Picking any digital mode from the Mode menu exits CW, restores the digital controls,
+and sends <code>Transceiver::USB</code> (or the configured Q65/Echo rig mode) to the radio.</p>
+
+<div class="callout mod">
+<strong>Two-click Q65 behavior</strong>
+<code>updateCWModeUI()</code> is explicitly forbidden from calling
+<code>ui-&gt;actionCW-&gt;setChecked(cw_mode)</code>, because during
+<code>on_actionQ65_triggered &rarr; setup_status_bar &rarr; updateCWModeUI</code>,
+<code>data_mode()</code> still reports CW until the <code>QActionGroup::triggered</code> lambda
+flips it &mdash; the re-check would undo Q65's own <em>setChecked</em>. Mode-menu check state
+is managed by Qt's QActionGroup exclusivity; the one programmatic case (startup CW
+restoration from saved settings) uses the existing safety-net
+<code>QTimer::singleShot(0, &hellip;)</code> in the MainWindow constructor.
 </div>
 
-<h3>Rig-mode status indicator</h3>
-<p>The status bar at the bottom of the main window shows a persistent
-color-coded label with the resolved rig mode:</p>
+<h3 id="cw-panel">12.3 CW panel &amp; macros <span class="tag mod">MOD</span></h3>
+
+<p>The CW panel replaces the digital decode-controls panel when CW is active. Layout:</p>
+
+<table>
+<tr><th>Control</th><th>Range / default</th><th>Purpose</th></tr>
+<tr><td>WPM</td><td>5&ndash;50, default 20</td><td>Keyer speed. In CAT-keyer mode, sent to the rig as <code>RIG_LEVEL_KEYSPD</code>. In soundcard mode, drives PARIS timing (dit = 1200 / WPM ms).</td></tr>
+<tr><td>TX Offset</td><td>&plusmn;5 kHz</td><td>Offset added to the CW TX frequency relative to the RX. Useful for operating split on a known DX frequency.</td></tr>
+<tr><td>TX Hold ms</td><td>200&ndash;10000, default 1000</td><td>Dwell before dropping PTT after the last soundcard CW symbol. Also debounces semi-break-in paddle work.</td></tr>
+<tr><td>TX/RX toggle</td><td>&mdash;</td><td>Force TX on/off independent of Auto-Seq.</td></tr>
+<tr><td>Tune</td><td>&mdash;</td><td>Continuous 700 Hz tone for amp tune-up. Stop with Stop button.</td></tr>
+<tr><td>Free text + Send / Stop</td><td>&mdash;</td><td>Arbitrary CW message. Pressing Send transmits immediately; Stop aborts mid-message.</td></tr>
+<tr><td>Edit Macros</td><td>&mdash;</td><td>Opens Tx1&hellip;Tx6 macro editor (inline).</td></tr>
+<tr><td>Tx1 &hellip; Tx6</td><td>default Tx1 = <code>CQ CQ CQ DE &lt;MYCALL&gt; &lt;MYCALL&gt; &lt;MYCALL&gt; K</code></td><td>6 inline-editable macros. Click to send, right-click to edit.</td></tr>
+<tr><td>CAT keyer checkbox <span class="tag new">v3.1.3</span></td><td>default checked</td><td>Chooses CAT <code>SEND_MORSE</code> vs soundcard tone (see section 12.8).</td></tr>
+<tr><td>Color-coded status</td><td>&mdash;</td><td>Shows current CW engine state: idle / sending / awaiting-reply / failed.</td></tr>
+</table>
+
+<p><strong>Live keyer</strong> (type-to-send): in <em>soundcard mode only</em>, typing in the free-text
+field streams CW immediately, character by character (<code>QMutex</code>-protected append).
+In CAT-keyer mode, there is no live-stream equivalent &mdash; press Send to transmit what is
+in the field.</p>
+
+<p><strong>Persistence</strong>: every CW setting is saved immediately on change (not lazy save on
+close):</p>
+<pre><code>CW/WPM, CW/TxOffsetHz, CW/TxHoldMs, CW/Macro1..6Text,
+CW/SkedFreq_&lt;band&gt;, CW/SkedFreq, CW/UseCATKeyer,
+Astro/DopplerMethod, Astro/DopplerTracking, Astro/LockSkedFreq</code></pre>
+
+<h3 id="doppler-tracking">12.4 Doppler tracking &mdash; six modes <span class="tag mod">MOD (v3.1.0-devel)</span></h3>
+
+<p>Open <em>View &gt; Astronomical Data</em>. The right-hand portion of the window becomes
+visible when <strong>Doppler tracking</strong> is checked. The mod replaces the stock 5 Doppler
+options with a <strong>3&times;2 radio grid</strong>:</p>
+
+<table>
+<tr><th>Doppler method</th><th>Index</th><th>Semantics</th><th>Typical use</th></tr>
+<tr><td>Full</td><td>1</td><td>Correct RX &amp; TX for the full round-trip Doppler to the DX grid. Sked-master.</td><td>DX not tracking</td></tr>
+<tr><td>Constant Moon (CFOM)</td><td>2</td><td>Correct your own one-way Doppler to the Moon. Sked-master.</td><td>Both stations CFOM &mdash; everyone converges on the lunar freq</td></tr>
+<tr><td>Call DX</td><td>5</td><td>Match DX's own-echo frequency, both ways. Sked-master.</td><td>DX announces TX freq and listens on own-echo</td></tr>
+<tr><td>Own Echoes</td><td>3</td><td>Track RX to your own echo. TX stays on Sked. Sked-master.</td><td>Self-echo testing, CQ announcement</td></tr>
+<tr><td>On DX Echoes</td><td>4</td><td>Match DX's echo frequency. Sked-master.</td><td>Cooperative EME on a shared echo frequency</td></tr>
+<tr><td>None</td><td>0</td><td>No correction. <strong>Rig-master</strong>: the operator's VFO is final; WSJT never pushes the rig frequency.</td><td>Manual tuning; watching an SDR; letting the operator take control</td></tr>
+</table>
+
+<div class="callout mod">
+<strong>Sked-master vs rig-master</strong>
+In any non-None Doppler method, WSJT-X is sked-master: <code>m_freqNominal</code> is locked
+to the Sked frequency, and every astroUpdate tick retunes the rig to
+<code>sked + correction</code>. VFO moves while a Doppler mode is active are reverted on the
+next astroUpdate &mdash; this is intended behavior. In <strong>Doppler = None (0)</strong>, WSJT-X
+is rig-master: VFO moves are adopted as the new sked (<code>m_freqNominal</code>,
+<code>m_freqTxNominal</code>, and the Astro sked field all follow), unless Ctl-Lock Sked
+Freq is checked.
+</div>
+
+<div class="callout mod">
+<strong>Call DX is sked-master</strong>
+Call DX (method 5) was previously treated as rig-master. From v3.1.3-devel onwards, it is
+correctly in the <strong>sked-master</strong> set: <code>rig_master = (method == 0)</code> in both
+<code>astroUpdate</code> and <code>handle_transceiver_update</code>. Operator VFO moves during
+Call DX get reverted on the next tick, same as Full / CFOM / Own Echoes / On DX Echoes.
+</div>
+
+<h4>Lock Sked Freq (Ctl-Lock)</h4>
+<p>Check <strong>Lock Sked Freq</strong> in the Astro dialog to freeze the sked. Main-window
+pushes (band-dropdown pick, VFO adoption in Doppler = None) honor the lock: VFO moves
+still update the main RX dial so it stays accurate, but <code>m_skedFreq</code> and the
+Astro Rx:/Tx: labels do <em>not</em> change. Hold <kbd>Ctrl</kbd> while moving the VFO to
+force a one-shot sked update even while locked.</p>
+
+<h4>Doppler tracking with no rig</h4>
+<p>Stock WSJT-X requires the rig to be online for Doppler math. The mod relaxes the
+<code>astroUpdate</code> gate: <code>is_dummy_rig()</code> bypasses the monitoring / transmitting /
+split checks, so Doppler numbers still update in the Astro dialog with Rig = None.</p>
+
+<h3 id="dual-dial">12.5 Dual RX / TX dial <span class="tag mod">MOD (v3.1.1-devel)</span></h3>
+
+<p>The single yellow-on-black MHz readout at the top of the main window is now
+<strong>two side-by-side dials</strong> &mdash; left for RX, right for TX &mdash; with small grey
+corner tags "RX" / "TX".</p>
+
+<p><strong>RX dial</strong> (left): fully editable, exactly like the original single dial. Mouse
+wheel (Shift / Ctrl / Ctrl+Shift modifiers), arrow keys, right/left click for kHz steps.
+Shows the rig's actual RX frequency during normal receive, and the nominal sked frequency
+during CW TX dial-freeze.</p>
+
+<p><strong>TX dial</strong> (right): read-only. Adjust indirectly via the Astro sked field (in
+Doppler modes) or via the main VFO (in rig-master = None mode). Content:</p>
 <ul>
-  <li><strong style="color:#fff; background:#0000cc; padding:0 .3em;">CW</strong>
-    &mdash; CW mode active (from Mode menu &gt; CW).</li>
-  <li><strong style="color:#fff; background:#006400; padding:0 .3em;">Data/PktUSB</strong>
-    (or <code>Data/PktLSB</code>, <code>USB</code>, <code>LSB</code>, <code>RTTY</code>,
-    <code>FM</code>) &mdash; Q65 or Echo mode active, showing the resolved
-    rig mode from the dropdown.</li>
-  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">USB</strong>
-    &mdash; any other digital mode (FT4, FT8, JT65, MSK144, etc.).</li>
-  <li><strong style="color:#000; background:#cccccc; padding:0 .3em;">None</strong>
-    &mdash; <em>Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode</em> set to <strong>None</strong>.</li>
+  <li>Split + keyed digital TX &rarr; <code>m_rigState.tx_frequency()</code> (the actual rig TX
+    readback).</li>
+  <li>Otherwise &rarr; <code>nominal + m_astroCorrection.tx</code>.</li>
+</ul>
+<p>With Doppler off (<code>correction.tx = 0</code>) the TX dial mirrors RX. With Doppler on,
+the two diverge by the applied TX &minus; RX correction, giving a live view of both legs
+of the path.</p>
+
+<h3 id="sked-frequency">12.6 Sked frequency <span class="tag mod">MOD (v3.1.0-devel &amp; later)</span></h3>
+
+<p>A large yellow-on-black <strong>Sked frequency</strong> display sits in the CW panel (and lives
+in the Astro dialog for digital modes). MHz with 1 Hz resolution. Per-band defaults:</p>
+
+<table>
+<tr><th>Band</th><th>Default sked RX (MHz)</th></tr>
+<tr><td>6m</td><td>50.200</td></tr>
+<tr><td>2m</td><td>144.100</td></tr>
+<tr><td>70cm</td><td>432.050</td></tr>
+<tr><td>23cm</td><td>1296.100</td></tr>
+<tr><td>13cm</td><td>2320.100</td></tr>
+<tr><td>9cm</td><td>3400.100</td></tr>
+<tr><td>6cm</td><td>5760.100</td></tr>
+<tr><td>3cm</td><td>10368.100</td></tr>
+<tr><td>1.25cm</td><td>24048.100</td></tr>
+</table>
+
+<p>Per-band sked is persisted (<code>CW/SkedFreq_&lt;band&gt;</code>). Two-way sync with the
+Astro dialog's sked field: edit either, both update.</p>
+
+<h4>Band dropdown pick always sets sked <span class="tag new">v3.1.3</span></h4>
+<p>Picking a frequency from the band combobox at the top-left of the main window is now a
+first-class operator input in <em>every</em> Doppler method:</p>
+<ol>
+  <li>The chosen frequency is pushed to the rig immediately.</li>
+  <li>It is adopted as the new sked (<code>m_skedFreq = f/1e6</code>; the Astro Rx: / Tx:
+    labels and the sked label in the CW panel all update).</li>
+  <li>The Doppler engine recalculates its correction around the new sked on the next
+    astroUpdate tick.</li>
+</ol>
+<p>Previously the "sticky sked" override (a 50 kHz guard against mode-default QSYs) could
+snap the operator's pick back to the old sked. The sticky now only applies when
+<code>m_bandEdited</code> is false &mdash; code-initiated QSYs still get protection, operator-driven
+picks pass through.</p>
+
+<h4 id="band-dropdown">Band dropdown filter <span class="tag new">v3.1.3</span></h4>
+<p>The content of the band combobox is driven <strong>solely by Settings &gt; General &rarr; Enable
+VHF and submode features</strong>:</p>
+<ul>
+  <li>Unchecked &rarr; every entry in the Frequencies table is shown (HF + VHF + UHF +
+    microwave).</li>
+  <li>Checked &rarr; only entries at 50 MHz and above are shown.</li>
+</ul>
+<p>The new <code>FrequencyList::set_vhf_only_filter(bool)</code> API applies the frequency-range
+cut at the model level, independent of the existing region / mode / time filter.
+<code>switch_mode</code> always passes <code>Modes::ALL</code> to <code>filter(&hellip;)</code> and then
+calls <code>set_vhf_only_filter(enable_VHF_features())</code>. Decoder mode no longer narrows
+the dropdown, so switching from Q65 to CW does not leave you stuck looking at only VHF
+entries.</p>
+
+<h3 id="transverter-use">12.7 Transverter band profiles in use <span class="tag mod">MOD</span></h3>
+
+<p>See <a href="#settings-transverter">section 6.11</a> for setup. Operational notes:</p>
+
+<ul>
+  <li>The offset only applies when the sky frequency falls inside the enabled band's hard-coded
+    range (e.g. 3 cm: 10000&ndash;10500 MHz). Outside that range, the offset is zero and the
+    status bar shows a grey <strong>IF=28.000 (idle)</strong> label. This prevents one enabled
+    band from breaking QSYs on other bands &mdash; a v3.0.9 regression that cost significant
+    debug time.</li>
+  <li>WSJT-X dial always holds the sky / main frequency. Logging and Doppler math operate
+    on sky frequency.</li>
+  <li>The Transverter table's Enabled checkbox is the <em>single source of truth</em>. The
+    earlier design (v3.0.9) had a <em>Band</em> menu with dynamic actions in the main window;
+    removed in favour of the Transverter table.</li>
 </ul>
 
-<p>This label replaces the CW-only blue label from v3.0.7-devel and gives a
-compact at-a-glance confirmation of what CAT mode WSJT-X is sending to the rig.</p>
+<h3 id="cat-vs-soundcard">12.8 CAT keyer vs soundcard CW <span class="tag mod">MOD (v3.1.3-devel)</span></h3>
 
-<!-- ===== 5j. DUAL RX/TX FREQUENCY DIAL ===== -->
-<h2 id="dual-dial">5j. Dual RX / TX Frequency Dial</h2>
-<p><span class="tag">NEW in v3.1.1-devel</span>
-The single yellow-on-black MHz readout at the top of the main window is now
-<strong>two side-by-side dials</strong> &mdash; one for RX, one for TX &mdash; with small
-grey corner tags identifying each.</p>
+<p>The <strong>CAT keyer</strong> checkbox in the CW panel keyer row overrides Hamlib
+auto-detection of CW keyer support. The operator picks which path WSJT uses:</p>
 
-<h3>RX dial (left)</h3>
+<table>
+<tr><th>Checkbox</th><th>Path</th><th>Rig mode during TX</th><th>PWR slider</th><th>Live keyer</th></tr>
+<tr><td>Checked (default)</td><td>Hamlib <code>SEND_MORSE</code> CAT command; WPM via <code>RIG_LEVEL_KEYSPD</code></td><td>CW (stays)</td><td>Hidden</td><td>No (Send only)</td></tr>
+<tr><td>Unchecked</td><td>WSJT-X generates 700 Hz tone through <code>audio_output_device</code>; keys rig via PTT</td><td>Data/PktUSB (temporary, 50 ms wait, then 200 ms settle)</td><td>Visible (<code>outAttenuation</code>)</td><td>Yes (type-to-send in free text)</td></tr>
+</table>
+
+<p>Soundcard path, step-by-step:</p>
+<ol>
+  <li>Switch rig to Data/PktUSB, wait 50 ms.</li>
+  <li>Assert PTT, wait 200 ms (rig settle).</li>
+  <li>Stream CW tone via <code>SoundOutput</code> on <code>audio_output_device</code>. 48 kHz,
+    16-bit mono PCM, PARIS timing (<code>dit = 1200/WPM</code> ms), 5 ms raised-cosine ramps,
+    full A-Z/0-9/basic-punct Morse table.</li>
+  <li>On Idle (no more symbols in queue), wait TX Hold ms.</li>
+  <li>Release PTT, wait 120 ms.</li>
+  <li>Switch rig back to CW.</li>
+</ol>
+
+<div class="callout mod">
+<strong>Why this switch exists</strong>
+Marcello's rig is an <strong>Icom IC-905</strong>. The CAT keyer path via Hamlib SEND_MORSE is
+unreliable on it under current Hamlib builds &mdash; messages are truncated, speed is
+sometimes wrong, and PTT release can hang. The soundcard path works on any rig that can
+be put into Data/PktUSB and keyed via PTT, so it's the reliable fallback. For rigs with
+solid SEND_MORSE support (Icom IC-7300, Yaesu FT-991A, Kenwood TS-590S/SG, etc.) leave
+the checkbox checked.
+</div>
+
+<p>Auto-detected default at startup: CAT-keyer checked if the Hamlib backend reports
+<code>SEND_MORSE</code> capability, soundcard otherwise. The explicit checkbox always wins over
+the auto-detection.</p>
+
+<h3 id="paddle-ptt">12.9 External paddle PTT &amp; dial freeze <span class="tag mod">MOD (v3.1.0-devel)</span></h3>
+
+<p>You can operate CW with an external keyer / paddle plugged straight into the rig while
+WSJT-X handles Doppler correction. When CW mode is active:</p>
+
 <ul>
-  <li>Fully editable, exactly like the original dial:
-    <ul>
-      <li>Mouse wheel: Shift = 100 Hz, Ctrl = 10 Hz, Ctrl+Shift = 1 Hz</li>
-      <li>Click + arrow keys for digit stepping</li>
-      <li>Right/left mouse click to step kHz up/down</li>
-    </ul></li>
-  <li>Shows the actual rig RX frequency during normal receive, and the
-    nominal sked frequency during CW TX dial-freeze.</li>
+  <li><code>PollingTransceiver::set_poll_interval(100)</code> ms &mdash; CAT is polled 10&times;/second.</li>
+  <li>PTT edge in <code>handle_transceiver_update()</code> fires
+    <code>cwDopplerUpdate(bool tx)</code>, which applies the correct RX / TX direction of the
+    Doppler correction.</li>
+  <li>During TX, a 1 Hz refresh timer updates the correction continuously.</li>
+  <li><code>CW_DOPPLER_MIN_DELTA_HZ = 5</code> filter prevents dial flicker from sub-Hz
+    recalculation noise.</li>
+  <li>TX Hold ms (CW panel setting) debounces semi-break-in: a brief RX during a long
+    QSO does not yank the rig back to the RX leg.</li>
 </ul>
 
-<h3>TX dial (right)</h3>
+<p><strong>Dial-freeze during CW TX</strong>: the main window's dial stops reading
+<code>m_rigState.frequency()</code> during any CW TX (soundcard, paddle, Tune). This
+eliminates the RX/TX flicker you otherwise see as the rig toggles between its RX and TX
+VFOs. The dial resumes live reading as soon as TX drops.</p>
+
+<h3 id="tx-shift">12.10 TX Shift (&plusmn;200 MHz) <span class="tag mod">MOD</span></h3>
+
+<p>The <strong>Tx Shift</strong> spinbox in the Astronomical Data window applies a fixed frequency
+offset to TX, on top of Doppler correction. Stock WSJT-X limits this to &plusmn;30 MHz; the
+mod extends it to <strong>&plusmn;200 MHz</strong>.</p>
+
+<table>
+<tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>Range</td><td>&minus;200 to +200 MHz</td></tr>
+<tr><td>Step</td><td>1 MHz</td></tr>
+<tr><td>Enable</td><td>"Enable Shift" checkbox must be ticked</td></tr>
+<tr><td>Display</td><td>Shifted TX freq shown in <strong style="color:blue;">blue</strong> in the Astro dialog (was "N/A Tx Shift!" in stock)</td></tr>
+</table>
+
+<p>Use cases:</p>
 <ul>
-  <li><strong>Read-only</strong>. Adjust indirectly via the Astro sked field
-    (Doppler modes) or via the main VFO (rig-master modes, see 5k).</li>
-  <li>Content:
-    <ul>
-      <li>In split + keyed digital TX: shows <code>m_rigState.tx_frequency()</code>.</li>
-      <li>Otherwise: shows <code>nominal + m_astroCorrection.tx</code>.</li>
-    </ul></li>
-  <li>With Doppler off (correction.tx = 0) the TX dial <strong>mirrors</strong> RX.
-    With Doppler on, the two diverge by the applied TX / RX correction, so
-    you can see both legs at a glance.</li>
+  <li>Country-pair EME with different frequency allocations (e.g. 2304 MHz &harr; 2320 MHz,
+    1296 MHz &harr; 1298 MHz).</li>
+  <li>Large transverter LO difference between TX and RX chains.</li>
+  <li>Cross-band EME.</li>
 </ul>
 
-<!-- ===== 5k. RIG-MASTER VFO ===== -->
-<h2 id="rig-master">5k. Rig-Master VFO in None / Call DX Doppler Modes</h2>
-<p><span class="tag">NEW in v3.1.1-devel</span>
-Previously every Doppler mode was &ldquo;sked-master&rdquo;: WSJT-X retuned the rig
-every poll to <code>sked + correction</code>, so turning the VFO knob did
-nothing &mdash; the next poll reverted it. In the <strong>None (0)</strong> and
-<strong>Call DX (5)</strong> Doppler methods WSJT-X now acts as rig-master:
-the operator&rsquo;s VFO is final.</p>
+<p>To avoid the dial-frequency indicator turning red when the shifted TX lies outside
+your Frequencies-table entries, add both the TX and RX frequencies to the Frequencies
+table.</p>
 
-<h3>Behavior</h3>
-<ul>
-  <li>WSJT-X does <strong>not</strong> force the rig frequency in these modes.</li>
-  <li>When you turn the VFO (while not keyed), the new frequency is adopted
-    as the <strong>new sked</strong>: <code>m_freqNominal</code>,
-    <code>m_freqTxNominal</code>, and the Astro sked field all follow.</li>
-  <li>During CW TX, VFO moves are <strong>not</strong> captured as sked &mdash; prevents
-    Doppler-driven TX frequency jumps from poisoning the sked.</li>
-</ul>
+<h3 id="keep-cq">12.11 Keep CQ (digital modes) <span class="tag mod">MOD (v3.1.2-devel)</span></h3>
 
-<h3>Interaction with Ctl-Lock Sked Freq</h3>
-<p>If you check <strong>Ctl-Lock Sked Freq</strong> in the Astro dialog, the sked
-is <em>frozen</em>: VFO moves still update the main RX dial (so it stays accurate),
-but the Astro Rx / Tx sked labels and the internal <code>m_skedFreq</code> do
-<strong>not</strong> change. Hold <strong>Ctrl</strong> while moving the VFO to force
-a one-shot sked update even when the lock is on.</p>
+<p><strong>Keep CQ</strong> is a checkbox + 1&ndash;60 minute spinbox below the Sh / Fast / Auto Seq
+row. When checked, instead of stopping Auto Tx after the final 73 of an auto-sequenced
+QSO, WSJT-X re-engages Auto, picks Tx6 (CQ), and transmits a fresh CQ at the next TX
+window.</p>
 
-<p>Typical use case: during a sked you don&rsquo;t want casual VFO twirling
-(hunting for the DX signal, checking band activity) to overwrite the
-agreed sked frequency. Check Ctl-Lock, hunt freely, then uncheck when
-you&rsquo;re ready to let the VFO drive the sked again.</p>
-
-<!-- ===== 5l. KEEP CQ ===== -->
-<h2 id="keep-cq">5l. Keep CQ (Digital Modes)</h2>
-<p><span class="tag">NEW in v3.1.2-devel</span>
-A new <strong>Keep CQ</strong> checkbox + minutes spinbox below the Sh / Fast /
-Auto Seq row. When checked, instead of stopping Auto Tx after the final
-<em>73</em> of an auto-sequenced QSO, WSJT-X automatically re-engages Auto
-and transmits a fresh CQ. A user-set <strong>timeout cap</strong> (1&ndash;60 min,
-default 10 min) stops the loop if no reply arrives in that window.</p>
-
-<h3>How it works</h3>
+<p>Behavior:</p>
 <ol>
   <li>Pick a digital mode (FT8 / FT4 / Q65 / JT65 / JT9) and check <strong>Auto Seq</strong>.</li>
-  <li>Check <strong>Keep CQ</strong> and set the minutes spinbox.</li>
-  <li>Start a QSO normally. After the final 73:
+  <li>Check <strong>Keep CQ</strong>, set the timeout (default 10 min).</li>
+  <li>Start a QSO normally. On the final 73:
     <ul>
-      <li>Auto stays on, Tx6 (CQ) is selected automatically.</li>
-      <li>The next period transmits a CQ.</li>
-      <li>Status bar: &ldquo;Keep CQ armed (N min)&rdquo;.</li>
+      <li>Auto stays on.</li>
+      <li>Tx6 (CQ) is selected automatically.</li>
+      <li>Watchdog armed for N minutes.</li>
+      <li>Status bar: <em>Keep CQ armed (N min)</em>.</li>
     </ul>
   </li>
-  <li>If someone replies &rarr; auto-sequence picks up normally, the watchdog
-    timer <strong>resets</strong>, the QSO proceeds.</li>
-  <li>If no one replies for N minutes &rarr; auto goes off, status bar shows
-    &ldquo;Keep CQ: N min cap reached, Tx stopped&rdquo;. The checkbox stays checked
-    for the next session.</li>
+  <li>If someone replies &rarr; auto-sequence picks up normally; the watchdog
+    <strong>resets</strong>.</li>
+  <li>If nobody replies for N minutes &rarr; Auto off, status bar shows <em>Keep CQ: N min
+    cap reached, Tx stopped</em>. The checkbox stays checked for the next session.</li>
 </ol>
 
-<h3>Timer resets</h3>
-<p>The watchdog counts only <em>unanswered-call</em> minutes. It stops on:</p>
-<ul>
-  <li>Auto-sequence detecting a reply (<code>REPLYING</code> transition).</li>
-  <li>Any Auto-off (user clicks <strong>Halt Tx</strong>, 73 completes, timeout
-    itself fires).</li>
-</ul>
-<p>The next 73 of the next QSO re-arms it with a fresh N-minute window.</p>
+<p>Watchdog resets on auto-sequence detecting a reply (<code>REPLYING</code> transition) or
+any Auto-off (<code>auto_tx_mode(false)</code>).</p>
 
-<h3>Scope &amp; persistence</h3>
-<ul>
-  <li><strong>Digital modes only.</strong> The checkbox and spinbox are hidden in CW mode.</li>
-  <li>Requires <strong>Auto Seq</strong> on (same requirement as any auto-sequencing).</li>
-  <li>Both the enabled state and the timeout value are persisted to QSettings
-    (<code>KeepCQEnabled</code>, <code>KeepCQTimeoutMin</code>) so they survive restarts.</li>
-</ul>
+<p>Scope: digital modes only &mdash; the checkbox is hidden in CW mode. Requires Auto Seq.
+Persisted as <code>KeepCQEnabled</code> / <code>KeepCQTimeoutMin</code>.</p>
 
 <div class="callout">
-  <strong>What this does not do (yet):</strong> there is no
-  &ldquo;call back the last decoded caller we haven&rsquo;t worked yet&rdquo; logic.
-  Keep CQ goes straight back to CQ and relies on WSJT-X&rsquo;s existing
-  <strong>CQ&nbsp;: First / Max dB / Max Dist</strong> dropdown (and Configuration&rsquo;s
-  <em>Force Call 1st</em>) to pick up inbound replies. Explicit candidate
-  targeting may come in a future version.
+<strong>What Keep CQ does not do (yet)</strong>
+There is no "call back the last decoded caller we haven't worked yet" logic. Keep CQ goes
+straight back to CQ and relies on the existing CQ : First / Max dB / Max Dist dropdown and
+<em>Force Call 1st</em> to pick up inbound replies.
 </div>
 
-<!-- ===== 5m. CAT vs SOUNDCARD CW ===== -->
-<h2 id="cat-vs-soundcard">5m. CAT keyer vs soundcard tone (CW mode)</h2>
-<p><span class="tag">NEW in v3.1.3-devel</span>
-A <strong>CAT keyer</strong> checkbox was added to the CW keyer row.
-It overrides WSJT&rsquo;s Hamlib auto-detection of CW keyer support so the
-operator picks which path WSJT uses to key CW:</p>
+<h3 id="q65-echo-rig-mode">12.12 Q65 / Echo rig mode <span class="tag mod">MOD (v3.0.8-devel)</span></h3>
+
+<p>See <a href="#settings-radio">section 6.2</a> for setup. Operational notes:</p>
 
 <ul>
-  <li><strong>Checked (default)</strong> &mdash; CW is sent as a Hamlib
-  <code>SEND_MORSE</code> CAT command. The rig does the actual keying;
-  WPM is sent as <code>RIG_LEVEL_KEYSPD</code>. Dry; the rig stays in
-  its CW mode throughout.</li>
-  <li><strong>Unchecked</strong> &mdash; WSJT generates a 700 Hz tone through
-  the soundcard and keys the rig via PTT. The rig temporarily switches to
-  <strong>Data/PktUSB</strong> for the TX duration (the normal soundcard CW path).</li>
-</ul>
-
-<p>Use the <strong>unchecked / soundcard</strong> setting when the rig
-backend&rsquo;s SEND_MORSE support is unreliable &mdash; e.g. the Icom
-IC-905 under current Hamlib builds. The soundcard path works on any rig
-that can be put into Data/PktUSB and keyed via PTT.</p>
-
-<h3>Visibility rules</h3>
-<ul>
-  <li><strong>Soundcard mode</strong>: the main-window <strong>PWR</strong>
-  attenuation slider becomes visible so the audio output level can be
-  trimmed.</li>
-  <li><strong>CAT keyer mode</strong>: the PWR slider is hidden
-  (the audio path isn&rsquo;t used).</li>
-</ul>
-
-<h3>Live keyer (type-to-send)</h3>
-<p>Typing in the free-text field streams CW immediately in
-<strong>soundcard mode</strong> only. CAT keyer sends full strings via
-one <code>SEND_MORSE</code> call per message, so the live-stream model
-has no equivalent. In CAT mode, press <strong>Send</strong> to transmit
-what&rsquo;s in the free-text field.</p>
-
-<p>Persisted as <code>CW/UseCATKeyer</code> QSettings.</p>
-
-<!-- ===== 5n. BAND DROPDOWN FILTER ===== -->
-<h2 id="band-dropdown-filter">5n. Band dropdown filter: VHF features flag only</h2>
-<p><span class="tag">NEW in v3.1.3-devel</span>
-The band combobox at the top left of the main window shows the list of
-preferred frequencies. In this version the content of that list is
-driven <strong>solely</strong> by the Configuration setting
-<strong>Enable VHF and submode features</strong> (Settings &rarr; General),
-not by the current decoder mode:</p>
-
-<ul>
-  <li><strong>Unchecked</strong> &rarr; every entry in the Frequencies
-  table is shown (HF + VHF + UHF + microwave).</li>
-  <li><strong>Checked</strong> &rarr; only entries at or above 50 MHz
-  are shown.</li>
-</ul>
-
-<p>Before v3.1.3 the list also depended on the current decoder mode
-(FT8/Q65/Echo/&hellip;), which could leave the band dropdown showing
-only VHF entries after switching to CW from a VHF mode. The new
-<code>set_vhf_only_filter(bool)</code> API in <code>FrequencyList</code>
-applies the frequency-range cut at the model level, independent of the
-existing region / mode / time filter.</p>
-
-<!-- ===== 5o. DROPDOWN PICK AS SKED ===== -->
-<h2 id="dropdown-pick-sked">5o. Dropdown pick always sets the sked</h2>
-<p><span class="tag">NEW in v3.1.3-devel</span>
-Picking a frequency from the band combobox dropdown always wins:</p>
-
-<ul>
-  <li>It is pushed to the rig immediately.</li>
-  <li>It is adopted as the new sked frequency
-  (<code>m_skedFreq</code> + Astro Rx:/Tx: labels), <strong>regardless of
-  the current Doppler method</strong>.</li>
-  <li>The Doppler engine recalculates its correction around the new
-  sked on the next astroUpdate tick.</li>
-</ul>
-
-<p>Previously the &ldquo;sticky sked&rdquo; override (a 50 kHz guard against
-mode-default QSYs) could snap the operator&rsquo;s pick back to the old
-sked. The sticky now only applies when <code>m_bandEdited</code> is
-false &mdash; code-initiated QSYs still get the sticky protection, but
-operator-driven picks pass through.</p>
-
-<h3>Rig VFO rule</h3>
-<p>The rig&rsquo;s VFO changes the sked <strong>only when the Astro
-Doppler method is None</strong>. In every other Doppler method
-(Full/CFOM/Own Echo/On DX Echo/Call DX) WSJT drives the rig and VFO
-moves are ignored (and typically reverted on the next astroUpdate).
-Call DX, which was previously treated as rig-master, is now correctly
-sked-master.</p>
-
-<!-- ===== 6. OPERATING PROCEDURE ===== -->
-<h2 id="procedure">6. EME CW Operating Procedure</h2>
-
-<p>Step-by-step guide for EME CW operation with Doppler tracking:</p>
-
-<h3>6.1 Initial setup (one-time)</h3>
-<ol>
-  <li>Open Settings (<kbd>F2</kbd>).</li>
-  <li><strong>General tab:</strong> Enter your callsign and Maidenhead grid locator.</li>
-  <li><strong>Radio tab:</strong>
+  <li>When the Mode menu is set to Q65 or Echo, WSJT-X sends the configured rig mode via
+    CAT. Other digital modes still send USB; CW sends CW.</li>
+  <li>The status bar label <code>rig_mode_label_</code> is always visible and shows the
+    resolved rig mode text:
     <ul>
-      <li>Select your rig from the Hamlib dropdown.</li>
-      <li>Configure the serial port (or network address for TCP rigs).</li>
-      <li>Set <strong>Mode</strong> to <strong>CW</strong>.</li>
-      <li>Set <strong>Split Operation</strong> to <strong>Rig</strong> or <strong>Fake It</strong>.</li>
-      <li>Configure PTT method (CAT, DTR, RTS, or VOX).</li>
+      <li><span class="label-cw">CW</span> &mdash; CW active</li>
+      <li><span class="label-data">Data/PktUSB</span> (or PktLSB / USB / LSB / RTTY / FM) &mdash;
+        Q65 or Echo active</li>
+      <li><span class="label-usb">USB</span> &mdash; any other digital mode</li>
+      <li><span class="label-usb">None</span> &mdash; Settings &gt; Radio &gt; Mode set to None</li>
     </ul>
   </li>
-  <li>Click <strong>Test CAT</strong> to verify communication. The button
-    should turn green.</li>
-</ol>
+  <li><code>updateRigModeLabel()</code> is called from <code>setup_status_bar()</code> and
+    <code>handle_leavingSettings()</code>.</li>
+</ul>
 
-<h3>6.2 Before each session</h3>
+<h3 id="jt4">12.13 JT4</h3>
+<p>Designed for microwave EME (2.3 GHz and above). Submodes JT4A&hellip;JT4G offer tone
+spacings 4.4&hellip;315 Hz for increasing Doppler spread. Submode JT4F is typical for 5.7
+and 10 GHz EME. Check <strong>Sh</strong> to enable short-form single-tone messages (OOO / RO / RRR
+/ 73). Tx6 toggles between 1000 Hz and 1250 Hz calibration tones. Select <em>Decode &gt;
+Deep</em>, optionally with <em>Enable averaging</em> and <em>Enable deep search</em>.</p>
+
+<h3 id="jt65">12.14 JT65</h3>
+<p>Submodes JT65A (177 Hz), JT65B (353 Hz), JT65C (703 Hz) for increasing Doppler spread.
+Typical allocation: 50 MHz &rarr; A, 144/432 MHz &rarr; B, 1296 MHz &rarr; C. Enable VHF
+features; check <em>Single decode</em>; skip <em>Two pass</em>. Shorthand messages (OOO / RO /
+RRR / 73 as two-tone signals) are decoded automatically and can be auto-generated with
+the <strong>Sh</strong> checkbox. <em>Enable AP</em>, <em>Enable Deep search</em>, and <em>Auto Clear
+Avg</em> further boost sensitivity at the cost of a slightly higher false-decode rate.</p>
+
+<h3 id="q65">12.15 Q65</h3>
+<p>Preferred mode for VHF+ EME and ionospheric / tropo scatter. Submodes A&ndash;E with
+tone spacings 1&ndash;16&times; the keying rate, and T/R periods 15&ndash;300 s.
+Recommended combinations: Q65-60A for 50/144 MHz, Q65-60B for 432, Q65-60C for 1296 /
+2320, Q65-60D for 3400 / 5760, Q65-60D or E for 10368, Q65-60E for 24 GHz+. AP decoding is
+always enabled and progressively uses your call, DX call, and DX grid as they become
+known. Mouse-click-on-waterfall can be disabled from <em>Decode</em> menu so you don't
+accidentally change Rx/Tx offsets &mdash; hold <kbd>Alt</kbd> to re-enable per-click.</p>
+
+<h3 id="msk144">12.16 MSK144</h3>
+<p>Meteor scatter. Fixed 1500 Hz center, 2400 Hz bandwidth, 15 s or 30 s T/R. Check
+<em>Fast</em> decoder. The <strong>Offset CQ</strong> feature ("Tx CQ nnn") lets you CQ on one
+frequency and conduct the QSO on another &mdash; requires CAT and Split. Short-form
+messages (Sh checkbox) at 20 ms let short pings carry the whole message. For 50 / 70 MHz
+the pings are usually long enough to use full 72 ms messages.</p>
+
+<h3 id="echo-mode">12.17 Echo mode</h3>
+<p>Detect and measure your own lunar echoes. A 2.048 s 1500 Hz tone is transmitted every
+6 s cycle, and the returned spectrum is averaged in the Echo Graph. Optional
+<strong>Fixed Tone</strong>, <strong>MFSK</strong>, or <strong>CW</strong> echo transmission types. The
+<strong>Avg</strong> spinner averages the specified number of cycles. Line output per cycle:
+UTC, Hour, Level (dB), Doppler, Width, N, Q, DF, SNR, dBerr. With <em>Doppler tracking</em>
+set to <em>Own Echo</em> or <em>Constant Moon</em>, WSJT-X handles T/R, frequency corrections,
+and the 2.5 s round-trip delay automatically.</p>
+
+<h3 id="tips-eme">12.18 Tips for EME</h3>
+
+<p>From the upstream guide, with mod-specific additions:</p>
+
+<ul>
+  <li>Preferred digital modes per band: Q65-60A on 50 / 144 MHz, Q65-60B on 432, Q65-60C
+    on 1296 / 2320, Q65-60D on 3400 / 5760, Q65-60D or E on 10368, Q65-60E on 24 GHz+.</li>
+  <li>JT4, JT65, and Q65 offer message averaging &mdash; sum of successive transmissions
+    conveying the same message &mdash; which decodes at S/N a few dB below single-tx threshold.</li>
+  <li>For CW EME on microwaves: put the rig in CW mode (via Mode menu &rarr; CW), check
+    Doppler tracking in Astro, pick the Doppler method appropriate for the sked. Use
+    the CW panel's Tune for amp warm-up.</li>
+  <li>Large additional dial-frequency offsets for cross-band EME: set Sked to the RX freq,
+    then use <strong>Tx Shift</strong> in the Astro dialog (&plusmn;200 MHz in the mod, see section
+    12.10). Example: RX 1296 MHz, Tx Shift = +2 MHz &rarr; TX on 1298 MHz.</li>
+  <li>For CW EME QSOs <em>without</em> the CW Mode menu entry (legacy style): put the rig in
+    CW mode manually, set Settings &gt; Radio &gt; Mode to <strong>None</strong>, use the
+    standard WSJT-X Tune button as a push-to-transmit (no audio tones generated in rig CW
+    mode, but WSJT-X still updates the dial for Doppler). Click Tune again to return to RX.</li>
+</ul>
+
+
+
+<!-- ============================================================ -->
+<!-- CHAPTER 13: WSPR MODE                                        -->
+<!-- ============================================================ -->
+<h2 id="wspr">13. WSPR mode</h2>
+
+<p>WSPR (Weak Signal Propagation Reporter, "whisper") is designed for probing
+propagation paths using low-power beacon transmissions. WSPR messages carry callsign,
+grid, and power in dBm, and decode down to about &minus;31 dB SNR in a 2500 Hz bandwidth.
+FST4W is a modern alternative for LF/MF with sequence lengths up to 1800 s and
+sensitivity down to &minus;45 dB.</p>
+
+<p>Setup:</p>
 <ol>
-  <li>Tune your rig to the desired nominal frequency (e.g. 144.100 MHz,
-    432.000 MHz, 1296.000 MHz).</li>
-  <li>Open <strong>View &gt; Astronomical Data</strong>.</li>
-  <li>Enter the DX station's grid locator (or leave blank for CQ).</li>
-  <li>Select the appropriate <strong>Doppler tracking method</strong>:
-    <ul>
-      <li>Use <em>Full Doppler to DX Grid</em> if you know the DX grid and
-        the DX station is not tracking.</li>
-      <li>Use <em>Both stations correct</em> if both of you run tracking.</li>
-      <li>Use <em>Own Echo</em> for testing your own echoes.</li>
-    </ul>
-  </li>
-  <li>If needed, set <strong>Tx Shift</strong> (check "Enable Shift" and
-    enter the value in MHz).</li>
-  <li>Click <strong>Track</strong> to start Doppler tracking.</li>
+  <li><em>Mode &gt; WSPR</em>. The main window reconfigures.</li>
+  <li>Set Wide Graph: Bins/Pixel 1, N Avg 5, Start 1400 Hz, width around 200 Hz.</li>
+  <li>Select an active WSPR frequency (10.1387 MHz, 14.0956 MHz, etc.). Check your local
+    regulations before TX on 60 m.</li>
+  <li><strong>Monitor</strong> to start 2-minute Rx periods.</li>
+  <li>Set <em>Tx Pct</em> (percent of periods devoted to TX, randomly placed to reduce
+    clashes) and your TX power (dBm from the dropdown).</li>
+  <li><em>Enable Tx</em> to go live.</li>
 </ol>
 
-<h3>6.3 During the QSO</h3>
+<h3>13.1 Band hopping</h3>
+<p>Check <strong>Band Hopping</strong> and click <strong>Schedule</strong> to open the WSPR Band
+Hopping window. For a CAT-controlled rig, WSJT-X moves between bands on a 20-minute
+repeating schedule tied to UTC minutes. Checking <em>Tune</em> for a band causes an
+unmodulated carrier to be sent on band change (useful for automatic ATU tune-up). A
+user-supplied script <code>user_hardware &lt;band&gt;</code> (or executable on the PATH) is run
+after each band switch, for antenna / preamp / filter switching.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 14: ON-SCREEN CONTROLS                               -->
+<!-- ============================================================ -->
+<h2 id="on-screen-controls">14. On-screen controls</h2>
+
+<h3>14.1 Button rows</h3>
+<p>Below the decode windows:</p>
 <ul>
-  <li>WSJT-X continuously updates the rig frequency via CAT. You will see
-    the VFO moving as the Doppler shift changes.</li>
-  <li>Operate CW normally &mdash; use your keyer, paddle, or straight key.</li>
-  <li>The Astronomical Data window shows the current Doppler shift, predicted
-    echo delay, and path degradation in real time.</li>
-  <li>If the DX station moves to a different grid, update the grid field
-    and the tracking will adjust immediately.</li>
+  <li><strong>Log QSO</strong> &mdash; raise Log dialog.</li>
+  <li><strong>Stop</strong> &mdash; freeze data acquisition.</li>
+  <li><strong>Monitor</strong> &mdash; toggle Rx; green while receiving, yellow if audio saving is
+    active. If <em>Monitor returns to last used frequency</em> is checked, re-enabling returns
+    the rig to its last frequency.</li>
+  <li><strong>Erase</strong> &mdash; single click clears the right text window, double-click clears
+    both. With <em>Alternate Erase button behavior</em>, left clears left, right clears right,
+    double clears both.</li>
+  <li><strong>Clear Avg</strong> &mdash; reset message averaging (mode-dependent visibility).</li>
+  <li><strong>Avg nn</strong> &mdash; set echo-mode averaging count.</li>
+  <li><strong>Decode</strong> &mdash; re-decode at the Rx frequency.</li>
+  <li><strong>Enable Tx</strong> &mdash; toggle auto T/R sequencing. Red when on, orange when Wait
+    and Pounce is armed, yellow when Wait features are on with a DX call set.</li>
+  <li><strong>Halt Tx</strong> &mdash; stop TX immediately and disable auto-sequence.</li>
+  <li><strong>Tune</strong> &mdash; send unmodulated carrier for ATU / amp tune.</li>
+  <li><strong>Menus</strong> checkbox &mdash; hide top menu bar for more vertical space.</li>
+  <li><strong>CQ-only</strong> and <strong>BP</strong> &mdash; show-only-CQs and filter-bypass toggles.</li>
 </ul>
 
-<h3>6.4 After the QSO</h3>
+<h3>14.2 Left area (frequency &amp; dial)</h3>
+<p>Band dropdown + dial frequency indicator (yellow-on-black MHz readout). Mod addition:
+<strong>dual dial</strong> &mdash; two side-by-side RX/TX dials (see
+<a href="#dual-dial">section 12.5</a>). <span class="tag mod">MOD</span></p>
+
+<p>Dial input:</p>
 <ul>
-  <li>Click <strong>Stop</strong> in the Astronomical Data window to stop tracking.</li>
-  <li>Log the QSO as usual.</li>
+  <li>Type a frequency in MHz, or an ADIF band name (<code>20m</code>, <code>70cm</code>), or
+    a kHz offset above the current integer MHz (<code>165k</code> &rarr; 10368.165 if currently
+    on 10368.xxx).</li>
+  <li>Mouse wheel &mdash; 1 kHz / 100 Hz / 10 Hz / 1 Hz steps per modifier (see
+    <a href="#keyboard-mouse">section 7.3</a>).</li>
 </ul>
 
-<!-- ===== 7. CAT / HAMLIB ===== -->
-<h2 id="cat">7. CAT / Hamlib Configuration</h2>
+<p>Green/red CAT status circle to the right of the dial: green = CAT working, "S" inside
+= Split active, red = CAT failure.</p>
 
-<p>WSJT-X uses <strong>Hamlib 4.7.2</strong> (bundled) for rig control. The CW
-mode mapping is:</p>
+<p>Buttons for quick mode switching (FT8 / FT4 / MSK144 / Q65 / JT65 / Echo). Add / Lookup
+/ Ignore for CALL3.TXT database. Right-click Lookup / Add / Ignore to open
+qrz.com / hamqth.com / qrzcq.com.</p>
 
-<pre><code>User selects "CW" in Settings
-  &rarr; Configuration sets data_mode_CW
-  &rarr; set_cached_mode() maps to Transceiver::CW
-  &rarr; HamlibTransceiver::map_mode() sends RIG_MODE_CW
-  &rarr; Hamlib issues the appropriate CAT command for your rig
-     (e.g. "MD3;" for Kenwood, 0x06 for Icom CI-V)</code></pre>
+<h3>14.3 Center controls</h3>
+<ul>
+  <li><strong>Tx even/1st</strong> &mdash; transmit in even or odd sequences.</li>
+  <li><strong>Rx / Tx frequency spinners</strong>.</li>
+  <li><strong>Hold Tx Freq</strong> &mdash; prevent Tx freq from being auto-moved when picking a
+    new target.</li>
+  <li><strong>F Tol</strong> &mdash; frequency tolerance for single-decode modes.</li>
+  <li><strong>Report</strong> &mdash; override auto-generated signal report.</li>
+  <li><strong>Sh / Fast / Auto Seq / Call 1st / Tx6</strong> &mdash; mode-dependent checkboxes.</li>
+  <li><strong>Submode</strong> &mdash; A/B/C/D/E for JT4/JT9/JT65/Q65.</li>
+  <li><strong>Sync</strong> &mdash; synchronization threshold.</li>
+  <li><strong>T/R nn s</strong> &mdash; sequence length for Q65, FST4, MSK144, fast JT9.</li>
+  <li><strong>Tx CQ nnn</strong> &mdash; Offset CQ spinner (MSK144, fast JT9).</li>
+  <li><strong>Keep CQ</strong> + minutes spinbox <span class="tag mod">MOD</span> &mdash; digital
+    modes only; see <a href="#keep-cq">section 12.11</a>.</li>
+</ul>
 
-<h3>Recommended settings</h3>
+<h3>14.4 Right area (message entry / CW panel)</h3>
+<p>Tab 1: six Tx message fields (Tx1&ndash;Tx6) with <em>Now</em> and <em>Next</em> columns.
+Click a radio in the Next column to pick the next outgoing message; click a Now button to
+switch mid-transmission. Double-click the Tx1 radio to start QSOs with Tx2 instead;
+double-click Tx4 to toggle RRR vs RR73. Tx5 has a dropdown to pick from Settings &gt;
+Tx Macros.</p>
+
+<p>Tab 2: traditional short-form message editor (for rigs without full digital-mode
+toolchain).</p>
+
+<p><strong>CW mode</strong> <span class="tag mod">MOD</span>: the right area becomes the CW panel
+(<a href="#cw-panel">section 12.3</a>). Digital-mode controls are hidden; dedicated CW
+macros, WPM, TX offset, TX hold, free text, Tune, and Send/Stop replace them.</p>
+
+<h3>14.5 Status bar</h3>
+<p>Left to right:</p>
+<ol>
+  <li><strong>Operating state</strong> &mdash; Receiving (green) / Tx (yellow) / Tx: Tune (red) /
+    file name (light blue).</li>
+  <li><strong>Configuration name</strong> &mdash; absent when Default; shows the name when another
+    configuration is loaded.</li>
+  <li><strong>Mode and submode</strong> &mdash; e.g. FT8, Q65-60A.</li>
+  <li><strong>Last transmitted message</strong>.</li>
+  <li><strong>Watchdog countdown</strong> (if WD timer is enabled).</li>
+</ol>
+
+<p>Mod-added persistent labels: <span class="tag mod">MOD</span></p>
+<ul>
+  <li><strong>Rig-mode label</strong> &mdash; color-coded resolved mode (CW / Data / USB / None),
+    see <a href="#q65-echo-rig-mode">section 12.12</a>.</li>
+  <li><strong>IF label</strong> &mdash; purple <span class="label-if">IF=432.000 MHz</span> when a
+    transverter band is enabled and the sky freq falls in-band, grey
+    <span class="label-usb">IF=NONE</span> or <code>IF=28.000 (idle)</code> otherwise.</li>
+</ul>
+
+<h3>14.6 Band Activity window</h3>
+<p>Decoded messages with optional distance / azimuth columns (check <em>Show
+distance/azimuth with grid</em>), aligned DXCC name (<em>Align DXCC / distance / azimuth</em>),
+and U.S. state inference from grid (<em>Map Grid locator to U.S. State</em> or <em>Show U.S.
+States in messages with grid</em>). CQ lines are highlighted green by default; messages
+addressed to your call are red.</p>
+
+<h3>14.7 Wide Graph</h3>
+<p>Spectrogram (waterfall) + line plot of current/averaged/cumulative spectrum. Controls:
+Bars, Freq (mouse pointer freq readout), Bins/Pixel, Time stamp, Start, N Avg, Palette,
+Adjust (import/export palette), Flatten, Ref Spec (apply saved refspec.dat), Current /
+Cumulative / Linear Avg / Q65_Sync, four scale sliders, Spec nn %, Smooth (Linear Avg
+only).</p>
+
+<h3>14.8 Fast Graph</h3>
+<p>MSK144 and fast JT9. Palette inherits from Wide Graph. Gain / Zero / Auto Level
+sliders.</p>
+
+<h3>14.9 Echo Graph</h3>
+<p>Average echo spectrum plot. Bins/Pixel, Gain, Zero, Baseline, Smooth, N label, Colors
+cycle.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 15: DECODER NOTES                                    -->
+<!-- ============================================================ -->
+<h2 id="decoder-notes">15. Decoder notes</h2>
+
+<h3>15.1 A priori (AP) decoding</h3>
+<p>FST4, FT4, FT8, JT65, and Q65 decoders can use known-in-advance message bits ("AP
+information") to boost sensitivity by up to 4 dB, at the cost of a slightly higher
+false-decode rate. AP is optional in FT8/JT65; always on in Q65, FT4/FST4 Normal and
+Deep.</p>
+
+<p>Example: you decided to answer a CQ. You know your own call, your partner's call, and
+likely message type &mdash; that's 57 bits already. The decoder needs to resolve only the
+remaining 15 bits (report / R-report / RRR / 73). Successful AP decodes are tagged
+<code>aP</code> on the decoded line, with <code>P</code> indicating the AP type (see upstream
+guide for the full AP-type tables).</p>
+
+<p>Decoder output format:</p>
+<pre><code>UTC  SNR  DT  Freq  Mode  Message  [sync]  [aP]  [?]</code></pre>
+<ul>
+  <li>Mode character: <code>~</code> FT8, <code>+</code> FT4, <code>`</code> FST4, <code>#</code>
+    JT65, <code>:</code> Q65, <code>&amp;</code> MSK144, <code>@</code> JT9, <code>$</code> JT4.</li>
+  <li><code>?</code> &mdash; decoded with lower confidence (not forwarded to PSK Reporter).</li>
+  <li><code>aP</code>, <code>qP</code> &mdash; AP / Q65 AP decode with type <code>P</code>.</li>
+  <li><code>fN</code> &mdash; Franke-Taylor / Fano, N averaging intervals.</li>
+  <li><code>dCN</code> &mdash; Deep Search, confidence C, N intervals.</li>
+</ul>
+
+<h3>15.2 Full-duplex mode</h3>
+<p><em>Decode &gt; Full-duplex</em> lets WSJT-X transmit and receive simultaneously. Audio
+input comes from a second local Rx or a WebSDR. Your own transmitted messages are
+highlighted in the Band Activity window with the "Transmitted message" color from
+Settings &gt; Colors.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 16: MEASUREMENT TOOLS                                -->
+<!-- ============================================================ -->
+<h2 id="measurement-tools">16. Measurement tools</h2>
+
+<h3>16.1 Frequency calibration</h3>
+<p>Dedicated FreqCal mode for CAT-controlled rigs. Define a per-location list of
+carrier references (AM broadcast stations, WWV at 2.5 / 5 / 10 / 15 / 20 MHz, CHU at
+3.330 / 7.850 / 14.670 MHz) in <em>Settings &gt; Frequencies</em>. Check <em>Tools &gt;
+Execute frequency calibration cycle</em> to step through them, 30 s per freq. Check the
+<em>Measure</em> option to accumulate data into <code>fmt.all</code>.</p>
+
+<p>After one or more cycles, <em>Tools &gt; Solve for calibration parameters</em> fits a line
+and offers an <strong>Apply</strong> button that writes Intercept A and Slope B into Settings
+&gt; Frequencies &gt; Frequency Calibration. See
+<a href="https://wsjt.sourceforge.io/FMT_User.pdf">FMT_User.pdf</a> for a detailed walk-through.</p>
+
+<h3>16.2 Reference spectrum</h3>
+<p>Tune to a quiet band, check <em>Flatten</em> on the Wide Graph, run <em>Tools &gt; Measure
+reference spectrum</em>, wait about a minute, click Stop. The file <code>refspec.dat</code>
+appears in the log directory. Check <strong>Ref Spec</strong> on the Wide Graph to apply it.</p>
+
+<h3>16.3 Phase equalization</h3>
+<p>MSK144 feature for compensating group-delay variation across the Rx passband. Record
+<code>.wav</code> files with decodable signals from a reference station (one with linear
+transmit phase, no multipath). Enter the reference call in DX Call, run <em>Tools &gt;
+Measure phase response</em>, open each file. The result is saved as a
+<code>CALL_YYMMDD_hhmmss.pcoeff</code> file. Open <em>Tools &gt; Equalization tools &gt;
+Phase&hellip;</em> to view the measured data and fitted curve; click <strong>Apply</strong> to make
+it active. The <strong>Group Delay</strong> curve appears (ms across the passband). To revert,
+<em>Restore Defaults</em> + <em>Apply</em>.</p>
+
+<p>Judge improvement by the three numbers at the end of each MSK144 decode line: N frames
+averaged, H hard errors corrected, E eye opening. Smaller N is strictly better (fewer
+frames needed for a decode); E is on a &minus;2&hellip;+2 scale with larger-positive =
+better.</p>
+
+
+
+<!-- ============================================================ -->
+<!-- CHAPTER 17: COOPERATING PROGRAMS                             -->
+<!-- ============================================================ -->
+<h2 id="cooperating-programs">17. Cooperating programs</h2>
+
 <table>
-  <tr><th>Setting</th><th>Value</th><th>Notes</th></tr>
-  <tr><td>Rig</td><td>(your rig model)</td><td>Select from the Hamlib dropdown list</td></tr>
-  <tr><td>Serial Port</td><td>COMx</td><td>The port your rig is connected to</td></tr>
-  <tr><td>Baud Rate</td><td>(rig default)</td><td>Consult your rig manual</td></tr>
-  <tr><td>Mode</td><td><strong>CW</strong></td><td>New option in this mod</td></tr>
-  <tr><td>Split Operation</td><td><strong>Rig</strong></td><td>Required for TX Doppler correction</td></tr>
-  <tr><td>PTT Method</td><td>CAT / VOX</td><td>CAT recommended; VOX if CAT PTT unreliable</td></tr>
+<tr><th>Program</th><th>Platform</th><th>Purpose</th></tr>
+<tr><td>PSK Reporter</td><td>Web</td><td>Automatic decode upload; propagation maps per band / mode</td></tr>
+<tr><td>JTAlert (VK3AMA)</td><td>Windows</td><td>Audio/visual alerts, auto-logging to third-party loggers</td></tr>
+<tr><td>AlarmeJT (F5JMH)</td><td>Linux</td><td>Own logbook + DXCC / grid alerts</td></tr>
+<tr><td>JT-Bridge (SM0THU)</td><td>macOS</td><td>Bridge to Aether / MacLoggerDX / RUMlog / RUMlogNG</td></tr>
+<tr><td>N1MM Logger+</td><td>Windows</td><td>Contest logging via UDP</td></tr>
+<tr><td>Writelog</td><td>Windows</td><td>Contest logging via UDP</td></tr>
+<tr><td>DX Lab Suite Commander, OmniRig, HRD, Flrig, rigctld</td><td>Varies</td><td>Rig control proxies</td></tr>
+<tr><td>QMAP (K1JT)</td><td>Windows</td><td>Wideband Q65 EME; feeds Active Stations</td></tr>
+<tr><td>MAP65 (K1JT)</td><td>Windows</td><td>Dual-polarization wideband JT65 EME</td></tr>
 </table>
 
-<div class="callout">
-  <strong>Test CAT before going on the air</strong>
-  Always click <strong>Test CAT</strong> after changing settings. The button
-  turns green on success, red on failure. If it fails, check serial port,
-  baud rate, and cable connections.
+<p>UDP protocol details: see
+<a href="https://sourceforge.net/p/wsjt/wsjtx/ci/master/tree/Network/NetworkMessage.hpp">NetworkMessage.hpp</a>
+in the WSJT-X source tree.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 18: PLATFORM DEPENDENCIES                            -->
+<!-- ============================================================ -->
+<h2 id="platform-dependencies">18. Platform dependencies</h2>
+
+<p>Standard locations for settings and logs:</p>
+
+<table>
+<tr><th>Platform</th><th>Settings</th><th>Log directory</th><th>Default save dir</th></tr>
+<tr><td>Windows</td><td><code>%LOCALAPPDATA%\WSJT-X\WSJT-X.ini</code></td><td><code>%LOCALAPPDATA%\WSJT-X\</code></td><td><code>%LOCALAPPDATA%\WSJT-X\save\</code></td></tr>
+<tr><td>Windows, <code>--rig-name=xxx</code></td><td><code>%LOCALAPPDATA%\WSJT-X - xxx\WSJT-X - xxx.ini</code></td><td><code>%LOCALAPPDATA%\WSJT-X - xxx\</code></td><td><code>%LOCALAPPDATA%\WSJT-X - xxx\save\</code></td></tr>
+<tr><td>Linux</td><td><code>~/.config/WSJT-X.ini</code></td><td><code>~/.local/share/WSJT-X/</code></td><td><code>~/.local/share/WSJT-X/save/</code></td></tr>
+<tr><td>macOS</td><td><code>~/Library/Preferences/WSJT-X.ini</code></td><td><code>~/Library/Application Support/WSJT-X/</code></td><td><code>~/Library/Application Support/WSJT-X/save/</code></td></tr>
+</table>
+
+<p>For <code>--rig-name=xxx</code> on Linux / macOS, append <code> - xxx</code> to the paths.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 19: FAQ                                              -->
+<!-- ============================================================ -->
+<h2 id="faq">19. Frequently asked questions</h2>
+
+<h3>My displayed spectrum is flatter when I do <em>not</em> check Flatten. What's wrong?</h3>
+<p>WSJT-X does not expect a steep filter edge within the displayed passband. Widen the IF
+filter, or reduce the displayed passband (decrease Bins/Pixel, increase Start, reduce
+Wide Graph width, or re-center the filter passband).</p>
+
+<h3>How do I run multiple WSJT-X instances?</h3>
+<p>Start from a command prompt with unique <code>--rig-name</code> values:</p>
+<pre><code>wsjtx --rig-name=TS590
+wsjtx --rig-name=FT847</code></pre>
+
+<h3>Network error "SSL/TLS support not installed".</h3>
+<p>Stock build: install OpenSSL Light for Win64 and (if still failing) the VC++ 2013
+redistributable. Mod build: OpenSSL is bundled, so you should not see this.</p>
+
+<h3>Icom rig CAT control is flaky when I twirl the VFO.</h3>
+<p>Disable <em>CI-V Transceive</em> in the rig's menu. Unsolicited CAT traffic breaks
+polling.</p>
+
+<h3>Can I share rig control between WSJT-X and another program?</h3>
+<p>Only via a rig-control server: Hamlib <code>rigctld</code>, OmniRig, or DX Lab Commander.
+Serial-port splitters (e.g. VSPE) are unreliable &mdash; unmanaged CAT collisions bite.</p>
+
+<h3>Rig frequency shifts slightly on RX &rarr; TX in FT8/FT4. Problem?</h3>
+<p>No. When Split is on and your Tx audio frequency falls outside 1500&ndash;2000 Hz,
+WSJT-X moves the rig to keep the actual tone inside 1500&ndash;2000 Hz &mdash; this avoids
+in-band audio harmonics and SSB-filter skirt issues. Normal.</p>
+
+<h3>Ubuntu: menu bar missing from the main window.</h3>
+<pre><code>sudo apt remove appmenu-qt5</code></pre>
+<p>Or run with an empty <code>QT_QPA_PLATFORMTHEME</code>:</p>
+<pre><code>QT_QPA_PLATFORMTHEME= wsjtx</code></pre>
+
+<h3>KDE: Configurations menu misbehaves.</h3>
+<p>Edit <code>~/.config/kdeglobals</code>:</p>
+<pre><code>[Development]
+AutoCheckAccelerators=false</code></pre>
+
+<h3 class="tag mod">MOD FAQ: SEND_MORSE is unreliable on my Icom IC-905.</h3>
+<p>Expected. Uncheck <strong>CAT keyer</strong> in the CW panel to use the soundcard path
+(see <a href="#cat-vs-soundcard">section 12.8</a>). Make sure Settings &gt; Radio &gt;
+Q65/Echo Rig Mode is set to a mode the rig advertises (Data/PktUSB on the IC-905) or you
+will hit the silent-fallback-to-USB logic.</p>
+
+<h3 class="tag mod">MOD FAQ: Band-button QSY crashes WSJT-X.</h3>
+<p>Fixed in v3.1.3-devel. <code>Astro::applySkedFreqMHz</code> no longer emits
+<code>skedFreq</code> &mdash; the emit caused infinite ping-pong between band_changed and
+applySkedFreqMHz. The signal still fires on explicit Set-kHz clicks (user input), which
+is the only legitimate case.</p>
+
+<h3 class="tag mod">MOD FAQ: Switching Q65 &rarr; CW requires two clicks.</h3>
+<p>Fixed in v3.1.3-devel. <code>updateCWModeUI</code> no longer calls
+<code>ui-&gt;actionCW-&gt;setChecked(cw_mode)</code> &mdash; the re-check was undoing
+<code>actionQ65-&gt;setChecked</code> via QActionGroup exclusivity. See
+<a href="#cw-mode">section 12.2</a>.</p>
+
+<h3 class="tag mod">MOD FAQ: Band dropdown shows only VHF entries after switching to CW.</h3>
+<p>Fixed in v3.1.3-devel. The dropdown filter is driven solely by Settings &gt; General
+&rarr; <em>Enable VHF features</em>, not by decoder mode. See
+<a href="#band-dropdown">section 12.6</a>.</p>
+
+<h3 class="tag mod">MOD FAQ: Transverter offset breaks other bands.</h3>
+<p>Fixed in v3.1.0-devel. The offset is only applied when the sky frequency falls inside
+the enabled band's hard-coded range. Outside the range, offset = 0 and the status bar
+shows the grey <strong>IF=28.000 (idle)</strong> hint. See
+<a href="#transverter-use">section 12.7</a>.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 20: PROTOCOL SPECIFICATIONS                          -->
+<!-- ============================================================ -->
+<h2 id="protocol-specs">20. Protocol specifications</h2>
+
+<p>All WSJT-X QSO modes use compressed fixed-length message payloads. JT4, JT9, and JT65
+use 72-bit payloads (two 28-bit callsign fields + 15-bit grid/report/ack + 1-bit free-text
+flag). FST4, FT4, FT8, Q65, and MSK144 use 77-bit payloads (5 extra bits for nonstandard
+calls, contest exchanges, SuperFox, etc.).</p>
+
+<h3>20.1 Slow modes (summary)</h3>
+<p>Mode / FEC / (n,k) / modulation / keying rate / BW / S/N threshold at 2500 Hz:</p>
+
+<table>
+<tr><th>Mode</th><th>FEC</th><th>(n,k)</th><th>Modulation</th><th>Baud</th><th>BW (Hz)</th><th>Tx (s)</th><th>S/N (dB)</th></tr>
+<tr><td>FST4-15</td><td>LDPC</td><td>(240,101)</td><td>4-GFSK</td><td>16.67</td><td>67</td><td>9.6</td><td>&minus;20.7</td></tr>
+<tr><td>FST4-120</td><td>LDPC</td><td>(240,101)</td><td>4-GFSK</td><td>1.46</td><td>6</td><td>109</td><td>&minus;31.3</td></tr>
+<tr><td>FST4-1800</td><td>LDPC</td><td>(240,101)</td><td>4-GFSK</td><td>0.089</td><td>0.36</td><td>1792</td><td>&minus;43.2</td></tr>
+<tr><td>FT4</td><td>LDPC</td><td>(174,91)</td><td>4-GFSK</td><td>20.83</td><td>83</td><td>5.04</td><td>&minus;17.5</td></tr>
+<tr><td>FT8</td><td>LDPC</td><td>(174,91)</td><td>8-GFSK</td><td>6.25</td><td>50</td><td>12.6</td><td>&minus;21</td></tr>
+<tr><td>JT4A</td><td>K=32, r=1/2</td><td>(206,72)</td><td>4-FSK</td><td>4.375</td><td>17.5</td><td>47.1</td><td>&minus;23</td></tr>
+<tr><td>JT9A</td><td>K=32, r=1/2</td><td>(206,72)</td><td>9-FSK</td><td>1.736</td><td>15.6</td><td>49.0</td><td>&minus;26</td></tr>
+<tr><td>JT65A</td><td>RS</td><td>(63,12)</td><td>65-FSK</td><td>2.692</td><td>178</td><td>46.8</td><td>&minus;25</td></tr>
+<tr><td>Q65-60A</td><td>QRA</td><td>(63,13)</td><td>65-FSK</td><td>1.667</td><td>108</td><td>51.0</td><td>&minus;27.6</td></tr>
+<tr><td>Q65-300A</td><td>QRA</td><td>(63,13)</td><td>65-FSK</td><td>0.289</td><td>19</td><td>294</td><td>&minus;33.8</td></tr>
+<tr><td>WSPR</td><td>K=32, r=1/2</td><td>(162,50)</td><td>4-FSK</td><td>1.465</td><td>6</td><td>110.6</td><td>&minus;31</td></tr>
+<tr><td>FST4W-1800</td><td>LDPC</td><td>(240,74)</td><td>4-GFSK</td><td>0.089</td><td>0.36</td><td>1792</td><td>&minus;44.8</td></tr>
+</table>
+
+<h3>20.2 Fast modes (summary)</h3>
+<table>
+<tr><th>Mode</th><th>FEC</th><th>(n,k)</th><th>Modulation</th><th>Baud</th><th>BW (Hz)</th><th>Tx (s)</th></tr>
+<tr><td>JT9E</td><td>K=32, r=1/2</td><td>(206,72)</td><td>9-FSK</td><td>25.0</td><td>225</td><td>3.400</td></tr>
+<tr><td>JT9H</td><td>K=32, r=1/2</td><td>(206,72)</td><td>9-FSK</td><td>200</td><td>1800</td><td>0.425</td></tr>
+<tr><td>MSK144</td><td>LDPC</td><td>(128,90)</td><td>OQPSK</td><td>2000</td><td>2400</td><td>0.072</td></tr>
+<tr><td>MSK144 Sh</td><td>LDPC</td><td>(32,16)</td><td>OQPSK</td><td>2000</td><td>2400</td><td>0.020</td></tr>
+</table>
+
+<p>Detailed FEC, sync vectors, and symbol tables are in the upstream WSJT-X User Guide
+and in <em>The FT4 and FT8 Communication Protocols</em>, QEX May/June 2020.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 21: ASTRONOMICAL DATA                                -->
+<!-- ============================================================ -->
+<h2 id="astronomical-data">21. Astronomical data</h2>
+
+<p>Open <em>View &gt; Astronomical Data</em> to see the current Moon tracking and Doppler
+state:</p>
+
+<table>
+<tr><th>Field</th><th>Meaning</th></tr>
+<tr><td>Date / Time</td><td>Current UTC</td></tr>
+<tr><td>Az / El</td><td>Moon azimuth / elevation at your location (deg)</td></tr>
+<tr><td>SelfDop</td><td>Doppler shift of your own echo (Hz)</td></tr>
+<tr><td>Width</td><td>Full limb-to-limb Doppler spread (Hz)</td></tr>
+<tr><td>Delay</td><td>Round-trip delay (s)</td></tr>
+<tr><td>DxAz / DxEl / DxDop / DxWid</td><td>Same quantities for the DX station's grid</td></tr>
+<tr><td>Dec</td><td>Moon declination</td></tr>
+<tr><td>SunAz / SunEl</td><td>Sun position</td></tr>
+<tr><td>Freq</td><td>Operating frequency (MHz, from Sked)</td></tr>
+<tr><td>Tsky</td><td>Sky background temperature at your freq (K), from the Haslam 408 MHz map scaled by f<sup>&minus;2.6</sup></td></tr>
+<tr><td>Dpol</td><td>Spatial polarization offset (deg). Positive = rotate antenna/feed clockwise looking at the Moon</td></tr>
+<tr><td>MNR</td><td>Max non-reciprocity of EME path (dB)</td></tr>
+<tr><td>Dist</td><td>Earth&ndash;Moon distance (km)</td></tr>
+<tr><td>Dgrd</td><td>Signal degradation vs cold-sky-at-perigee reference (dB)</td></tr>
+</table>
+
+<p>Moon/Sun positions come from the JPL ephemeris, accurate to about 0.0000003 degrees.
+Doppler computations are described in QEX, Nov/Dec 2016. On the higher microwave bands
+where linear polarization is used and Faraday rotation is small, Dpol is the number of
+degrees you need to rotate the antenna / feed to get back to co-polarized.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 22: UTILITY PROGRAMS                                 -->
+<!-- ============================================================ -->
+<h2 id="utilities">22. Utility programs</h2>
+
+<ul>
+  <li><code>rigctl-wsjtx[.exe]</code>, <code>rigctld-wsjtx[.exe]</code> &mdash; Hamlib
+    command-line and server tools with the exact Hamlib build used by WSJT-X.</li>
+  <li><code>jt4code</code>, <code>jt9code</code>, <code>jt65code</code>, <code>msk144code</code>
+    &mdash; message-to-symbol encoders for debugging / beacon design. Example:
+    <pre><code>jt65code "G0XYZ K1ABC FN42"</code></pre>
+    prints the packed message (12 six-bit symbols) and the 63 information-carrying
+    channel symbols.</li>
+  <li>Pass <code>-t</code> as the only argument to print a worked example for every
+    supported message type.</li>
+</ul>
+
+<div class="callout mod">
+<strong>Slim build in the mod</strong>
+The mod drops several utilities and features to reduce the Windows install from ~489 MB
+to ~140 MB (ZIP 79 MB &rarr; 33 MB):
+<ul>
+  <li><code>WSJT_SKIP_QMAP=ON</code> &mdash; skip wideband Q65 EME RX (QMAP), &minus;123 MB</li>
+  <li><code>WSJT_SKIP_RIGCTL=ON</code> &mdash; skip the three rigctl tools</li>
+  <li><code>WSJT_SKIP_UDP_TOOLS=ON</code> &mdash; skip udp_daemon, message_aggregator,
+    wsjtx_app_version</li>
+  <li><code>WSJT_SKIP_WSPRD=ON</code>, <code>WSJT_BUILD_UTILS=OFF</code>,
+    <code>WSJT_BUILD_TESTS=OFF</code></li>
+</ul>
+MAP65 is also skipped (<code>WSJT_SKIP_MAP65=ON</code>) because it was not needed for the
+EME CW use case. If you need any of these, build upstream WSJT-X or rebuild the mod
+without the skip options.
 </div>
 
-<!-- ===== 8. FREQUENCY RESOLUTION ===== -->
-<h2 id="resolution">8. Frequency Resolution</h2>
+<!-- ============================================================ -->
+<!-- CHAPTER 23: SUPPORT                                          -->
+<!-- ============================================================ -->
+<h2 id="support">23. Support</h2>
 
-<p>Doppler corrections are rounded to match the minimum frequency step your
-rig supports via CAT. WSJT-X queries the rig's tuning resolution from Hamlib
-and applies the following rounding:</p>
-
-<table>
-  <tr><th>Rig Resolution</th><th>Correction Rounded To</th></tr>
-  <tr><td>100 Hz or coarser</td><td>Nearest 100 Hz</td></tr>
-  <tr><td>20 Hz</td><td>Nearest 20 Hz</td></tr>
-  <tr><td>10 Hz</td><td>Nearest 10 Hz</td></tr>
-  <tr><td>1 Hz</td><td>Nearest 1 Hz</td></tr>
-</table>
-
-<p>On microwave bands where Doppler rates are high, a rig with 1&nbsp;Hz
-resolution provides the smoothest tracking. Most modern HF/VHF transceivers
-support 1&nbsp;Hz or 10&nbsp;Hz CAT resolution.</p>
-
-<!-- ===== 9. TROUBLESHOOTING ===== -->
-<h2 id="troubleshooting">9. Troubleshooting</h2>
-
-<h3>Rig does not switch to CW mode</h3>
+<h3>23.1 Help &amp; bug reports</h3>
 <ul>
-  <li>Verify <strong>CW</strong> is selected in Settings&nbsp;&gt;&nbsp;Radio&nbsp;&gt;&nbsp;Mode.</li>
-  <li>Click <strong>Test CAT</strong> &mdash; green means CAT is working.</li>
-  <li>Some rigs require specific baud rate or handshake settings. Consult
-    your rig manual and the Hamlib documentation.</li>
-  <li>Check that your rig model is correctly selected (not "Dummy" or a
-    wrong model).</li>
+  <li>Upstream WSJT-X &mdash; email list at
+    <a href="https://sourceforge.net/projects/wsjt/lists/wsjt-devel">wsjt-devel</a>.</li>
+  <li>Mod issues &mdash; file an issue at
+    <a href="https://github.com/IT9CJC/wsjtx-eme-mods/issues">github.com/IT9CJC/wsjtx-eme-mods/issues</a>.</li>
 </ul>
 
-<h3>Doppler corrections not applied to TX</h3>
+<p>A useful bug report includes:</p>
 <ul>
-  <li><strong>Split mode must be enabled.</strong> Go to Settings&nbsp;&gt;&nbsp;Radio
-    and set Split Operation to "Rig" or "Fake It".</li>
-  <li>Verify that Doppler tracking is active (click "Track" in the
-    Astronomical Data window).</li>
+  <li>Program version (and whether it is the mod build or upstream).</li>
+  <li>OS and version.</li>
+  <li>Concise description of the problem.</li>
+  <li>Exact sequence of steps to reproduce.</li>
+  <li>Relevant lines from <code>ALL.TXT</code> or <code>wsjtx.log</code>.</li>
 </ul>
 
-<h3>TX Shift has no effect</h3>
+<h3>23.2 Troubleshooting checklist (EME CW mod)</h3>
+
+<p>Rig does not switch to CW mode.</p>
 <ul>
-  <li>The <strong>"Enable Shift"</strong> checkbox must be checked.</li>
-  <li>TX Shift only applies to certain Doppler methods. Select the appropriate
-    tracking method in the Astronomical Data window.</li>
+  <li>Verify CW selected in Settings &gt; Radio &gt; Mode.</li>
+  <li>Click Test CAT (green = CAT working).</li>
+  <li>Some rigs need specific baud rate / handshake.</li>
+  <li>Make sure the right rig model is selected (not "Dummy").</li>
 </ul>
 
-<h3>VFO not moving / frequency frozen</h3>
+<p>Doppler not applied to TX.</p>
 <ul>
-  <li>Make sure WSJT-X is in <strong>Monitor</strong> mode (click Monitor or
-    press <kbd>F4</kbd>). Doppler corrections are only sent when monitoring
-    or transmitting.</li>
-  <li>Check that the rig is online (green circle in the bottom status bar).</li>
+  <li>Split must be enabled. Check the "S" in the status bar.</li>
+  <li>Verify Doppler tracking is ticked in Astro.</li>
+  <li>Doppler method must not be None (which is rig-master).</li>
 </ul>
 
-<h3>"Test CAT" fails (red button)</h3>
+<p>TX Shift has no effect.</p>
 <ul>
-  <li>Check serial cable and port number.</li>
-  <li>Verify baud rate matches the rig setting.</li>
-  <li>Close any other programs that might be using the same COM port.</li>
-  <li>Try a different rig model in the Hamlib list (some rigs have multiple
-    entries for different firmware versions).</li>
+  <li>"Enable Shift" checkbox must be ticked.</li>
+  <li>TX Shift only applies with a Doppler method active.</li>
 </ul>
 
-<!-- ===== 10. BUILD FROM SOURCE ===== -->
-<h2 id="build">10. Building from Source</h2>
-
-<p>The source code is available at
-<a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a>.</p>
-
-<h3>Requirements</h3>
+<p>VFO not moving / frequency frozen.</p>
 <ul>
-  <li>Windows 10/11 64-bit</li>
-  <li>CMake 3.10+</li>
-  <li>Qt 5.15.2 with MinGW 8.1.0 64-bit</li>
-  <li>Boost 1.74 (log, stacktrace, timer)</li>
-  <li>FFTW 3.3.5 (64-bit DLL)</li>
-  <li>Hamlib 4.x (pre-built Windows 64-bit)</li>
-  <li>libusb 1.0.x</li>
-  <li>libbacktrace 1.0</li>
-  <li>OmniRig (type library for COM interface)</li>
+  <li>Monitor must be on (green). Doppler commands are only sent while monitoring or
+    transmitting.</li>
+  <li>Check the CAT indicator (green circle).</li>
+  <li>If in CW TX, dial-freeze is intentional &mdash; the dial resumes updating when TX
+    drops.</li>
 </ul>
 
-<h3>Build commands</h3>
-<pre><code>set PATH=C:\Qt\Tools\mingw810_64\bin;%PATH%
+<p>Test CAT fails (red).</p>
+<ul>
+  <li>Serial cable / port number.</li>
+  <li>Baud rate mismatch.</li>
+  <li>Another program is holding the COM port.</li>
+  <li>Try a different Hamlib entry for the same rig (some have firmware variants).</li>
+</ul>
 
-mkdir build-wsjtx && cd build-wsjtx
 
+
+<!-- ============================================================ -->
+<!-- APPENDIX A: INVARIANTS                                       -->
+<!-- ============================================================ -->
+<h2 id="invariants">A. EME CW Mod &mdash; operator-visible design rules</h2>
+
+<p>These behaviors have been established across v3.0.2 through v3.1.4-devel and are
+load-bearing &mdash; reintroducing an older assumption will silently break something that
+was fixed at real debugging cost. Listed here so operators understand "why does WSJT do
+X" when the answer is "because doing Y would break Z."</p>
+
+<ol>
+  <li><strong>Band dropdown filter = f(Enable VHF features) ONLY.</strong>
+    Content depends solely on Settings &gt; General &rarr; <em>Enable VHF features</em>,
+    not on current decoder mode. Applied via
+    <code>FrequencyList::set_vhf_only_filter(bool)</code> at startup, in switch_mode, and
+    in handle_leavingSettings. <a href="#band-dropdown">Section 12.6</a>.</li>
+
+  <li><strong>Band-dropdown pick &rarr; sked, in every Doppler method.</strong>
+    Operator picks always win. Sticky-sked override is skipped when
+    <code>m_bandEdited</code> is true, protecting user intent against code-initiated QSYs.
+    <a href="#sked-frequency">Section 12.6</a>.</li>
+
+  <li><strong>Rig VFO &rarr; sked ONLY in Doppler = None (method 0).</strong>
+    Call DX (method 5) is <em>sked-master</em> &mdash; WSJT drives the rig; operator VFO moves
+    are reverted. <code>rig_master = (method == 0)</code> in both <code>astroUpdate</code>
+    and <code>handle_transceiver_update</code>. <a href="#doppler-tracking">Section 12.4</a>.</li>
+
+  <li><strong><code>Astro::applySkedFreqMHz</code> does NOT emit <code>skedFreq</code>.</strong>
+    The emit caused infinite band_changed &harr; applySkedFreqMHz ping-pong on band-button
+    QSY (stack blown). The signal fires only on explicit <em>Set kHz</em> clicks in the
+    Astro dialog.</li>
+
+  <li><strong><code>updateCWModeUI</code> does NOT touch <code>ui-&gt;actionCW-&gt;setChecked</code>.</strong>
+    It used to reassert on every call, which during
+    <code>on_actionQ65_triggered &rarr; setup_status_bar &rarr; updateCWModeUI</code> undid
+    actionQ65's own setChecked via QActionGroup exclusivity &rarr; two-click Q65 bug.
+    Mode-menu check state is managed by Qt's QActionGroup. Startup CW restoration lives
+    in the existing <code>QTimer::singleShot(0, &hellip;)</code> safety-net in the
+    MainWindow constructor.</li>
+
+  <li><strong>Astro <em>Ctl-Lock Sked Freq</em> gates main-window-driven sked updates.</strong>
+    When locked, band-dropdown picks and VFO adoption (Doppler = None) do not change
+    <code>m_skedFreq</code> or Astro sked labels. The main dial still follows the VFO so it
+    stays accurate &mdash; only the sked is frozen. Hold <kbd>Ctrl</kbd> to force a one-shot
+    sked push.</li>
+
+  <li><strong>CW layout centering via gridLayout_5 column-6 stretch.</strong>
+    gridLayout_5 default column stretch is <code>0,0,0,0,1,1,5,0</code>. Column 6 holds
+    <code>controls_stack_widget</code> (stretch 5 &rarr; 5/7 of extra width). In CW the
+    widget is hidden; leaving stretch at 5 jams dial + bandComboBox left and clips "80m"
+    to just "m". <code>updateCWModeUI</code> zeros column-6 stretch in CW, restores 5 in
+    digital. <code>bandComboBox-&gt;setMinimumWidth(120)</code> in CW, 0 in digital.</li>
+</ol>
+
+<!-- ============================================================ -->
+<!-- APPENDIX B: RELEASE HISTORY                                  -->
+<!-- ============================================================ -->
+<h2 id="release-history">B. EME CW Mod &mdash; release history</h2>
+
+<p>Full per-release feature list. Repository:
+<a href="https://github.com/IT9CJC/wsjtx-eme-mods">IT9CJC/wsjtx-eme-mods</a>. Base commit:
+upstream <code>ccdfaf3c1</code> (WSJT-X 3.0.2-devel).</p>
+
+<h3>v3.1.4-devel &mdash; 2026-11-03 (manual merge + Help menu + UI polish)</h3>
+<ul>
+  <li>Full upstream WSJT-X 3.0.1 User Guide merged with all EME-CW-mod sections into
+    a single <code>docs/manual.html</code> (~2300 lines, 36 anchors, 25 upstream chapters
+    + 2 mod appendices). Mod additions tagged inline.</li>
+  <li>Help &rarr; Local User Guide now opens <code>docs/manual.html</code> via
+    <code>QUrl::fromLocalFile</code>.</li>
+  <li>Help &rarr; Release Notes now opens the local <code>docs/changelog.html</code>
+    instead of the upstream sourceforge.io URL.</li>
+  <li>RX / TX dial corner tags enlarged: <code>MS Shell Dlg 2, 16pt</code> (matching the
+    yellow dial numbers), color kept at <code>#a0a0a0</code>.</li>
+  <li>CMake <code>install(FILES)</code> rule for <code>docs/*.html</code> targets both
+    <code>${CMAKE_INSTALL_DOCDIR}</code> (resolved by <code>Configuration::doc_dir()</code>
+    for the Help menu) and <code>${CMAKE_INSTALL_PREFIX}</code> (convenience copies at
+    the top of the install folder for easy discovery).</li>
+</ul>
+
+<h3>v3.1.3-devel &mdash; 2026-11-03</h3>
+<ul>
+  <li>CAT keyer / soundcard CW toggle (<code>cb_cw_use_cat</code>). Default checked.
+    Soundcard path required for IC-905. Section 12.8.</li>
+  <li>PWR slider restored in soundcard CW mode; hidden in CAT mode.</li>
+  <li>Band dropdown filter driven solely by Enable VHF features flag. Section 12.6.</li>
+  <li>Band-dropdown pick always sets sked in every Doppler method. Section 12.6.</li>
+  <li>Rig VFO &rarr; sked only in Doppler = None (Call DX removed from rig-master set).
+    Section 12.4.</li>
+  <li>Two-click Q65 fix: <code>updateCWModeUI</code> no longer calls
+    <code>actionCW-&gt;setChecked</code>.</li>
+  <li>Band-button crash fix: <code>Astro::applySkedFreqMHz</code> no longer emits
+    <code>skedFreq</code>.</li>
+  <li>CW layout centering: gridLayout_5 column-6 stretch set to 0 in CW,
+    <code>bandComboBox</code> minimum width 120.</li>
+</ul>
+
+<h3>v3.1.2-devel &mdash; 2026-11-02 (Keep CQ)</h3>
+<ul>
+  <li>Keep CQ checkbox + 1&ndash;60 minute watchdog spinbox below the Sh / Fast / Auto
+    Seq row. Digital modes only. Section 12.11.</li>
+  <li>Persists as <code>KeepCQEnabled</code> / <code>KeepCQTimeoutMin</code>.</li>
+</ul>
+
+<h3>v3.1.1-devel &mdash; 2026-11-02 (dual dial + rig-master)</h3>
+<ul>
+  <li>Dual RX / TX dial at the top of the main window. Section 12.5.</li>
+  <li>Sked frequency + Doppler mode radios removed from CW panel (live in Astro only).</li>
+  <li><code>defaultSkedForBand</code> renamed to <code>defaultCwRxForBand</code> (same values).</li>
+  <li>Rig-master Doppler for None + Call DX (later restricted to None only in v3.1.3).</li>
+  <li>Tune button removed; immediate Stop button.</li>
+</ul>
+
+<h3>v3.1.0-devel &mdash; 2026-11-02 (major CW overhaul)</h3>
+<ul>
+  <li>CW mode panel replaces digital decode controls. Section 12.3.</li>
+  <li>Sked frequency, large yellow-on-black display, 1 Hz resolution, per-band persistence.</li>
+  <li>6 Doppler modes in a 3&times;2 radio grid: Full / CFOM / Call DX / Own Echoes / On
+    DX Echoes / None. Section 12.4.</li>
+  <li>Soundcard CW path (<code>Audio/CwToneGenerator</code>): 48 kHz 16-bit mono PCM,
+    PARIS timing, 5 ms raised-cosine ramps, A-Z / 0-9 / basic punct Morse table. Section
+    12.8.</li>
+  <li>External paddle PTT detection: <code>PollingTransceiver::set_poll_interval(100)</code>
+    in CW, PTT edge triggers <code>cwDopplerUpdate(bool)</code>, 1 Hz refresh during TX,
+    <code>CW_DOPPLER_MIN_DELTA_HZ = 5</code> filter. Section 12.9.</li>
+  <li>Dial-freeze during CW TX (soundcard, paddle, Tune).</li>
+  <li>Band-aware transverter: offset only applies when sky freq is in-band. Section 12.7.</li>
+  <li>UI simplifications in CW: hidden digital-mode buttons, decode windows, PWR slider,
+    digital Tx1&ndash;Tx6.</li>
+  <li>Startup robustness: one-shot singleShot at MainWindow constructor end defaults to
+    FT8 if none of the 13 mode actions are checked.</li>
+  <li>Slim build: 489 MB &rarr; 140 MB, ZIP 79 MB &rarr; 33 MB.</li>
+  <li>CW persistence: every CW setting saved immediately on change.</li>
+</ul>
+
+<h3>v3.0.9-devel &mdash; 2026-11-01 (transverter rewrite)</h3>
+<ul>
+  <li>Transverter band profiles with 9 fixed bands (6m/2m/70cm/23cm/13cm/9cm/6cm/3cm/1.25cm).
+    Section 6.11 / 12.7.</li>
+  <li>CAT direction: <code>rig_freq = main_freq &minus; offset</code>, sign flipped from
+    v3.0.6.</li>
+  <li>IF status indicator (<code>band_label_</code>) in status bar: grey "IF=NONE" or
+    purple "IF=xxx MHz".</li>
+  <li>Fixed RX/TX offsets removed. <code>FixedRxOffset</code> / <code>FixedTxOffset</code>
+    QSettings keys silently ignored on upgrade.</li>
+  <li>No Band menu in the main window (earlier design removed).</li>
+</ul>
+
+<h3>v3.0.8-devel &mdash; 2026-11-01</h3>
+<ul>
+  <li>Q65 / Echo rig mode selector (<code>q65_echo_rig_mode_group_box</code>) with 6
+    options. Section 12.12.</li>
+  <li>Silent fallback to USB in <code>HamlibTransceiver::map_mode()</code> when the chosen
+    mode is not advertised by the rig.</li>
+  <li>Rig-mode status indicator (<code>rig_mode_label_</code>, renamed from
+    <code>cw_mode_label</code>) always visible in status bar, color-coded.</li>
+</ul>
+
+<h3>v3.0.7-devel</h3>
+<ul>
+  <li>CW mode in Mode menu as exclusive option alongside digital modes (QActionGroup).
+    Section 12.2.</li>
+  <li>Automatic radio mode switching via <code>QActionGroup::triggered</code>.</li>
+  <li>About dialog updated: "Revised and modified by IT9CJC Marcello Criscione for EME
+    and CW Microwaves use"; git hash / dirty suffix removed.</li>
+</ul>
+
+<h3>v3.0.6-devel</h3>
+<ul>
+  <li>Language selector (<em>System default</em> / <em>English</em>) in Settings &gt;
+    General.</li>
+  <li>Fixed frequency offset (RX/TX spinboxes, &plusmn;100 MHz) &mdash; <em>removed in
+    v3.0.9</em>.</li>
+  <li>Split with "None" rig (<code>WSJT_RIG_NONE_CAN_SPLIT=ON</code>).</li>
+  <li>Doppler tracking without rig (<code>is_dummy_rig()</code> bypass).</li>
+  <li>Rig failure dialog: <code>int m_rig_fail_count</code> replaces bool; dialog shows
+    once; counter resets on successful connection or Retry.</li>
+  <li>Band-frequency display without rig (<code>displayDialFrequency</code> falls back to
+    <code>m_freqNominal</code>).</li>
+</ul>
+
+<h3>v3.0.5-devel</h3>
+<ul>
+  <li>Log source selector for Cabrillo export. Section 11.2.</li>
+</ul>
+
+<h3>v3.0.4-devel</h3>
+<ul>
+  <li>Per-callsign QSO log (<code>wsjtx_log_&lt;CALL&gt;.adi</code>). Section 11.1.</li>
+</ul>
+
+<h3>v3.0.3-devel</h3>
+<ul>
+  <li>TX Shift display fix: shows actual shifted frequency in blue instead of "N/A Tx
+    Shift!".</li>
+  <li>Fine frequency wheel control: Shift = 100 Hz, Ctrl = 10 Hz, Ctrl+Shift = 1 Hz.
+    Section 7.3.</li>
+  <li>CW status indicator (blue "CW" in status bar), later renamed and generalized in
+    v3.0.8.</li>
+</ul>
+
+<h3>v3.0.2-eme-cw &mdash; initial release</h3>
+<ul>
+  <li>CW rig mode via CAT (<code>data_mode_CW</code>, Settings &gt; Radio &gt; Mode CW
+    radio).</li>
+  <li>TX Shift extended to &plusmn;200 MHz (was &plusmn;30 MHz). Section 12.10.</li>
+</ul>
+
+<h3>B.1 Building from source</h3>
+
+<p>Toolchain (Windows):</p>
+<ul>
+  <li>CMake 4.x</li>
+  <li>Qt 5.15.2 MinGW 8.1.0 64-bit (<code>C:\Qt\5.15.2\mingw81_64</code>)</li>
+  <li>Boost 1.74 (<code>C:\Tools\boost</code>; log, stacktrace, timer)</li>
+  <li>FFTW 3.3.5 (<code>C:\Tools\fftw-3.3.5-dll64</code>; import libs via dlltool)</li>
+  <li>Hamlib 4.7.2 pre-built (<code>C:\Tools\hamlib-w64-4.7.2</code>)</li>
+  <li>libusb 1.0.27 (<code>C:\Tools\libusb-1.0.27</code>)</li>
+  <li>libbacktrace (<code>C:\Tools\libbacktrace-1.0\MinGW64</code>)</li>
+  <li>OmniRig type library in <code>OmniRig.exe</code>
+    (<code>C:\Tools\omnirig-extracted\app\OmniRig.exe</code>)</li>
+  <li>MSYS2 at <code>C:\msys64</code> for bootstrap.</li>
+</ul>
+
+<p>Build commands:</p>
+<pre><code>set PATH=C:\Program Files\CMake\bin;C:\Qt\Tools\mingw810_64\bin;C:\Qt\5.15.2\mingw81_64\bin;%PATH%
+cd C:\src\build-wsjtx
 cmake -G "MinGW Makefiles" ^
-  -DCMAKE_TOOLCHAIN_FILE=C:\Tools\wsjtx-toolchain.cmake ^
+  -DCMAKE_TOOLCHAIN_FILE=C:/Tools/wsjtx-toolchain.cmake ^
   -DCMAKE_BUILD_TYPE=Release ^
   -DWSJT_SKIP_MANPAGES=ON ^
   -DWSJT_GENERATE_DOCS=OFF ^
   -DWSJT_SKIP_MAP65=ON ^
-  -DOMNIRIG_TYPE_LIB=C:\Tools\omnirig-extracted\app\OmniRig.exe ^
-  -DCMAKE_INSTALL_PREFIX=C:\Tools\wsjtx-install ^
-  C:\src\wsjtx
-
+  -DOMNIRIG_TYPE_LIB=C:/Tools/omnirig-extracted/app/OmniRig.exe ^
+  -DWSJT_RIG_NONE_CAN_SPLIT=ON ^
+  -DCMAKE_INSTALL_PREFIX=C:/Tools/wsjtx-install ^
+  C:/src/wsjtx
 cmake --build . -j8
 cmake --build . --target install</code></pre>
 
-<p>The toolchain file <code>wsjtx-toolchain.cmake</code> is included in the
-repository. Edit it to match your local dependency paths.</p>
+<p>Source path must not contain spaces (MinGW Makefiles breaks on <code>.ts</code> files),
+so build from <code>C:\src\wsjtx</code> rather than directly from the OneDrive working copy.</p>
 
-<h3>Modified files</h3>
-<table>
-  <tr><th>File</th><th>Change</th></tr>
-  <tr><td><code>Configuration.hpp</code></td><td>Added <code>data_mode_CW</code> to <code>DataMode</code> enum</td></tr>
-  <tr><td><code>Configuration.cpp</code></td><td>Registered CW radio button; added CW case to <code>set_cached_mode()</code></td></tr>
-  <tr><td><code>Configuration.ui</code></td><td>Added CW radio button to Mode group box</td></tr>
-  <tr><td><code>widgets/astro.ui</code></td><td>Extended TX Shift spinbox range to &plusmn;200 MHz</td></tr>
-  <tr><td><code>widgets/astro.cpp</code></td><td>Show shifted TX frequency (blue) instead of "N/A Tx Shift!" label</td></tr>
-  <tr><td><code>widgets/mainwindow.h</code></td><td>Added <code>cw_mode_label</code> QLabel member for CW status indicator</td></tr>
-  <tr><td><code>widgets/mainwindow.cpp</code></td><td>CW status label in status bar; modifier-key wheel steps (Shift: 100 Hz, Ctrl: 10 Hz, Ctrl+Shift: 1 Hz); help text</td></tr>
-  <tr><td><code>Configuration.hpp</code></td><td>Added public <code>data_mode()</code> accessor</td></tr>
-  <tr><td><code>Configuration.cpp</code></td><td>PIMPL forwarding for <code>data_mode()</code></td></tr>
-  <tr><td><code>logbook/WorkedBefore.hpp</code></td><td>Added <code>set_callsign()</code> slot for per-callsign log switching</td></tr>
-  <tr><td><code>logbook/WorkedBefore.cpp</code></td><td>Dynamic log file path from callsign; <code>update_path()</code> and <code>set_callsign()</code></td></tr>
-  <tr><td><code>logbook/logbook.h / .cpp</code></td><td>Added <code>set_callsign()</code> forwarding method</td></tr>
-  <tr><td><code>widgets/mainwindow.ui</code></td><td>Added <code>actionCW</code> (checkable) to the Mode menu after the digital-mode separator</td></tr>
-  <tr><td><code>widgets/mainwindow.cpp</code></td><td>CW added to <code>modeGroup</code> <code>QActionGroup</code>; <code>QActionGroup::triggered</code> lambda handles CW/USB auto-switching and sends rig command; <code>updateCWModeUI()</code> hides/shows digital controls</td></tr>
-  <tr><td><code>widgets/mainwindow.h</code></td><td>Added <code>m_dataModePriorToCW</code>, <code>updateCWModeUI()</code>, <code>handleCWModeToggle()</code></td></tr>
-  <tr><td><code>widgets/about.cpp</code></td><td>Added IT9CJC credit line; removed git hash/dirty suffix from version display</td></tr>
-  <tr><td><code>CMakeLists.txt</code></td><td>Version bumped from 3.0.2.0 to 3.0.7.0</td></tr>
-</table>
+<p>Release workflow: sync source, <code>taskkill //IM wsjtx.exe //F</code> to release the
+exe lock, build/install, package with <code>Compress-Archive</code>, version-bump
+<code>CMakeLists.txt</code> line 64, update <code>docs/changelog.html</code> and this
+<code>docs/manual.html</code>, push to <code>myfork</code> (NOT <code>origin</code>, that's
+upstream), create release with <code>gh release create &hellip; --prerelease=false --latest</code>,
+upload ZIP and docs with <code>gh release upload &hellip; --clobber</code>.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 24: ACKNOWLEDGEMENTS                                 -->
+<!-- ============================================================ -->
+<h2 id="acknowledgements">24. Acknowledgements</h2>
+
+<p><strong>Upstream WSJT-X</strong> is the work of Joseph Taylor (K1JT) and a long list of
+collaborators: Bill Somerville (G4WJS, 2013&ndash;2021), Steven Franke (K9AN, 2015&ndash;),
+Nico Palermo (IV3NWV, 2016&ndash;), Uwe Risse (DG2YCB, 2021&ndash;2026), Brian Moran
+(N9ADG, 2022&ndash;), John Nelson (G4KLA, 2024&ndash;), Charles Suckling (DL3WDG, 2024&ndash;),
+Roger Rehr (W3SZ, 2025&ndash;), Terrell Deppe (KJ5HST, 2026&ndash;). Hamlib contributions
+from G4WJS and Michael Black (W9MDB). The full upstream acknowledgement list is in the
+canonical WSJT-X User Guide.</p>
+
+<p><strong>EME CW Mod</strong> is maintained by Marcello Criscione (IT9CJC, operating as II9P)
+with help from Claude (Anthropic AI) for code generation and CI-level documentation.
+Bug reports from the EME community are credited in individual release notes on GitHub.</p>
+
+<p>Waterfall color palettes are from fldigi (W1HKJ and friends). FFTW by Matteo Frigo and
+Steven G. Johnson. SLALIB by P. T. Wallace. JPL DE421 ephemeris. Qt by The Qt Company.</p>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 25: LICENSE                                          -->
+<!-- ============================================================ -->
+<h2 id="license">25. License</h2>
+
+<p>WSJT-X is free software under the GNU General Public License v3 or later. The EME CW
+Mod is a derivative work and is distributed under the same license.</p>
+
+<p>The algorithms, source code, look-and-feel, and protocol specifications for FSK441,
+FST4, FST4W, FT4, FT8, JT4, JT6M, JT9, JT44, JT65, JTMS, Q65, QRA64, ISCAT, and MSK144
+are &copy; 2001&ndash;2026 Joseph Taylor (K1JT), Bill Somerville (G4WJS), Steven Franke
+(K9AN), Nico Palermo (IV3NWV), Uwe Risse (DG2YCB), Brian Moran (N9ADG), John Nelson
+(G4KLA), Charles Suckling (DL3WDG), Roger Rehr (W3SZ), Greg Beam (KI7MT), Michael Black
+(W9MDB), Edson Pereira (PY2SDR), Philip Karn (KA9Q), and other members of the WSJT
+Development Group.</p>
+
+<p>Mod additions (CW mode, dual dial, Doppler mode rework, transverter profiles,
+soundcard CW, CAT-keyer toggle, Keep CQ, per-callsign log, TX Shift extension, UI
+language selector, Q65/Echo rig mode, etc.) &copy; 2026 Marcello Criscione (IT9CJC) and
+are distributed under the same GPL v3 terms.</p>
+
+<p>WSJT-X and this fork are distributed in the hope that they will be useful, but
+<strong>WITHOUT ANY WARRANTY</strong>; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for details:
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html">gnu.org/licenses/gpl-3.0.en.html</a>.</p>
+
+
 
 <footer>
-  <p>WSJT-X EME CW Mod v3.1.3-devel &mdash; Built by II9P &mdash; November 2026</p>
-  <p>Based on WSJT-X by Joe Taylor K1JT and the WSJT Development Group.</p>
-  <p>Source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a></p>
+  <p>WSJT-X EME CW Mod &middot; v3.1.4-devel &middot; built by II9P &middot; November 2026.</p>
+  <p>Based on WSJT-X &copy; 2001&ndash;2026 Joe Taylor K1JT and the WSJT Development Group.</p>
+  <p>Mod source: <a href="https://github.com/IT9CJC/wsjtx-eme-mods">github.com/IT9CJC/wsjtx-eme-mods</a>
+  &middot; Upstream: <a href="https://sourceforge.net/projects/wsjt/">sourceforge.net/projects/wsjt</a></p>
 </footer>
 
 </body>

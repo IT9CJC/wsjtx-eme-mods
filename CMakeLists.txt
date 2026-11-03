@@ -61,7 +61,7 @@ if (POLICY CMP0075)
 endif ()
 
 project (wsjtx
-  VERSION 3.1.3.0
+  VERSION 3.1.4.0
   LANGUAGES C CXX Fortran
   )
 set (PROJECT_DESCRIPTION "WSJT-X: Digital Modes for Weak Signal Communications in Amateur Radio")
@@ -1936,6 +1936,27 @@ install (FILES
   BUGS
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
   #COMPONENT runtime
+  )
+
+# EME CW Mod: ship the local HTML user guide + changelog so that
+# Help > Local User Guide and Help > Release Notes resolve to
+# ${doc_dir}/manual.html and ${doc_dir}/changelog.html respectively.
+install (FILES
+  docs/manual.html
+  docs/changelog.html
+  docs/modifications-summary.html
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+  )
+
+# EME CW Mod: also drop convenience copies at the install root so the
+# docs are visible / double-clickable at C:\Tools\wsjtx-install\ without
+# digging into share\doc\wsjtx\. The Help menu actions still resolve via
+# doc_dir() to the share\doc\wsjtx\ copies above.
+install (FILES
+  docs/manual.html
+  docs/changelog.html
+  docs/modifications-summary.html
+  DESTINATION .
   )
 
 install (FILES

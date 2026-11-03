@@ -88,10 +88,69 @@
 <p>All releases are available at
 <a href="https://github.com/IT9CJC/wsjtx-eme-mods/releases">github.com/IT9CJC/wsjtx-eme-mods/releases</a>.</p>
 
+<!-- ===== v3.1.4-devel ===== -->
+<div class="release">
+  <div class="release-header">
+    <h2>v3.1.4-devel <span class="tag tag-new">Latest</span></h2>
+    <span class="release-date">2026-11-03</span>
+  </div>
+
+  <p>Documentation + UI polish release. The local user guide is now a
+  full-coverage manual rather than a mod-only pamphlet: the upstream
+  WSJT-X User Guide (chapters 1&ndash;25, covering installation, modes,
+  settings, QSOs, decoder, protocol specs, astronomical data) has been
+  merged with every EME-CW-mod feature across v3.0.2 &rarr; v3.1.4-devel,
+  with mod additions tagged inline. Help menu now opens local HTML:
+  <strong>Local User Guide</strong> &rarr; <code>docs/manual.html</code>,
+  <strong>Release Notes</strong> &rarr; <code>docs/changelog.html</code>.
+  Dual-dial corner tags enlarged to match the dial-number font.</p>
+
+  <h3>New / changed</h3>
+  <ul>
+    <li><b>Merged user guide.</b> <code>docs/manual.html</code> rebuilt from
+    scratch. Full upstream WSJT-X 3.0.1 skeleton + all mod sections
+    woven in at the appropriate chapters (VHF+ features, Settings &gt;
+    Radio / Transverter, On-screen Controls, Logging, FAQ). Two new
+    appendices: <strong>A. Operator-visible invariants</strong> (7 design rules)
+    and <strong>B. Release history</strong> (per-version feature list from
+    v3.0.2-eme-cw through v3.1.4-devel, with build recipe). ~2300
+    lines, 36 anchors, all cross-links verified.</li>
+    <li><b>Help &rarr; Local User Guide opens <code>docs/manual.html</code>.</b>
+    Was <code>DisplayManual::display_html_file(doc_dir, PROJECT_MANUAL)</code>
+    which resolved a <code>wsjtx-main_&lt;lang&gt;-&lt;ver&gt;.html</code> filename
+    that never matched the mod's naming. Replaced with
+    <code>QDesktopServices::openUrl(QUrl::fromLocalFile(doc_dir/manual.html))</code>.</li>
+    <li><b>Help &rarr; Release Notes opens <code>docs/changelog.html</code>.</b>
+    Was <code>QDesktopServices::openUrl("https://wsjt.sourceforge.io/Release_Notes.txt")</code>
+    (upstream URL, not mod-relevant). Now opens the local
+    mod-specific changelog via <code>QUrl::fromLocalFile</code>.</li>
+    <li><b>RX / TX dial corner tags enlarged.</b> The small grey "RX" /
+    "TX" labels in the top-left of the dual-dial widgets changed from
+    <code>font-size: 7pt</code> to <code>font-family: 'MS Shell Dlg 2'; font-size: 16pt</code>
+    &mdash; matching the yellow dial numbers' font. Color kept at
+    <code>#a0a0a0</code>. <code>adjustSize()</code> called so the label resizes
+    to fit without clipping.</li>
+    <li><b>CMake install rule for docs.</b> <code>docs/manual.html</code>,
+    <code>docs/changelog.html</code>, and <code>docs/modifications-summary.html</code>
+    are now installed by the <code>install</code> target. Two destinations:
+      <ul>
+        <li><code>${CMAKE_INSTALL_DOCDIR}</code> (e.g.
+        <code>share/doc/wsjtx/</code>) &mdash; where the Help menu
+        actions resolve via <code>Configuration::doc_dir()</code>.</li>
+        <li><code>${CMAKE_INSTALL_PREFIX}</code> (install root) &mdash;
+        convenience copies so the HTMLs are visible / double-clickable
+        at the top of the install folder (e.g.
+        <code>C:\Tools\wsjtx-install\</code>) without digging into
+        <code>share\doc\wsjtx\</code>.</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
 <!-- ===== v3.1.3-devel ===== -->
 <div class="release">
   <div class="release-header">
-    <h2>v3.1.3-devel <span class="tag tag-new">Latest</span></h2>
+    <h2>v3.1.3-devel</h2>
     <span class="release-date">2026-11-03</span>
   </div>
 

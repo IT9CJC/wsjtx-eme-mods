@@ -566,7 +566,9 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   {
     auto make_tag = [] (QLabel * parent, QString const& text) {
       auto tag = new QLabel (text, parent);
-      tag->setStyleSheet ("QLabel { background: transparent; color: #a0a0a0; font-size: 7pt; }");
+      tag->setStyleSheet ("QLabel { background: transparent; color: #a0a0a0;"
+                          " font-family: 'MS Shell Dlg 2'; font-size: 16pt; }");
+      tag->adjustSize ();
       tag->setAttribute (Qt::WA_TransparentForMouseEvents, true);
       tag->move (4, 2);
       tag->show ();
@@ -5569,7 +5571,8 @@ void MainWindow::on_pbBandHopping_clicked()
 
 void MainWindow::on_actionRelease_Notes_triggered ()
 {
-  QDesktopServices::openUrl (QUrl {"https://wsjt.sourceforge.io/Release_Notes.txt"});
+  auto const& path = m_config.doc_dir ().absoluteFilePath ("changelog.html");
+  QDesktopServices::openUrl (QUrl::fromLocalFile (path));
 }
 
 void MainWindow::on_actionFT8_DXpedition_Mode_User_Guide_triggered()
@@ -5631,9 +5634,8 @@ void MainWindow::on_actionOnline_User_Guide_triggered()      //Display manual
 //Display local copy of manual
 void MainWindow::on_actionLocal_User_Guide_triggered()
 {
-#if defined (CMAKE_BUILD)
-  m_manual.display_html_file (m_config.doc_dir (), PROJECT_MANUAL);
-#endif
+  auto const& path = m_config.doc_dir ().absoluteFilePath ("manual.html");
+  QDesktopServices::openUrl (QUrl::fromLocalFile (path));
 }
 
 void MainWindow::on_actionWide_Waterfall_triggered()      //Display Waterfalls

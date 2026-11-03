@@ -13041,9 +13041,12 @@ void MainWindow::band_changed (Frequency f)
   }
   // Sticky sked override: snap to the current nominal (band-preferred RX
   // in CW, or Astro's sked field in other modes) ONLY when f is far from
-  // it (e.g. 10368.200 Q65 default vs 10368.100 preferred, 100 kHz apart).
-  // Small deltas like +-1 kHz come from manual tuning and must be respected.
-  if (m_skedFreq > 0.0) {
+  // it (e.g. 10368.200 Q65 default vs 10368.100 preferred, 100 kHz apart)
+  // AND the band change was NOT user-initiated. m_bandEdited distinguishes
+  // operator-driven dropdown picks / wheel edits from code-initiated QSYs
+  // triggered as side-effects of mode switches - the operator's choice
+  // must always win.
+  if (m_skedFreq > 0.0 && !m_bandEdited) {
     Frequency const sked_hz = qRound64 (1000000.0 * m_skedFreq);
     if (sked_hz > 0 && sked_hz != f) {
       QString const& sked_band = m_config.bands ()->find (sked_hz);
@@ -13055,6 +13058,14 @@ void MainWindow::band_changed (Frequency f)
           f = sked_hz;
         }
       }
+    }
+  }
+  // User-driven band pick in CW mode: adopt f as the new sked so Astro
+  // and future sticky-override checks agree with what the operator chose.
+  if (m_bandEdited && m_config.data_mode () == Configuration::data_mode_CW && f > 0) {
+    m_skedFreq = f / 1000000.0;
+    if (m_astroWidget && !m_astroWidget->lockSkedFreq ()) {
+      m_astroWidget->applySkedFreqMHz (m_skedFreq);
     }
   }
   msk144qsy = false;  // MSK144 QSY

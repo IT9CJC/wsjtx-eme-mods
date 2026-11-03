@@ -5348,12 +5348,18 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   // their natural (minimumWidth) sizes in the middle. Guarantee the
   // bandComboBox is wide enough to actually show band names like "80m".
   if (cw_mode) {
-    ui->gridLayout_5->setColumnStretch (0, 2);
-    ui->gridLayout_5->setColumnStretch (1, 2);
-    ui->gridLayout_5->setColumnStretch (4, 0);
-    ui->gridLayout_5->setColumnStretch (5, 0);
+    // Push space onto cols 4-5 (dial) via horstretch=1 their size policy
+    // already carries. Zero everything else. This makes the dial expand
+    // to fill all empty space previously held by controls_stack_widget,
+    // which keeps the whole row visually centered around the dial
+    // regardless of how much ancillary stuff is on the right (Pwr label,
+    // outAttenuation slider).
+    ui->gridLayout_5->setColumnStretch (0, 0);
+    ui->gridLayout_5->setColumnStretch (1, 0);
+    ui->gridLayout_5->setColumnStretch (4, 1);
+    ui->gridLayout_5->setColumnStretch (5, 1);
     ui->gridLayout_5->setColumnStretch (6, 0);
-    ui->gridLayout_5->setColumnStretch (7, 4);
+    ui->gridLayout_5->setColumnStretch (7, 0);
     ui->bandComboBox->setMinimumWidth (120);
   } else {
     ui->gridLayout_5->setColumnStretch (0, 0);

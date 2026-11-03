@@ -134,6 +134,10 @@ public:
   // Set filter
   Q_SLOT void filter (Region, Mode, bool);
 
+  // Additional VHF-only filter: when true, hide entries below 50 MHz.
+  // Applied on top of the Region / Mode / time filter above.
+  Q_SLOT void set_vhf_only_filter (bool);
+
   // Reset
   Q_SLOT void reset_to_defaults ();
 

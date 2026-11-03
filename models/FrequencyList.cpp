@@ -215,7 +215,7 @@ namespace
       //     14105.5            OLIVIA 1000
       //     14106.5            OLIVIA 1000 (main QRG)
       //
-      // R3: 14070 - 14112 DM NB(<2000Hz) with ±500Hz IBP guard band at 14100
+      // R3: 14070 - 14112 DM NB(<2000Hz) with ï¿½500Hz IBP guard band at 14100
       //
       //     14070              PSK31
       //     14074.4            OLIVIA, Contestia, etc.
@@ -254,7 +254,7 @@ namespace
       //     18105   - 18110    Packet
       //     18110              NCDXF beacons
       //
-      // R3: 18095 - 18120 DM NB(<2000Hz) with ±500Hz IBP guard band at 18110
+      // R3: 18095 - 18120 DM NB(<2000Hz) with ï¿½500Hz IBP guard band at 18110
       //
       //     18100              PSK31
       //     18103.4            OLIVIA, Contestia, etc. (main QRG)
@@ -490,6 +490,7 @@ public:
   Region region_filter_;
   Mode mode_filter_;
   bool filter_on_time_;
+  bool vhf_only_filter_ {false};
 
 };
 
@@ -647,6 +648,13 @@ void FrequencyList_v2_101::filter_refresh ()
   invalidateFilter ();
 }
 
+void FrequencyList_v2_101::set_vhf_only_filter (bool on)
+{
+  if (m_->vhf_only_filter_ == on) return;
+  m_->vhf_only_filter_ = on;
+  invalidateFilter ();
+}
+
 bool FrequencyList_v2_101::filterAcceptsRow (int source_row, QModelIndex const& /* parent */) const
 {
   bool result {true};
@@ -665,6 +673,13 @@ bool FrequencyList_v2_101::filterAcceptsRow (int source_row, QModelIndex const& 
     {
       result = (!item.start_time_.isValid() || item.start_time_ <= QDateTime::currentDateTimeUtc ()) &&
               (!item.end_time_.isValid() || item.end_time_ >= QDateTime::currentDateTimeUtc ());
+    }
+  if (result && m_->vhf_only_filter_)
+    {
+      // Hide HF entries (<50 MHz) when the VHF-only filter is set. Used
+      // by the main window so the band dropdown respects Enable VHF/UHF
+      // Features regardless of which decoder mode is currently active.
+      result = item.frequency_ >= 50000000ULL;
     }
   return result;
 }

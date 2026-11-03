@@ -1040,19 +1040,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // calls to on_actionXXX_triggered() or for setChecked().
   connect (modeGroup, &QActionGroup::triggered, this, [this] (QAction *action) {
     if (action == ui->actionCW) {
-      // Band dropdown filter in CW:
-      //   VHF features OFF -> operator is on HF: widen to Modes::ALL so
-      //     HF entries become visible (switch_mode may have left a
-      //     VHF-only per-mode filter in place).
-      //   VHF features ON  -> leave the current filter alone so the
-      //     dropdown stays limited to VHF+ entries, matching what the
-      //     operator wanted when they enabled VHF features.
-      // Done outside the data_mode guard below so re-clicking the CW
-      // action always refreshes the filter (handy if something else
-      // narrowed it mid-session).
-      if (!m_config.enable_VHF_features ()) {
-        m_config.frequencies ()->filter (m_config.region (), Modes::ALL, true);
-      }
       if (m_config.data_mode () != Configuration::data_mode_CW) {
         m_config.set_data_mode (Configuration::data_mode_CW);
         m_config.transceiver_frequency (m_freqNominal);
@@ -1317,16 +1304,14 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
     set_mode (m_mode);
     if (saved_cw == Configuration::data_mode_CW) {
       m_config.set_data_mode (Configuration::data_mode_CW);
-      // Startup CW restoration: set_mode(m_mode) above already called
-      // switch_mode() which filtered to the digital-mode entries only.
-      // Widen to Modes::ALL in CW when VHF features are off (operator is
-      // on HF and needs HF freqs visible). Mirrors the user-click path.
-      if (!m_config.enable_VHF_features ()) {
-        m_config.frequencies ()->filter (m_config.region (), Modes::ALL, true);
-      }
       statusChanged ();
     }
   }
+  // Apply the VHF-only dropdown filter per Enable VHF/UHF Features. Done
+  // after set_mode above (which calls switch_mode and resets the filter
+  // to Modes::ALL + VHF-only-per-flag) so this is really a belt-and-braces
+  // apply in case a code path somewhere else cleared it.
+  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
   if(m_mode=="Echo") monitor(false);  //Don't auto-start Monitor in Echo mode.
 
   // Ensure that the correct frequency is set and displayed
@@ -1515,6 +1500,10 @@ void MainWindow::handle_leavingSettings ()
   updateRigModeLabel ();
   // Transverter profiles may have been edited while in Settings.
   updateBandLabel ();
+  // Enable VHF/UHF Features may have been toggled; re-apply the
+  // frequency-range filter so the band dropdown reflects the new state
+  // immediately.
+  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
 }
 
 void MainWindow::initialize_fonts ()
@@ -12682,7 +12671,12 @@ void MainWindow::switch_mode (Mode mode)
       ui->txb1->setEnabled(true);
    }
   m_fastGraph->setMode(m_mode);
-  m_config.frequencies ()->filter (m_config.region (), mode, true); // filter on current time
+  // Band dropdown filter does NOT depend on the current decoder mode.
+  // Operator picks what shows via Enable VHF/UHF Features: when ON a
+  // separate frequency-range filter (set_vhf_only_filter) hides HF
+  // entries; when OFF everything shows.
+  m_config.frequencies ()->filter (m_config.region (), Modes::ALL, true);
+  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
   auto const& row = m_config.frequencies ()->best_working_frequency (m_freqNominal);
   if (!keep_frequency) {
       ui->bandComboBox->setCurrentIndex (row);

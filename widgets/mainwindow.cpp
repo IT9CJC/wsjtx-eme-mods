@@ -5316,9 +5316,8 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->EraseButton->setVisible (!cw_mode);
   ui->ClrAvgButton->setVisible (!cw_mode);
   // Soundcard CW uses the audio output path, so the PWR / attenuation
-  // slider and the TX/RX cursor spinboxes (controls_stack_widget) are
-  // relevant. CAT keyer bypasses the soundcard entirely, so neither
-  // control affects anything in that mode and both stay hidden.
+  // slider is relevant. CAT keyer bypasses the soundcard entirely, so
+  // the slider stays hidden in CAT mode.
   bool const cw_soundcard = cw_mode && !m_cwUseCATKeyer;
   ui->outAttenuation->setVisible (!cw_mode || cw_soundcard);
   ui->cbCQonly->setVisible (!cw_mode);
@@ -5327,7 +5326,7 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->sb_keep_cq_min->setVisible (!cw_mode);
   // ui->label (PWR reading) stays visible — shows power during CW TX
   mode_label.setVisible (!cw_mode);
-  ui->controls_stack_widget->setVisible (!cw_mode || cw_soundcard);
+  ui->controls_stack_widget->setVisible (!cw_mode);
   ui->decodes_splitter->setVisible (!cw_mode);
   ui->cw_panel_widget->setVisible (cw_mode);
   if (cw_mode) {

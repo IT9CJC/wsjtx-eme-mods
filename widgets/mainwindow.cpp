@@ -12661,6 +12661,7 @@ void MainWindow::on_actionFreqCal_triggered()
 
 void MainWindow::switch_mode (Mode mode)
 {
+  Q_UNUSED (mode);  // Band dropdown no longer filters by decoder mode
   no_a7_decodes = true;  // Don't allow a7 decodes during the first period because they can be leftovers from the previous mode
   msk144qsy = false;     // MSK144 QSY
   QTimer::singleShot ((int(1500.0*m_TRperiod)), [=] {no_a7_decodes = false;});
@@ -13109,9 +13110,12 @@ void MainWindow::band_changed (Frequency f)
       }
     }
   }
-  // User-driven band pick in CW mode: adopt f as the new sked so Astro
-  // and future sticky-override checks agree with what the operator chose.
-  if (m_bandEdited && m_config.data_mode () == Configuration::data_mode_CW && f > 0) {
+  // User-driven band pick: adopt f as the new sked so Astro and future
+  // sticky-override checks agree with what the operator chose. Applies
+  // regardless of mode (CW or digital) and regardless of Doppler method
+  // - the dropdown choice must always win and the Doppler engine will
+  // recalculate correction around the new sked on the next astroUpdate.
+  if (m_bandEdited && f > 0) {
     m_skedFreq = f / 1000000.0;
     if (m_astroWidget && !m_astroWidget->lockSkedFreq ()) {
       m_astroWidget->applySkedFreqMHz (m_skedFreq);
@@ -13491,12 +13495,14 @@ void MainWindow::handle_transceiver_update (Transceiver::TransceiverState const&
       m_cwLastRigPTT = rigPtt;
       onCWRigPTTChanged (rigPtt);
     }
-    // Rig-master Doppler modes (None, Call DX): if the operator moves
-    // the VFO (any freq change while not keyed), adopt the new freq as
-    // the new sked so Astro and future Doppler math use the right ref.
+    // Rig-master Doppler mode (None only): if the operator moves the
+    // VFO (any freq change while not keyed), adopt the new freq as the
+    // new sked so Astro and future Doppler math use the right ref.
+    // Call DX and the other Doppler methods are sked-master: VFO is
+    // driven by WSJT, no adoption.
     if (!rigPtt && m_astroWidget) {
       int const method = m_astroWidget->DopplerMethod();
-      bool const rig_master = (method == 0 || method == 5);
+      bool const rig_master = (method == 0);
       if (rig_master && s.frequency () != old_state.frequency ()
           && old_state.frequency () != 0) {
         Frequency const new_freq = s.frequency ();
@@ -14895,10 +14901,11 @@ void MainWindow::astroUpdate ()
 
     if (m_transmitting && !m_config.tx_QSY_allowed ()) return;  // No Tx Doppler correction if rig can't do it
     int const method = m_astroWidget->DopplerMethod();
-    // Methods 0 (None) and 5 (Call DX) are rig-master: WSJT must not
-    // force the rig; the operator's VFO is final. Clear the correction
-    // so the TX dial mirrors RX and nothing drifts the display.
-    bool const rig_master = (method == 0 || method == 5);
+    // Method 0 (None) is rig-master: WSJT must not force the rig; the
+    // operator's VFO is final. Clear the correction so the TX dial
+    // mirrors RX and nothing drifts the display. Call DX (method 5)
+    // IS a Doppler mode - correction is still applied.
+    bool const rig_master = (method == 0);
     if (!m_astroWidget->doppler_tracking() or rig_master) {
       m_fAudioShift = m_fDop;
       m_astroCorrection = {};

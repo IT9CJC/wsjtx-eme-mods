@@ -1043,11 +1043,16 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
       if (m_config.data_mode () != Configuration::data_mode_CW) {
         m_config.set_data_mode (Configuration::data_mode_CW);
         m_config.transceiver_frequency (m_freqNominal);
-        // Re-filter the band dropdown to Modes::ALL so HF, VHF, UHF and
-        // microwave bands all show up. switch_mode() last applied a
-        // per-mode filter (e.g. Q65 => VHF-only entries) that would
-        // otherwise hide HF freqs when the operator switches to CW.
-        m_config.frequencies ()->filter (m_config.region (), Modes::ALL, true);
+        // Band dropdown filter in CW:
+        //   VHF features OFF -> operator is on HF: widen to Modes::ALL so
+        //     HF entries become visible (switch_mode may have left a
+        //     VHF-only per-mode filter in place).
+        //   VHF features ON  -> leave the current filter alone so the
+        //     dropdown stays limited to VHF+ entries, matching what the
+        //     operator wanted when they enabled VHF features.
+        if (!m_config.enable_VHF_features ()) {
+          m_config.frequencies ()->filter (m_config.region (), Modes::ALL, true);
+        }
         setup_status_bar (m_config.enable_VHF_features ());
       }
     } else if (action == ui->actionQ65 || action == ui->actionEcho) {

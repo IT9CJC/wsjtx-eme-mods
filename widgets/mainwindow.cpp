@@ -1503,7 +1503,14 @@ void MainWindow::handle_leavingSettings ()
   // Enable VHF/UHF Features may have been toggled; re-apply the
   // frequency-range filter so the band dropdown reflects the new state
   // immediately.
-  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
+  bool const vhf = m_config.enable_VHF_features ();
+  m_config.frequencies ()->set_vhf_only_filter (vhf);
+  // Diagnostic: show what the code actually sees for the VHF flag so
+  // operator can confirm filter state matches checkbox state.
+  statusBar ()->showMessage (tr ("Dropdown filter: Enable VHF features = %1 (VHF-only hide = %2)")
+                              .arg (vhf ? "ON" : "OFF")
+                              .arg (vhf ? "ENABLED (hide <50 MHz)" : "DISABLED (show all)"),
+                              15000);
 }
 
 void MainWindow::initialize_fonts ()

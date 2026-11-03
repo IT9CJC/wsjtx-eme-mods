@@ -794,6 +794,12 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // checked (startup race or settings corruption), default to FT8 so
   // the user never sees an unchecked Mode menu.
   QTimer::singleShot (0, this, [this] {
+    // Startup restoration: if settings saved CW mode, make sure the Mode
+    // menu reflects it before the fallback below declares nothing checked.
+    if (m_config.data_mode () == Configuration::data_mode_CW && !ui->actionCW->isChecked ()) {
+      ui->actionCW->setChecked (true);
+      return;
+    }
     if (!ui->actionFT8->isChecked () && !ui->actionFT4->isChecked ()
         && !ui->actionJT9->isChecked () && !ui->actionJT65->isChecked ()
         && !ui->actionJT4->isChecked () && !ui->actionWSPR->isChecked ()
@@ -5255,7 +5261,12 @@ void MainWindow::loadCwRxForBand (QString const& band)
 
 void MainWindow::updateCWModeUI (bool cw_mode)
 {
-  ui->actionCW->setChecked (cw_mode);
+  // Do NOT touch ui->actionCW->setChecked here. Mode-menu check state is
+  // managed by Qt's QActionGroup on user clicks and by one-time startup
+  // restoration below. Re-asserting it here fires during the Q65-from-CW
+  // transition (where data_mode() is still CW when on_actionQ65_triggered
+  // calls setup_status_bar), un-checking the just-checked Q65 action and
+  // forcing the user to click twice.
 
   ui->ft8Button->setVisible (!cw_mode);
   ui->ft4Button->setVisible (!cw_mode);

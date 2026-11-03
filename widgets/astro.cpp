@@ -498,6 +498,11 @@ void Astro::applySkedFreqMHz(double freqMHz)
   Frequency const f = static_cast<Frequency> (qRound64 (freqMHz * 1000000.0));
   ui_->sked_frequency_label->setText (Radio::pretty_frequency_MHz_string (f));
   ui_->sked_tx_frequency_label->setText (Radio::pretty_frequency_MHz_string (f));
-  Q_EMIT skedFreq (freqMHz);
+  // Do NOT emit skedFreq here. MainWindow callers (band_changed,
+  // loadCwRxForBand, rig-master VFO adoption) use this as a one-way push
+  // into Astro; echoing back through MainWindow::skedFreq causes an
+  // infinite band_changed <-> applySkedFreqMHz loop (band button QSY
+  // crashed the app). Only on_pbSet_clicked (user clicks "Set kHz" in
+  // Astro) should emit skedFreq to notify MainWindow.
   Q_EMIT astroStateChanged ();
 }

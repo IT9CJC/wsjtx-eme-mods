@@ -4331,18 +4331,6 @@ void MainWindow::displayDialFrequency ()
 
   // lookup band
   auto const& band_name = m_config.bands ()->find (dial_frequency);
-  // Diagnostic: in CW mode, log what we are about to set the combo
-  // lineedit to. Lets us see whether the "m" the user reports is from
-  // this call or from a later setter clobbering the text.
-  if (m_config.data_mode () == Configuration::data_mode_CW
-      && m_lastBand != band_name) {
-    statusBar ()->showMessage (
-        tr ("displayDialFrequency: dial=%1 Hz, band=\"%2\", lineedit will be set to \"%3\"")
-            .arg (dial_frequency)
-            .arg (band_name)
-            .arg (band_name.size () ? band_name : m_config.bands ()->oob ()),
-        30000);
-  }
   if (m_lastBand != band_name or m_freqNominalPeriod != m_freqNominal)
     {
       // only change this when necessary as we get called a lot and it
@@ -5350,6 +5338,13 @@ void MainWindow::updateCWModeUI (bool cw_mode)
   ui->controls_stack_widget->setVisible (!cw_mode);
   ui->decodes_splitter->setVisible (!cw_mode);
   ui->cw_panel_widget->setVisible (cw_mode);
+  // gridLayout_5 reserves 5/7 of the width for controls_stack_widget
+  // (column 6, stretch 5). When controls_stack_widget is hidden in CW
+  // mode, that column is empty but keeps its stretch, pushing the dial
+  // + bandComboBox to the left. Zero out col 6's stretch in CW so the
+  // dial + bandComboBox expand to fill the window, then restore it on
+  // return to digital mode.
+  ui->gridLayout_5->setColumnStretch (6, cw_mode ? 0 : 5);
   if (cw_mode) {
     // Fast polling (100 ms) so we catch external paddle PTT edges quickly
     m_config.transceiver_set_poll_interval (100);

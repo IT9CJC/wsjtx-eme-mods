@@ -1311,17 +1311,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   // after set_mode above (which calls switch_mode and resets the filter
   // to Modes::ALL + VHF-only-per-flag) so this is really a belt-and-braces
   // apply in case a code path somewhere else cleared it.
-  {
-    bool const vhf_startup = m_config.enable_VHF_features ();
-    m_config.frequencies ()->set_vhf_only_filter (vhf_startup);
-    QTimer::singleShot (3000, this, [this, vhf_startup] {
-      statusBar ()->showMessage (
-          tr ("Startup: VHF features = %1 -> dropdown shows %2")
-              .arg (vhf_startup ? "ON" : "OFF")
-              .arg (vhf_startup ? ">= 50 MHz only" : "ALL (HF + VHF+)"),
-          20000);
-    });
-  }
+  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
   if(m_mode=="Echo") monitor(false);  //Don't auto-start Monitor in Echo mode.
 
   // Ensure that the correct frequency is set and displayed
@@ -1513,13 +1503,7 @@ void MainWindow::handle_leavingSettings ()
   // Enable VHF/UHF Features may have been toggled; re-apply the
   // frequency-range filter so the band dropdown reflects the new state
   // immediately.
-  bool const vhf = m_config.enable_VHF_features ();
-  m_config.frequencies ()->set_vhf_only_filter (vhf);
-  statusBar ()->showMessage (
-      tr ("Settings closed: VHF features = %1 -> dropdown shows %2")
-          .arg (vhf ? "ON" : "OFF")
-          .arg (vhf ? ">= 50 MHz only" : "ALL (HF + VHF+)"),
-      20000);
+  m_config.frequencies ()->set_vhf_only_filter (m_config.enable_VHF_features ());
 }
 
 void MainWindow::initialize_fonts ()
